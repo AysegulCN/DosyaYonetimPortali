@@ -9,11 +9,9 @@
         public long Size { get; set; } 
         public DateTime UploadDate { get; set; } = DateTime.Now;
 
-        // Bu dosya hangi klasörde? (Null ise ana dizindedir)
         public int? FolderId { get; set; }
         public Folder Folder { get; set; }
-
-        // Bu dosyayı kim yükledi?
+        public bool IsDeleted { get; set; } = false; 
         public string? AppUserId { get; set; }
         public AppUser AppUser { get; set; }
     }
