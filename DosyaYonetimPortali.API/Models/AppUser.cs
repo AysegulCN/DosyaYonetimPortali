@@ -12,5 +12,6 @@ namespace DosyaYonetimPortali.API.Models
         // Bir kullanıcının birden fazla klasörü ve dosyası olabilir (Bire-Çok İlişki)
         public ICollection<Folder> Folders { get; set; }
         public ICollection<AppFile> Files { get; set; }
+        public string? AvatarPath { get; set; } // Kullanıcının profil fotoğrafı
     }
 }

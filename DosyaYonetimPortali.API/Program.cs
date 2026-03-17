@@ -16,15 +16,11 @@ namespace DosyaYonetimPortali.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // ==================================================
-            // 1. SERVİS KAYITLARI 
-            // ==================================================
+            
 
-            // SQL Server Bağlantısı
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Identity Ayarları
             builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
             {
                 options.Password.RequireDigit = false;
@@ -36,15 +32,13 @@ namespace DosyaYonetimPortali.API
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
-            // Kendi Yazdığımız Servislerin Sisteme Tanıtılması (Dependency Injection)
             builder.Services.AddScoped<IAuthService, AuthService>();
 
-            // ==================================================
-            // YENİ EKLENEN KISIM: Generic Repository Tanıtımı
-            // ==================================================
+          
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            builder.Services.AddScoped<IFolderRepository, FolderRepository>();
+            builder.Services.AddScoped<IFileRepository, FileRepository>();
 
-            // JWT Kimlik Doğrulama (Authentication) Ayarları
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
