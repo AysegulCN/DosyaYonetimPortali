@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DosyaYonetimPortali.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260317183917_AddShareableLinks")]
-    partial class AddShareableLinks
+    [Migration("20260329103313_AddCommentsAndNotifications")]
+    partial class AddCommentsAndNotifications
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -48,6 +48,9 @@ namespace DosyaYonetimPortali.API.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsStarred")
+                        .HasColumnType("bit");
+
                     b.Property<string>("PhysicalPath")
                         .HasColumnType("nvarchar(max)");
 
@@ -79,6 +82,9 @@ namespace DosyaYonetimPortali.API.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
+
+                    b.Property<string>("AvatarPath")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -143,6 +149,37 @@ namespace DosyaYonetimPortali.API.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("DosyaYonetimPortali.API.Models.FileComment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AppFileId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AppUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CommentText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppFileId");
+
+                    b.HasIndex("AppUserId");
+
+                    b.ToTable("FileComments");
+                });
+
             modelBuilder.Entity("DosyaYonetimPortali.API.Models.Folder", b =>
                 {
                     b.Property<int>("Id")
@@ -170,6 +207,35 @@ namespace DosyaYonetimPortali.API.Migrations
                     b.HasIndex("ParentFolderId");
 
                     b.ToTable("Folders");
+                });
+
+            modelBuilder.Entity("DosyaYonetimPortali.API.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AppUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
+
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("DosyaYonetimPortali.API.Models.SystemLog", b =>
@@ -347,6 +413,25 @@ namespace DosyaYonetimPortali.API.Migrations
                     b.Navigation("Folder");
                 });
 
+            modelBuilder.Entity("DosyaYonetimPortali.API.Models.FileComment", b =>
+                {
+                    b.HasOne("DosyaYonetimPortali.API.Models.AppFile", "AppFile")
+                        .WithMany()
+                        .HasForeignKey("AppFileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DosyaYonetimPortali.API.Models.AppUser", "AppUser")
+                        .WithMany()
+                        .HasForeignKey("AppUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppFile");
+
+                    b.Navigation("AppUser");
+                });
+
             modelBuilder.Entity("DosyaYonetimPortali.API.Models.Folder", b =>
                 {
                     b.HasOne("DosyaYonetimPortali.API.Models.AppUser", "AppUser")
@@ -361,6 +446,17 @@ namespace DosyaYonetimPortali.API.Migrations
                     b.Navigation("AppUser");
 
                     b.Navigation("ParentFolder");
+                });
+
+            modelBuilder.Entity("DosyaYonetimPortali.API.Models.Notification", b =>
+                {
+                    b.HasOne("DosyaYonetimPortali.API.Models.AppUser", "AppUser")
+                        .WithMany()
+                        .HasForeignKey("AppUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppUser");
                 });
 
             modelBuilder.Entity("DosyaYonetimPortali.API.Models.SystemLog", b =>

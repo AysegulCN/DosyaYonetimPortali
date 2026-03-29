@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace DosyaYonetimPortali.API.Controllers.Data
+namespace DosyaYonetimPortali.API.Data
 {
     public class AppDbContext : IdentityDbContext<AppUser>
     {
@@ -10,19 +10,23 @@ namespace DosyaYonetimPortali.API.Controllers.Data
         {
         }
 
+        // Tablo tanımlamaları
         public DbSet<Folder> Folders { get; set; }
         public DbSet<AppFile> Files { get; set; }
         public DbSet<SystemLog> SystemLogs { get; set; }
+        public DbSet<FileComment> FileComments { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
+            // Klasör hiyerarşisi (İç içe klasörler)
             builder.Entity<Folder>()
                 .HasOne(f => f.ParentFolder)
                 .WithMany(f => f.SubFolders)
                 .HasForeignKey(f => f.ParentFolderId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

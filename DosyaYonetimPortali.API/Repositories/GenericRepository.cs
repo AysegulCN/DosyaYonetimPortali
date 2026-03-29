@@ -1,4 +1,4 @@
-﻿using DosyaYonetimPortali.API.Controllers.Data;
+﻿using DosyaYonetimPortali.API.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 

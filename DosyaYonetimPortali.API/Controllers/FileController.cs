@@ -1,10 +1,11 @@
-﻿using DosyaYonetimPortali.API.Models;
+﻿using DosyaYonetimPortali.API.Data; // Notification ve AppDbContext için eklendi
+using DosyaYonetimPortali.API.Models;
 using DosyaYonetimPortali.API.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using System.IO.Compression;
+using System.Security.Claims;
 
 namespace DosyaYonetimPortali.API.Controllers
 {
@@ -16,47 +17,63 @@ namespace DosyaYonetimPortali.API.Controllers
         private readonly IGenericRepository<AppFile> _fileRepository;
         private readonly UserManager<AppUser> _userManager;
         private readonly IWebHostEnvironment _env;
+        private readonly AppDbContext _context; // Bildirim eklemek için eklendi
 
-        public FileController(IGenericRepository<AppFile> fileRepository, UserManager<AppUser> userManager, IWebHostEnvironment env)
+        public FileController(IGenericRepository<AppFile> fileRepository, UserManager<AppUser> userManager, IWebHostEnvironment env, AppDbContext context)
         {
             _fileRepository = fileRepository;
             _userManager = userManager;
             _env = env;
+            _context = context;
         }
 
+        // 1. DOSYA YÜKLEME (Anti-Virüs + Akıllı İsimlendirme + Kota)
         [HttpPost("upload")]
         public async Task<IActionResult> UploadFile(IFormFile file, [FromForm] int? folderId)
         {
             if (file == null || file.Length == 0) return BadRequest("Dosya seçilmedi.");
 
+            // GÜVENLİK FİLTRESİ
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".pdf", ".docx", ".xlsx", ".txt", ".zip" };
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
             if (!allowedExtensions.Contains(extension))
             {
-                return BadRequest(new { Message = "Güvenlik İhlali: Sadece resim, ofis belgeleri, pdf ve zip dosyaları yüklenebilir. Çalıştırılabilir (.exe, .bat vb.) dosyalar sistem tarafından engellenmiştir!" });
+                return BadRequest(new { Message = "Güvenlik İhlali: Sadece resim, ofis belgeleri, pdf ve zip dosyaları yüklenebilir!" });
             }
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var user = await _userManager.FindByIdAsync(userId);
             var roles = await _userManager.GetRolesAsync(user);
 
-            // 1. KOTA KONTROLÜ (Freemium Mantığı)
-            long maxQuota = roles.Contains("PremiumUser") ? 5368709120 : 104857600; // Premium 5GB, Normal 100MB
-
+            // KOTA KONTROLÜ
+            long maxQuota = roles.Contains("PremiumUser") ? 5368709120 : 104857600;
             var userFiles = await _fileRepository.WhereAsync(f => f.AppUserId == userId && !f.IsDeleted);
             long totalUsedSpace = userFiles.Sum(f => f.Size);
 
             if (totalUsedSpace + file.Length > maxQuota)
             {
-                return BadRequest($"Kota aşıldı! Mevcut kullanım: {totalUsedSpace / 1024 / 1024} MB. Sınırınız: {maxQuota / 1024 / 1024} MB.");
+                return BadRequest($"Kota aşıldı! Sınırınız: {maxQuota / 1024 / 1024} MB.");
             }
 
-            // 2. DOSYA YÜKLEME İŞLEMİ
+            // AKILLI İSİM ÇAKIŞMA ÇÖZÜCÜ (Dropbox Mantığı: Dosya(1).pdf)
+            var originalFileName = Path.GetFileNameWithoutExtension(file.FileName);
+            var finalFileName = file.FileName;
+            int counter = 1;
+
+            var folderFiles = await _fileRepository.WhereAsync(f => f.FolderId == folderId && f.AppUserId == userId && !f.IsDeleted);
+
+            while (folderFiles.Any(f => f.FileName == finalFileName))
+            {
+                finalFileName = $"{originalFileName}({counter}){extension}";
+                counter++;
+            }
+
+            // FİZİKSEL KAYIT
             var uploadsFolder = Path.Combine(_env.ContentRootPath, "Uploads");
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + finalFileName;
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
@@ -64,10 +81,11 @@ namespace DosyaYonetimPortali.API.Controllers
                 await file.CopyToAsync(stream);
             }
 
+            // VERİTABANI KAYIT
             var newFile = new AppFile
             {
-                FileName = file.FileName,
-                Extension = Path.GetExtension(file.FileName),
+                FileName = finalFileName, // Çakışma çözülmüş isim
+                Extension = extension,
                 Size = file.Length,
                 PhysicalPath = filePath,
                 FolderId = folderId,
@@ -78,10 +96,10 @@ namespace DosyaYonetimPortali.API.Controllers
             await _fileRepository.AddAsync(newFile);
             await _fileRepository.SaveAsync();
 
-            return Ok(new { Message = "Dosya başarıyla yüklendi.", FileId = newFile.Id, KalanKotaMB = (maxQuota - (totalUsedSpace + file.Length)) / 1024 / 1024 });
+            return Ok(new { Message = "Dosya başarıyla yüklendi.", SavedName = finalFileName, FileId = newFile.Id });
         }
 
-        // 3. ÇÖP KUTUSUNA GÖNDERME (Soft Delete)
+        // 2. ÇÖP KUTUSUNA TAŞIMA (Premium Bildirimli)
         [HttpDelete("move-to-trash/{id}")]
         public async Task<IActionResult> MoveToTrash(int id)
         {
@@ -89,183 +107,135 @@ namespace DosyaYonetimPortali.API.Controllers
             if (file == null || file.IsDeleted) return NotFound("Dosya bulunamadı.");
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (file.AppUserId != userId) return Unauthorized("Bu işlem için yetkiniz yok.");
+            if (file.AppUserId != userId) return Unauthorized();
 
-            file.IsDeleted = true; // Fiziksel olarak silmiyoruz, sadece işaretliyoruz!
+            var user = await _userManager.FindByIdAsync(userId);
+            var roles = await _userManager.GetRolesAsync(user);
+
+            file.IsDeleted = true;
             _fileRepository.Update(file);
             await _fileRepository.SaveAsync();
+
+            // Freemium Pazarlama Bildirimi
+            if (!roles.Contains("PremiumUser"))
+            {
+                var notification = new Notification
+                {
+                    AppUserId = userId,
+                    Message = "Dosya çöpe atıldı. Silinen dosyalarınıza 30 gün boyunca erişebilmek için Premium pakete geçin!",
+                    CreatedDate = DateTime.Now
+                };
+                _context.Notifications.Add(notification);
+                await _context.SaveChangesAsync();
+            }
 
             return Ok(new { Message = "Dosya çöp kutusuna taşındı." });
         }
 
-        // 4. ÇÖP KUTUSUNDAKİLERİ GETİR (Trash Bin Arayüzü İçin)
+        // 3. ÇÖP KUTUSU ERİŞİMİ (Sadece Premiumlar İçin Kilit)
         [HttpGet("trash-bin")]
         public async Task<IActionResult> GetTrashBin()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var trashedFiles = await _fileRepository.WhereAsync(f => f.AppUserId == userId && f.IsDeleted);
+            var user = await _userManager.FindByIdAsync(userId);
+            var roles = await _userManager.GetRolesAsync(user);
 
-            var result = trashedFiles.Select(f => new { f.Id, f.FileName, f.Size, f.UploadDate }).ToList();
-            return Ok(result);
+            if (!roles.Contains("PremiumUser"))
+            {
+                return BadRequest(new { Message = "Çöp kutusunu görmek ve dosyaları kurtarmak için Premium abonelik gereklidir." });
+            }
+
+            var trashedFiles = await _fileRepository.WhereAsync(f => f.AppUserId == userId && f.IsDeleted);
+            return Ok(trashedFiles.Select(f => new { f.Id, f.FileName, f.Size, f.UploadDate }));
         }
-        // 5. ÇÖP KUTUSUNDAN GERİ GETİRME (Restore)
+
+        // 4. RESTORE (Geri Getirme)
         [HttpPut("restore-from-trash/{id}")]
         public async Task<IActionResult> RestoreFromTrash(int id)
         {
             var file = await _fileRepository.GetByIdAsync(id);
-            if (file == null || !file.IsDeleted) return NotFound("Çöp kutusunda böyle bir dosya bulunamadı.");
+            if (file == null || !file.IsDeleted) return NotFound();
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (file.AppUserId != userId) return Unauthorized("Bu işlem için yetkiniz yok.");
+            if (file.AppUserId != userId) return Unauthorized();
 
-            // Dosyayı hayata döndürüyoruz!
             file.IsDeleted = false;
             _fileRepository.Update(file);
             await _fileRepository.SaveAsync();
 
-            return Ok(new { Message = "Dosya başarıyla çöp kutusundan çıkarıldı ve geri getirildi." });
+            return Ok(new { Message = "Dosya geri getirildi." });
         }
 
-        // 6. DOSYAYI PAYLAŞIMA AÇMA (Share Link)
-        [HttpPost("share/{id}")]
-        public async Task<IActionResult> CreateShareLink(int id, [FromQuery] int expireDays = 7)
-        {
-            var file = await _fileRepository.GetByIdAsync(id);
-            if (file == null || file.IsDeleted) return NotFound("Dosya bulunamadı.");
-
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (file.AppUserId != userId) return Unauthorized("Bu dosyayı paylaşma yetkiniz yok.");
-
-            // Dosyaya benzersiz bir şifre (GUID) ve son kullanma tarihi atıyoruz
-            file.ShareToken = Guid.NewGuid();
-            file.ShareExpiration = DateTime.Now.AddDays(expireDays);
-
-            _fileRepository.Update(file);
-            await _fileRepository.SaveAsync();
-
-            // Kullanıcıya vereceğimiz indirme linki (Swagger'da test edebilmek için API ucumuzu veriyoruz)
-            var downloadLink = $"{Request.Scheme}://{Request.Host}/api/Shared/download/{file.ShareToken}";
-
-            return Ok(new
-            {
-                Message = $"{expireDays} gün geçerli paylaşım linki oluşturuldu.",
-                ShareUrl = downloadLink,
-                ExpiresAt = file.ShareExpiration
-            });
-        }
-
+        // 5. LİSTELEME, ARAMA VE SAYFALAMA
         [HttpGet("my-files")]
-        public async Task<IActionResult> GetMyFiles(
-            [FromQuery] int? folderId = null,
-            [FromQuery] string? searchTerm = null,
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetMyFiles([FromQuery] int? folderId = null, [FromQuery] string? searchTerm = null, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            // 1. Temel Sorgu: Kullanıcının silinmemiş dosyaları (Eğer folderId varsa o klasörün içindekiler)
             var files = await _fileRepository.WhereAsync(f => f.AppUserId == userId && !f.IsDeleted && f.FolderId == folderId);
 
-            // 2. Arama (Search) Filtresi: Eğer kullanıcı bir kelime girdiyse o kelimeyi isminde ara
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 files = files.Where(f => f.FileName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
-            // Toplam dosya sayısını al (Sayfa sayısını hesaplamak için)
             int totalRecords = files.Count();
-            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            var pagedFiles = files.OrderByDescending(f => f.UploadDate).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
 
-            // 3. Sayfalama (Pagination): İstenilen sayfaya git ve sadece o sayfanın verisini kopar
-            var pagedFiles = files
-                .OrderByDescending(f => f.UploadDate) // En son yüklenen en üstte görünsün
-                .Skip((pageNumber - 1) * pageSize)    // Önceki sayfaları atla
-                .Take(pageSize)                       // Sadece bu sayfanın boyutu kadarını al
-                .Select(f => new
-                {
-                    f.Id,
-                    f.FileName,
-                    f.Extension,
-                    f.Size,
-                    f.UploadDate,
-                    f.ShareToken // Paylaşımda olup olmadığını arayüzde göstermek için
-                }).ToList();
-
-            // Sonuçları ve sayfa bilgilerini şık bir paket halinde dışarı yolla
-            return Ok(new
-            {
-                TotalRecords = totalRecords,
-                TotalPages = totalPages,
-                CurrentPage = pageNumber,
-                PageSize = pageSize,
-                Files = pagedFiles
-            });
+            return Ok(new { TotalRecords = totalRecords, CurrentPage = pageNumber, Files = pagedFiles });
         }
-        // 8. DOSYA İSMİ DEĞİŞTİRME (Rename)
+
+        // 6. DİĞER FONKSİYONLAR (Share, Rename, Star, Move, Zip)
+        [HttpPost("share/{id}")]
+        public async Task<IActionResult> CreateShareLink(int id, [FromQuery] int expireDays = 7)
+        {
+            var file = await _fileRepository.GetByIdAsync(id);
+            if (file == null || file.IsDeleted) return NotFound();
+            file.ShareToken = Guid.NewGuid();
+            file.ShareExpiration = DateTime.Now.AddDays(expireDays);
+            _fileRepository.Update(file);
+            await _fileRepository.SaveAsync();
+            return Ok(new { ShareUrl = $"{Request.Scheme}://{Request.Host}/api/Shared/download/{file.ShareToken}" });
+        }
+
         [HttpPut("rename/{id}")]
         public async Task<IActionResult> RenameFile(int id, [FromBody] string newName)
         {
             var file = await _fileRepository.GetByIdAsync(id);
-            if (file == null || file.IsDeleted) return NotFound("Dosya bulunamadı.");
-
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (file.AppUserId != userId) return Unauthorized("Yetkiniz yok.");
-
-            if (string.IsNullOrWhiteSpace(newName)) return BadRequest("Yeni isim boş olamaz.");
-
+            if (file == null || file.IsDeleted) return NotFound();
             file.FileName = newName;
             _fileRepository.Update(file);
             await _fileRepository.SaveAsync();
-
-            return Ok(new { Message = "Dosya ismi başarıyla değiştirildi.", NewName = file.FileName });
+            return Ok(new { Message = "Dosya ismi güncellendi." });
         }
 
-        // 9. YILDIZLAMA / FAVORİLERE EKLEME-ÇIKARMA (Toggle Star)
         [HttpPut("toggle-star/{id}")]
         public async Task<IActionResult> ToggleStar(int id)
         {
             var file = await _fileRepository.GetByIdAsync(id);
-            if (file == null || file.IsDeleted) return NotFound("Dosya bulunamadı.");
-
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (file.AppUserId != userId) return Unauthorized("Yetkiniz yok.");
-
-            // Yıldızlıysa yıldızı kaldır, değilse yıldızla (Aç/Kapat mantığı)
+            if (file == null || file.IsDeleted) return NotFound();
             file.IsStarred = !file.IsStarred;
             _fileRepository.Update(file);
             await _fileRepository.SaveAsync();
-
-            var status = file.IsStarred ? "Favorilere eklendi." : "Favorilerden çıkarıldı.";
-            return Ok(new { Message = status, IsStarred = file.IsStarred });
+            return Ok(new { IsStarred = file.IsStarred });
         }
-        // 10. DOSYA TAŞIMA (Klasör Değiştirme)
+
         [HttpPut("move/{id}")]
         public async Task<IActionResult> MoveFile(int id, [FromQuery] int? newFolderId)
         {
             var file = await _fileRepository.GetByIdAsync(id);
-            if (file == null || file.IsDeleted) return NotFound("Dosya bulunamadı.");
-
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (file.AppUserId != userId) return Unauthorized("Yetkiniz yok.");
-
-            // Dosyanın klasör ID'sini güncelliyoruz (null ise ana dizine çıkar)
+            if (file == null || file.IsDeleted) return NotFound();
             file.FolderId = newFolderId;
             _fileRepository.Update(file);
             await _fileRepository.SaveAsync();
-
-            return Ok(new { Message = "Dosya başarıyla taşındı." });
+            return Ok(new { Message = "Dosya taşındı." });
         }
 
-        // 11. SEÇİLİ DOSYALARI ZİP OLARAK İNDİRME (Toplu İndirme)
         [HttpPost("download-zip")]
         public async Task<IActionResult> DownloadFilesAsZip([FromBody] List<int> fileIds)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            // Sadece kullanıcıya ait ve silinmemiş dosyaları bul
             var files = await _fileRepository.WhereAsync(f => fileIds.Contains(f.Id) && f.AppUserId == userId && !f.IsDeleted);
-
-            if (!files.Any()) return NotFound("İndirilecek geçerli dosya bulunamadı.");
+            if (!files.Any()) return NotFound();
 
             using var memoryStream = new MemoryStream();
             using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
@@ -273,16 +243,11 @@ namespace DosyaYonetimPortali.API.Controllers
                 foreach (var file in files)
                 {
                     if (System.IO.File.Exists(file.PhysicalPath))
-                    {
-                        // Dosyayı Zip arşivine ekle
                         archive.CreateEntryFromFile(file.PhysicalPath, file.FileName);
-                    }
                 }
             }
-
             memoryStream.Position = 0;
             return File(memoryStream.ToArray(), "application/zip", "Dosyalarim.zip");
         }
-
     }
 }

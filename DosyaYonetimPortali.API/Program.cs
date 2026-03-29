@@ -1,4 +1,4 @@
-using DosyaYonetimPortali.API.Controllers.Data;
+using DosyaYonetimPortali.API.Data;
 using DosyaYonetimPortali.API.Models;
 using DosyaYonetimPortali.API.Repositories;
 using DosyaYonetimPortali.API.Services;
@@ -38,6 +38,9 @@ namespace DosyaYonetimPortali.API
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             builder.Services.AddScoped<IFolderRepository, FolderRepository>();
             builder.Services.AddScoped<IFileRepository, FileRepository>();
+            builder.Services.AddHostedService<TrashCleanupService>();
+            builder.Services.AddHostedService<TrashCleanupService>();
+
 
             builder.Services.AddAuthentication(options =>
             {
@@ -62,9 +65,6 @@ namespace DosyaYonetimPortali.API
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
 
-            // ==================================================
-            // YENİ EKLENEN KISIM: Swagger Kilit Ekranı
-            // ==================================================
             builder.Services.AddSwaggerGen(c =>
             {
                 c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
