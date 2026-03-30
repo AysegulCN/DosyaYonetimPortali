@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="DosyaYonetimPortali.API/DosyaYonetimPortali.API.csproj" />
+  <Project Path="DosyaYonetimPortali.MVC/DosyaYonetimPortali.MVC.csproj" Id="781d76d9-ded9-4bfe-bc84-c95b0e770778" />
 </Solution>
