@@ -47,7 +47,6 @@ namespace DosyaYonetimPortali.API.Services
 
             if (result.Succeeded)
             {
-                // Yeni kayıt olan herkese otomatik "User" rolünü (Ücretsiz Plan) veriyoruz
                 await _userManager.AddToRoleAsync(user, "User");
 
                 return new AuthResponseDto { IsSuccessful = true };
@@ -64,7 +63,6 @@ namespace DosyaYonetimPortali.API.Services
                 return new AuthResponseDto { IsSuccessful = false, ErrorMessage = "Email veya şifre hatalı!" };
             }
 
-            // Kullanıcının rollerini alıyoruz (Admin mi, User mı?)
             var userRoles = await _userManager.GetRolesAsync(user);
 
             var authClaims = new List<Claim>
@@ -97,7 +95,7 @@ namespace DosyaYonetimPortali.API.Services
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
-                expires: DateTime.Now.AddHours(3), // Token 3 saat geçerli olsun
+                expires: DateTime.Now.AddHours(3), 
                 claims: claims,
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
             );

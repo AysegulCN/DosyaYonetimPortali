@@ -8,6 +8,5 @@ namespace DosyaYonetimPortali.API.Repositories
         public FolderRepository(AppDbContext context) : base(context)
         {
         }
-        // Özel metotların içleri (SQL sorguları) buraya yazılır.
     }
 }

@@ -18,8 +18,7 @@ namespace DosyaYonetimPortali.API.Controllers
             _userManager = userManager;
         }
 
-        // 1. PAKETLERİ LİSTELEME (Arayüzdeki Fiyat Tablosu İçin)
-        [AllowAnonymous] // Sisteme üye olmayanlar da fiyatları görebilsin
+        [AllowAnonymous] 
         [HttpGet("packages")]
         public IActionResult GetPackages()
         {
@@ -33,25 +32,20 @@ namespace DosyaYonetimPortali.API.Controllers
             return Ok(packages);
         }
 
-        // 2. SATIN ALMA VE HESAP YÜKSELTME (Upgrade)
         [Authorize]
         [HttpPost("upgrade")]
         public async Task<IActionResult> UpgradeAccount([FromBody] PaymentRequestDto request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            // 1. Ödeme Simülasyonu (Gerçekte burada Iyzico, Stripe gibi bir banka servisi çağrılır)
             if (request.CardNumber.StartsWith("4") == false)
             {
-                // Örnek bir kural: "Kart numarası 4 (Visa) ile başlamıyorsa reddet!"
                 return BadRequest(new { Message = "Ödeme reddedildi. Geçersiz kart numarası!" });
             }
 
-            // 2. Kullanıcıyı Bulma
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var user = await _userManager.FindByIdAsync(userId);
 
-            // 3. Rolü Yükseltme (Eski rolü silip yenisini veriyoruz)
             var currentRoles = await _userManager.GetRolesAsync(user);
             await _userManager.RemoveFromRolesAsync(user, currentRoles);
 
@@ -61,7 +55,6 @@ namespace DosyaYonetimPortali.API.Controllers
             }
             else if (request.PackageId == 3)
             {
-                // İstersen daha sonra sisteme UltraUser rolü de ekleyebilirsin
                 await _userManager.AddToRoleAsync(user, "PremiumUser");
             }
             else
@@ -69,8 +62,7 @@ namespace DosyaYonetimPortali.API.Controllers
                 return BadRequest("Geçersiz paket seçimi.");
             }
 
-            // DİKKAT: Kullanıcının rolü değiştiği için elindeki eski Token artık geçersizdir.
-            // Yeniden giriş yapması gerekir. Arayüzde onu direkt Login sayfasına yönlendireceğiz.
+            
             return Ok(new
             {
                 Message = "Ödeme başarılı! Hesabınız Premium'a yükseltildi.",

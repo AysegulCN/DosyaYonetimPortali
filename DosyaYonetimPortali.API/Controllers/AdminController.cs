@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DosyaYonetimPortali.API.Controllers
 {
-    // DİKKAT: Burası işin sihri! Sadece "Admin" rolüne sahip Token'lar buraya girebilir.
     [Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     [ApiController]
@@ -21,7 +20,6 @@ namespace DosyaYonetimPortali.API.Controllers
             _logRepository = logRepository;
         }
 
-        // 1. ADMİN İŞLEMİ: Tüm Kullanıcıları Listele
         [HttpGet("all-users")]
         public IActionResult GetAllUsers()
         {
@@ -36,12 +34,29 @@ namespace DosyaYonetimPortali.API.Controllers
             return Ok(users);
         }
 
-        // 2. ADMİN İŞLEMİ: Sistemdeki Tüm Hareketleri (Logları) Gör
         [HttpGet("system-logs")]
         public async Task<IActionResult> GetSystemLogs()
         {
             var logs = await _logRepository.GetAllAsync();
             return Ok(logs);
         }
+        // Herkese açık olması için AllowAnonymous ekliyoruz!
+        [AllowAnonymous]
+        [HttpGet("summary")]
+        public IActionResult GetAdminSummary()
+        {
+            // Sistemdeki toplam kullanıcı sayısını çekiyoruz
+            var totalUsers = _userManager.Users.Count();
+
+            // Verileri Admin Dashboard'un beklediği isimlerle gönderiyoruz
+            return Ok(new
+            {
+                totalUsers = totalUsers,
+                premiumUsers = 3, // Şimdilik deneme verisi
+                totalFiles = 145, // Şimdilik deneme verisi
+                totalStorageUsed = 5368709120 // Yaklaşık 5 GB bayt karşılığı
+            });
+        }
+
     }
 }

@@ -12,7 +12,7 @@ namespace DosyaYonetimPortali.API.Models
         public ICollection<AppFile> Files { get; set; }
         public string? AvatarPath { get; set; } 
 
-        public long TotalStorageQuota { get; set; } = 104857600; // Varsayılan 100MB (veya istediğin bir değer)
+        public long TotalStorageQuota { get; set; } = 104857600; 
         public long UsedStorage { get; set; } = 0;
     }
 }

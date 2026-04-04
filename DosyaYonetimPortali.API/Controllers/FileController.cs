@@ -1,4 +1,4 @@
-﻿using DosyaYonetimPortali.API.Data; // Notification ve AppDbContext için eklendi
+﻿using DosyaYonetimPortali.API.Data; 
 using DosyaYonetimPortali.API.Models;
 using DosyaYonetimPortali.API.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -17,7 +17,7 @@ namespace DosyaYonetimPortali.API.Controllers
         private readonly IGenericRepository<AppFile> _fileRepository;
         private readonly UserManager<AppUser> _userManager;
         private readonly IWebHostEnvironment _env;
-        private readonly AppDbContext _context; // Bildirim eklemek için eklendi
+        private readonly AppDbContext _context; 
 
         public FileController(IGenericRepository<AppFile> fileRepository, UserManager<AppUser> userManager, IWebHostEnvironment env, AppDbContext context)
         {
@@ -32,7 +32,11 @@ namespace DosyaYonetimPortali.API.Controllers
         {
             if (file == null || file.Length == 0) return BadRequest("Dosya seçilmedi.");
 
-            // 1. GÜVENLİK FİLTRESİ (Mükemmel çalışıyor, dokunulmadı)
+            if (folderId == 0)
+            {
+                folderId = null;
+            }
+
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".pdf", ".docx", ".xlsx", ".txt", ".zip" };
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
@@ -44,15 +48,12 @@ namespace DosyaYonetimPortali.API.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var user = await _userManager.FindByIdAsync(userId);
 
-            // --- YENİ EKLENEN PROFESYONEL KOTA KONTROLÜ ---
-            // Artık bütün dosyaları toplamıyoruz, direkt kullanıcının profilindeki "UsedStorage" değerine bakıyoruz.
+           
             if (user.UsedStorage + file.Length > user.TotalStorageQuota)
             {
                 return BadRequest(new { Message = $"Yetersiz depolama alanı! Sınırınız: {user.TotalStorageQuota / 1024 / 1024} MB. Lütfen dosya silin veya Premium'a geçin." });
             }
-            // ----------------------------------------------
-
-            // 2. AKILLI İSİM ÇAKIŞMA ÇÖZÜCÜ (Dropbox Mantığı: Dosya(1).pdf)
+            
             var originalFileName = Path.GetFileNameWithoutExtension(file.FileName);
             var finalFileName = file.FileName;
             int counter = 1;
@@ -65,7 +66,6 @@ namespace DosyaYonetimPortali.API.Controllers
                 counter++;
             }
 
-            // 3. FİZİKSEL KAYIT
             var uploadsFolder = Path.Combine(_env.ContentRootPath, "Uploads");
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
@@ -77,7 +77,6 @@ namespace DosyaYonetimPortali.API.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            // 4. VERİTABANI KAYIT
             var newFile = new AppFile
             {
                 FileName = finalFileName,
@@ -99,7 +98,6 @@ namespace DosyaYonetimPortali.API.Controllers
             return Ok(new { Message = "Dosya başarıyla yüklendi.", SavedName = finalFileName, FileId = newFile.Id });
         }
 
-        // 2. ÇÖP KUTUSUNA TAŞIMA (Premium Bildirimli)
         [HttpDelete("move-to-trash/{id}")]
         public async Task<IActionResult> MoveToTrash(int id)
         {
@@ -113,11 +111,10 @@ namespace DosyaYonetimPortali.API.Controllers
             var roles = await _userManager.GetRolesAsync(user);
 
             file.IsDeleted = true;
-            file.DeletedDate = DateTime.Now; // Bunu eklemeyi unutma!
-            _fileRepository.Update(file); // Başındaki 'await' ve sonundaki 'Async' kelimelerini sildik
-            await _fileRepository.SaveAsync(); // Değişikliği veritabanına kaydettik
+            file.DeletedDate = DateTime.Now; 
+            _fileRepository.Update(file); 
+            await _fileRepository.SaveAsync(); 
 
-            // Freemium Pazarlama Bildirimi
             if (!roles.Contains("PremiumUser"))
             {
                 var notification = new Notification
@@ -133,7 +130,6 @@ namespace DosyaYonetimPortali.API.Controllers
             return Ok(new { Message = "Dosya çöp kutusuna taşındı." });
         }
 
-        // 3. ÇÖP KUTUSU ERİŞİMİ (Sadece Premiumlar İçin Kilit)
         [HttpGet("trash-bin")]
         public async Task<IActionResult> GetTrashBin()
         {
@@ -150,7 +146,6 @@ namespace DosyaYonetimPortali.API.Controllers
             return Ok(trashedFiles.Select(f => new { f.Id, f.FileName, f.Size, f.UploadDate }));
         }
 
-        // 4. RESTORE (Geri Getirme)
         [HttpPut("restore-from-trash/{id}")]
         public async Task<IActionResult> RestoreFromTrash(int id)
         {
@@ -167,7 +162,6 @@ namespace DosyaYonetimPortali.API.Controllers
             return Ok(new { Message = "Dosya geri getirildi." });
         }
 
-        // 5. LİSTELEME, ARAMA VE SAYFALAMA
         [HttpGet("my-files")]
         public async Task<IActionResult> GetMyFiles([FromQuery] int? folderId = null, [FromQuery] string? searchTerm = null, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
@@ -185,7 +179,6 @@ namespace DosyaYonetimPortali.API.Controllers
             return Ok(new { TotalRecords = totalRecords, CurrentPage = pageNumber, Files = pagedFiles });
         }
 
-        // 6. DİĞER FONKSİYONLAR (Share, Rename, Star, Move, Zip)
         [HttpPost("share/{id}")]
         public async Task<IActionResult> CreateShareLink(int id, [FromQuery] int expireDays = 7)
         {

@@ -28,21 +28,17 @@ namespace DosyaYonetimPortali.API.Controllers
             var user = await _userManager.FindByIdAsync(userId);
             var roles = await _userManager.GetRolesAsync(user);
 
-            // 1. Kota Hesaplamaları
-            long maxQuota = roles.Contains("PremiumUser") ? 5368709120 : 104857600; // 5GB veya 100MB
+            long maxQuota = roles.Contains("PremiumUser") ? 5368709120 : 104857600; 
 
             var allUserFiles = await _fileRepository.WhereAsync(f => f.AppUserId == userId);
 
-            // Çöpteki ve normal dosyaların boyutları
             long usedSpace = allUserFiles.Where(f => !f.IsDeleted).Sum(f => f.Size);
             long trashSpace = allUserFiles.Where(f => f.IsDeleted).Sum(f => f.Size);
 
-            // 2. İstatistikler
             int activeFileCount = allUserFiles.Count(f => !f.IsDeleted);
             int starredFileCount = allUserFiles.Count(f => !f.IsDeleted && f.IsStarred);
             int trashedFileCount = allUserFiles.Count(f => f.IsDeleted);
 
-            // 3. Son Yüklenen 5 Dosya (Hızlı Erişim)
             var recentFiles = allUserFiles
                 .Where(f => !f.IsDeleted)
                 .OrderByDescending(f => f.UploadDate)
@@ -50,7 +46,6 @@ namespace DosyaYonetimPortali.API.Controllers
                 .Select(f => new { f.Id, f.FileName, f.Extension, f.Size, f.UploadDate, f.IsStarred })
                 .ToList();
 
-            // Tüm verileri tek bir dev pakette arayüze yolluyoruz
             return Ok(new
             {
                 WelcomeMessage = $"Hoş geldin, {user.FirstName}!",

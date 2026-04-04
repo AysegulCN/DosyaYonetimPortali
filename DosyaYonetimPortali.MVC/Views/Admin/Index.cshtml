@@ -1,0 +1,110 @@
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Sistem Genel Özeti</h1>
+    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" onclick="location.reload();">
+        <i class="fas fa-sync fa-sm text-white-50"></i> Verileri Yenile
+    </a>
+</div>
+
+<div class="row">
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Toplam Kullanıcı
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="statTotalUsers">Yükleniyor...</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Premium Aboneler
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="statPremiumUsers">Yükleniyor...</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-crown fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Yüklenen Dosyalar
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="statTotalFiles">Yükleniyor...</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Kullanılan Sunucu Alanı
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="statTotalSize">Yükleniyor...</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-hdd fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Şifre, bilet, token YOK! Direkt açık kapıdan Admin özetine gidiyoruz.
+            $.ajax({
+                url: "https://localhost:7145/api/Admin/summary", // Adresi Dashboard'dan Admin'e çevirdik!
+                type: "GET",
+                success: function (data) {
+                    $("#statTotalUsers").text(data.totalUsers || 0);
+                    $("#statPremiumUsers").text(data.premiumUsers || 0);
+                    $("#statTotalFiles").text(data.totalFiles || 0);
+
+                    var sizeInBytes = data.totalStorageUsed || 0;
+                    var sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+                    $("#statTotalSize").text(sizeInMB + " MB");
+                },
+                error: function (xhr) {
+                    console.log(xhr.responseText); // Hatayı gizlice konsola yaz
+                    alert("Veriler API'den çekilirken bir hata oluştu. Lütfen API'nin (7145) çalıştığından emin olun.");
+                }
+            });
+        });
+    </script>
+}

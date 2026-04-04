@@ -61,6 +61,14 @@ namespace DosyaYonetimPortali.API
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                 };
             });
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", builder =>
+                {
+                    builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+                });
+            });
+
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
@@ -94,9 +102,7 @@ namespace DosyaYonetimPortali.API
 
             var app = builder.Build();
 
-            // ==================================================
-            // 2. HTTP REQUEST PIPELINE
-            // ==================================================
+            
 
             if (app.Environment.IsDevelopment())
             {
@@ -105,6 +111,7 @@ namespace DosyaYonetimPortali.API
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("AllowAll");
 
             app.UseAuthentication();
             app.UseAuthorization();

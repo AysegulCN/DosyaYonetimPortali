@@ -10,7 +10,6 @@ namespace DosyaYonetimPortali.API.Data
         {
         }
 
-        // Tablo tanımlamaları
         public DbSet<Folder> Folders { get; set; }
         public DbSet<AppFile> Files { get; set; }
         public DbSet<SystemLog> SystemLogs { get; set; }
@@ -21,7 +20,6 @@ namespace DosyaYonetimPortali.API.Data
         {
             base.OnModelCreating(builder);
 
-            // Klasör hiyerarşisi (İç içe klasörler)
             builder.Entity<Folder>()
                 .HasOne(f => f.ParentFolder)
                 .WithMany(f => f.SubFolders)

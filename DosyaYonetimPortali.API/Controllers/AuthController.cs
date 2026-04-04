@@ -4,8 +4,10 @@ using DosyaYonetimPortali.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.IO; 
 using System.Security.Claims;
-using System.IO; // Dosya işlemleri için eklendi
 
 namespace DosyaYonetimPortali.API.Controllers
 {
@@ -14,9 +16,8 @@ namespace DosyaYonetimPortali.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly UserManager<AppUser> _userManager; // HATAYI ÇÖZEN SİHİRLİ SATIR
+        private readonly UserManager<AppUser> _userManager; 
 
-        // Constructor güncellendi, _userManager içeriye alındı
         public AuthController(IAuthService authService, UserManager<AppUser> userManager)
         {
             _authService = authService;
@@ -43,21 +44,39 @@ namespace DosyaYonetimPortali.API.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] UserLoginDto request)
+        public async Task<IActionResult> Login([FromBody] UserLoginDto model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
+            {
+                var userRoles = await _userManager.GetRolesAsync(user);
 
-            var result = await _authService.LoginAsync(request);
-            if (result.IsSuccessful)
-                return Ok(result);
+                var authClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Name, user.UserName),
+                };
 
-            return Unauthorized(result);
+                foreach (var userRole in userRoles)
+                {
+                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                }
+
+                var token = GetToken(authClaims);
+
+                return Ok(new
+                {
+                    token = new JwtSecurityTokenHandler().WriteToken(token), 
+                    roles = userRoles 
+                });
+            }
+            return Unauthorized(new { message = "Giriş başarısız. Şifrenizi veya e-postanızı kontrol edin." });
         }
 
-        [HttpPost("logout")]
-        public IActionResult Logout()
+        private SecurityToken GetToken(List<Claim> authClaims)
         {
-            return Ok(new { Message = "Başarıyla çıkış yapıldı. Lütfen istemci tarafındaki Token'ı temizleyin." });
+            throw new NotImplementedException();
         }
 
         [Authorize]
@@ -83,13 +102,12 @@ namespace DosyaYonetimPortali.API.Controllers
         {
             if (file == null || file.Length == 0) return BadRequest("Lütfen bir resim seçin.");
 
-            // Sadece resim dosyalarına izin ver
+          
             if (!file.ContentType.StartsWith("image/")) return BadRequest("Sadece resim dosyası yükleyebilirsiniz.");
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var user = await _userManager.FindByIdAsync(userId);
 
-            // Resmi sunucuya kaydet
             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "Avatars");
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
@@ -101,7 +119,6 @@ namespace DosyaYonetimPortali.API.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            // Eski avatar varsa fiziksel olarak sil (sunucu şişmesin)
             if (!string.IsNullOrEmpty(user.AvatarPath) && System.IO.File.Exists(user.AvatarPath))
             {
                 System.IO.File.Delete(user.AvatarPath);
@@ -113,18 +130,15 @@ namespace DosyaYonetimPortali.API.Controllers
             return Ok(new { Message = "Profil fotoğrafınız başarıyla güncellendi." });
         }
 
-        // 1. Şifre Sıfırlama Talebi (Email Girilir)
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null) return NotFound("Bu e-posta adresine ait bir kullanıcı bulunamadı.");
 
-            // Şifre sıfırlama için tek kullanımlık güvenli bir Token (Anahtar) üretilir
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            // NOT: Gerçek projede bu Token kullanıcıya e-posta olarak gönderilir.
-            // Vize projesi olduğu için SMTP (Mail) sunucusu kurmadık, Swagger ekranına basıyoruz.
+            
             return Ok(new
             {
                 Message = "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi (Simülasyon).",
@@ -132,7 +146,6 @@ namespace DosyaYonetimPortali.API.Controllers
             });
         }
 
-        // 2. Yeni Şifreyi Belirleme İşlemi
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromQuery] string email, [FromQuery] string resetToken, [FromBody] string newPassword)
         {

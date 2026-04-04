@@ -12,7 +12,7 @@ namespace DosyaYonetimPortali.API.DTOs
         public string CardNumber { get; set; }
 
         public string CardHolderName { get; set; }
-        public string ExpirationDate { get; set; } // Örn: 12/28
+        public string ExpirationDate { get; set; } 
         public string Cvv { get; set; }
     }
 }

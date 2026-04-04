@@ -10,13 +10,13 @@
         public AppUser AppUser { get; set; }
         public long Size { get; set; } 
         public DateTime UploadDate { get; set; } = DateTime.Now;
-        public DateTime? ShareExpiration { get; set; } // Linkin son kullanma tarihi
-        public DateTime? DeletedDate { get; set; } // Dosya çöpe atıldığı an bu tarih dolacak
+        public DateTime? ShareExpiration { get; set; } 
+        public DateTime? DeletedDate { get; set; } 
         public int? FolderId { get; set; }
         public Folder Folder { get; set; }
         public bool IsDeleted { get; set; } = false;
-        public bool IsStarred { get; set; } = false; // Varsayılan olarak yıldızsız
-        public Guid? ShareToken { get; set; } // Benzersiz paylaşım şifresi (Örn: a1b2c3d4-...)
+        public bool IsStarred { get; set; } = false; 
+        public Guid? ShareToken { get; set; } 
         
     }
 }
