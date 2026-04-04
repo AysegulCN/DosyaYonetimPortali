@@ -27,13 +27,12 @@ namespace DosyaYonetimPortali.API.Controllers
             _context = context;
         }
 
-        // 1. DOSYA YÜKLEME (Anti-Virüs + Akıllı İsimlendirme + Kota)
         [HttpPost("upload")]
         public async Task<IActionResult> UploadFile(IFormFile file, [FromForm] int? folderId)
         {
             if (file == null || file.Length == 0) return BadRequest("Dosya seçilmedi.");
 
-            // GÜVENLİK FİLTRESİ
+            // 1. GÜVENLİK FİLTRESİ (Mükemmel çalışıyor, dokunulmadı)
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".pdf", ".docx", ".xlsx", ".txt", ".zip" };
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
@@ -44,19 +43,16 @@ namespace DosyaYonetimPortali.API.Controllers
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var user = await _userManager.FindByIdAsync(userId);
-            var roles = await _userManager.GetRolesAsync(user);
 
-            // KOTA KONTROLÜ
-            long maxQuota = roles.Contains("PremiumUser") ? 5368709120 : 104857600;
-            var userFiles = await _fileRepository.WhereAsync(f => f.AppUserId == userId && !f.IsDeleted);
-            long totalUsedSpace = userFiles.Sum(f => f.Size);
-
-            if (totalUsedSpace + file.Length > maxQuota)
+            // --- YENİ EKLENEN PROFESYONEL KOTA KONTROLÜ ---
+            // Artık bütün dosyaları toplamıyoruz, direkt kullanıcının profilindeki "UsedStorage" değerine bakıyoruz.
+            if (user.UsedStorage + file.Length > user.TotalStorageQuota)
             {
-                return BadRequest($"Kota aşıldı! Sınırınız: {maxQuota / 1024 / 1024} MB.");
+                return BadRequest(new { Message = $"Yetersiz depolama alanı! Sınırınız: {user.TotalStorageQuota / 1024 / 1024} MB. Lütfen dosya silin veya Premium'a geçin." });
             }
+            // ----------------------------------------------
 
-            // AKILLI İSİM ÇAKIŞMA ÇÖZÜCÜ (Dropbox Mantığı: Dosya(1).pdf)
+            // 2. AKILLI İSİM ÇAKIŞMA ÇÖZÜCÜ (Dropbox Mantığı: Dosya(1).pdf)
             var originalFileName = Path.GetFileNameWithoutExtension(file.FileName);
             var finalFileName = file.FileName;
             int counter = 1;
@@ -69,7 +65,7 @@ namespace DosyaYonetimPortali.API.Controllers
                 counter++;
             }
 
-            // FİZİKSEL KAYIT
+            // 3. FİZİKSEL KAYIT
             var uploadsFolder = Path.Combine(_env.ContentRootPath, "Uploads");
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
@@ -81,10 +77,10 @@ namespace DosyaYonetimPortali.API.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            // VERİTABANI KAYIT
+            // 4. VERİTABANI KAYIT
             var newFile = new AppFile
             {
-                FileName = finalFileName, // Çakışma çözülmüş isim
+                FileName = finalFileName,
                 Extension = extension,
                 Size = file.Length,
                 PhysicalPath = filePath,
@@ -95,6 +91,10 @@ namespace DosyaYonetimPortali.API.Controllers
 
             await _fileRepository.AddAsync(newFile);
             await _fileRepository.SaveAsync();
+
+           
+            user.UsedStorage += file.Length;
+            await _userManager.UpdateAsync(user);
 
             return Ok(new { Message = "Dosya başarıyla yüklendi.", SavedName = finalFileName, FileId = newFile.Id });
         }
@@ -113,8 +113,9 @@ namespace DosyaYonetimPortali.API.Controllers
             var roles = await _userManager.GetRolesAsync(user);
 
             file.IsDeleted = true;
-            _fileRepository.Update(file);
-            await _fileRepository.SaveAsync();
+            file.DeletedDate = DateTime.Now; // Bunu eklemeyi unutma!
+            _fileRepository.Update(file); // Başındaki 'await' ve sonundaki 'Async' kelimelerini sildik
+            await _fileRepository.SaveAsync(); // Değişikliği veritabanına kaydettik
 
             // Freemium Pazarlama Bildirimi
             if (!roles.Contains("PremiumUser"))

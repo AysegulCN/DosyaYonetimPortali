@@ -3,15 +3,16 @@ using System.IO.Compression;
 
 namespace DosyaYonetimPortali.API.Models
 {
-    // IdentityUser sınıfından miras alıyoruz ki hazır giriş/çıkış/şifreleme özellikleri gelsin
     public class AppUser : IdentityUser
     {
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
 
-        // Bir kullanıcının birden fazla klasörü ve dosyası olabilir (Bire-Çok İlişki)
         public ICollection<Folder> Folders { get; set; }
         public ICollection<AppFile> Files { get; set; }
-        public string? AvatarPath { get; set; } // Kullanıcının profil fotoğrafı
+        public string? AvatarPath { get; set; } 
+
+        public long TotalStorageQuota { get; set; } = 104857600; // Varsayılan 100MB (veya istediğin bir değer)
+        public long UsedStorage { get; set; } = 0;
     }
 }
