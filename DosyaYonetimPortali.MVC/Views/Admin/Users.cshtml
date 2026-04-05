@@ -1,0 +1,160 @@
+﻿@{
+    ViewData["Title"] = "Tüm Kullanıcılar";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Kullanıcı Yönetimi</h1>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Sistemdeki Kayıtlı Kullanıcılar</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="usersTable" width="100%" cellspacing="0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>ID (Kısa)</th>
+                        <th>Ad</th>
+                        <th>Soyad</th>
+                        <th>E-posta</th>
+                        <th class="text-center">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5" class="text-center text-muted">Kullanıcılar API'den çekiliyor...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="roleModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content shadow border-0">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-user-tag mr-2"></i>Yetki Seviyesini Güncelle</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">Seçilen kullanıcının sistemdeki yetkilerini buradan değiştirebilirsiniz.</p>
+                <input type="hidden" id="selectedUserId">
+                <div class="form-group">
+                    <label class="font-weight-bold small text-uppercase text-gray-600">Yeni Rol Seçin</label>
+                    <select class="form-control" id="roleSelect">
+                        <option value="Admin">Admin (Tam Yetki)</option>
+                        <option value="Moderator">Moderatör (Yardımcı/Denetçi)</option>
+                        <option value="User">Standart Kullanıcı</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light btn-sm" type="button" data-dismiss="modal">İptal</button>
+                <button class="btn btn-warning btn-sm font-weight-bold" onclick="saveRoleChange()">Yetkiyi Güncelle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // API'den Tüm Kullanıcıları Çeken AJAX
+            $.ajax({
+                url: "https://localhost:7145/api/Admin/all-users", // API adresi (Çalıştığından emin ol)
+                type: "GET",
+                success: function (data) {
+                    var tbody = $("#usersTable tbody");
+                    tbody.empty(); // "Çekiliyor..." yazısını sil
+
+                    if (data.length === 0) {
+                        tbody.append('<tr><td colspan="5" class="text-center">Sistemde hiç kullanıcı bulunmuyor.</td></tr>');
+                        return;
+                    }
+
+                    // Gelen her bir kullanıcı için tabloya yeni bir satır (tr) ekle
+                    $.each(data, function (index, user) {
+                        var shortId = user.id.substring(0, 8) + "..."; // ID çok uzun olduğu için ilk 8 hanesini alıyoruz
+
+                                var statusBadge = user.isVisible ?
+                             '<span class="badge badge-success">Aktif</span>' :
+                            '<span class="badge badge-secondary">Görünmez (Pasif)</span>';
+
+                           var row = `<tr>
+                         <td class="align-middle text-muted">#${shortId}</td>
+                          <td class="align-middle fw-bold">${user.firstName} ${user.lastName}</td>
+                            <td class="align-middle">${user.email}</td>
+                          <td class="align-middle text-center">${statusBadge}</td>
+                              <td class="text-center align-middle">
+                            <div class="btn-group">
+                             <button class="btn btn-sm btn-outline-warning" title="Rol Değiştir" onclick="openRoleModal('${user.id}')">
+                                        <i class="fas fa-user-tag"></i>
+                              </button>
+                          <button class="btn btn-sm btn-outline-secondary" title="Görünmez Yap / Aktif Et" onclick="toggleVisibility('${user.id}')">
+                        <i class="fas fa-eye-slash"></i>
+                             </button>
+                        <button class="btn btn-sm btn-outline-danger" title="Kullanıcıyı Yasakla" onclick="deleteUser('${user.id}')">
+                           <i class="fas fa-user-times"></i>
+                         </button>
+                        </div>
+                           </td>
+                         </tr>`;
+                        
+                        tbody.append(row);
+                    });
+                },
+                error: function () {
+                    $("#usersTable tbody").html('<tr><td colspan="5" class="text-center text-danger fw-bold">Veriler API\'den çekilemedi! API\'nin açık olduğundan ve kilitli olmadığından emin olun.</td></tr>');
+                }
+            });
+        });
+
+                // Rol Modalını Açan Fonksiyon
+        function openRoleModal(userId) {
+            $("#selectedUserId").val(userId);
+            $("#roleModal").modal('show');
+        }
+
+        // Görünmezlik (Aktif/Pasif) Durumunu Değiştiren Fonksiyon
+        function toggleVisibility(userId) {
+            if(confirm("Bu kullanıcının erişimini askıya almak (görünmez yapmak) istediğinize emin misiniz?")) {
+                $.ajax({
+                    url: `https://localhost:7145/api/Admin/toggle-visibility/${userId}`,
+                    type: "POST",
+                    success: function () {
+                        alert("Kullanıcı durumu başarıyla güncellendi!");
+                        location.reload(); // Tabloyu yenile
+                    },
+                    error: function () {
+                        alert("İşlem sırasında bir hata oluştu.");
+                    }
+                });
+            }
+        }
+
+        // Rol Değişikliğini Kaydeden Fonksiyon
+        function saveRoleChange() {
+            var userId = $("#selectedUserId").val();
+            var newRole = $("#roleSelect").val();
+
+            $.ajax({
+                url: "https://localhost:7145/api/Admin/change-role",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ userId: userId, roleName: newRole }),
+                success: function () {
+                    alert("Kullanıcı artık " + newRole + " yetkisine sahip!");
+                    $("#roleModal").modal('hide');
+                    location.reload();
+                },
+                error: function () {
+                    alert("Rol atanırken API tarafında bir sorun oluştu.");
+                }
+            });
+        }
+    </script>
+}
