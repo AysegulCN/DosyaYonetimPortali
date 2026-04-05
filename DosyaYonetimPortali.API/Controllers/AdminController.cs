@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DosyaYonetimPortali.API.Controllers
 {
-    [AllowAnonymous] // MVC'den rahatça erişebilmek için kilidi açık bırakmıştık
+    [AllowAnonymous] 
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController : ControllerBase
@@ -16,13 +16,12 @@ namespace DosyaYonetimPortali.API.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly IGenericRepository<SystemLog> _logRepository;
 
-        // YENİ: Dosya veritabanına bağlanmak için File Repository'yi ekliyoruz
         private readonly IGenericRepository<AppFile> _fileRepository;
 
         public AdminController(
             UserManager<AppUser> userManager,
             IGenericRepository<SystemLog> logRepository,
-            IGenericRepository<AppFile> fileRepository) // Constructor'a dahil ettik
+            IGenericRepository<AppFile> fileRepository) 
         {
             _userManager = userManager;
             _logRepository = logRepository;
@@ -32,26 +31,19 @@ namespace DosyaYonetimPortali.API.Controllers
         [HttpGet("summary")]
         public async Task<IActionResult> GetAdminSummary()
         {
-            // 1. GERÇEK: Sistemdeki Toplam Kullanıcı Sayısı
             var totalUsers = _userManager.Users.Count();
 
-            // 2. GERÇEK: "Moderator" veya "PremiumUser" rolündeki kullanıcı sayısı
             var premiumUsersList = await _userManager.GetUsersInRoleAsync("Moderator");
             var premiumUsers = premiumUsersList.Count;
 
-            // 3. GERÇEK: Veritabanındaki tüm dosyaları çek
             var allFiles = await _fileRepository.GetAllAsync();
 
-            // Sadece çöp kutusunda OLMAYAN (aktif) dosyaları filtrele
             var activeFiles = allFiles.Where(f => !f.IsDeleted).ToList();
 
-            // 4. GERÇEK: Aktif Dosya Sayısı
             var totalFiles = activeFiles.Count;
 
-            // 5. GERÇEK: Aktif Dosyaların Toplam Boyutu (Byte cinsinden toplayıp gönderiyoruz)
             var totalStorageUsed = activeFiles.Sum(f => (long)f.Size);
 
-            // Verileri paketleyip MVC'nin beklediği isimlerle fırlat!
             return Ok(new
             {
                 totalUsers = totalUsers,
