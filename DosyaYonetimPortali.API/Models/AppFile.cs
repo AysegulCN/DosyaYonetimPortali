@@ -16,7 +16,8 @@
         public Folder Folder { get; set; }
         public bool IsDeleted { get; set; } = false;
         public bool IsStarred { get; set; } = false; 
-        public Guid? ShareToken { get; set; } 
-        
+        public Guid? ShareToken { get; set; }
+        public DateTime UpdatedDate { get; internal set; }
+        public DateTime CreatedDate { get; internal set; }
     }
 }

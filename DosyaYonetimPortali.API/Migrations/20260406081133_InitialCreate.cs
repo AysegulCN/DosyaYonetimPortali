@@ -32,6 +32,9 @@ namespace DosyaYonetimPortali.API.Migrations
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AvatarPath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TotalStorageQuota = table.Column<long>(type: "bigint", nullable: false),
+                    UsedStorage = table.Column<long>(type: "bigint", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -166,6 +169,7 @@ namespace DosyaYonetimPortali.API.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ParentFolderId = table.Column<int>(type: "int", nullable: true),
                     AppUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
@@ -186,6 +190,49 @@ namespace DosyaYonetimPortali.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Message = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AppUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notifications_AspNetUsers_AppUserId",
+                        column: x => x.AppUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SystemLogs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ActionType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Details = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LogDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AppUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SystemLogs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SystemLogs_AspNetUsers_AppUserId",
+                        column: x => x.AppUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Files",
                 columns: table => new
                 {
@@ -194,10 +241,15 @@ namespace DosyaYonetimPortali.API.Migrations
                     FileName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Extension = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PhysicalPath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AppUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Size = table.Column<long>(type: "bigint", nullable: false),
                     UploadDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ShareExpiration = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     FolderId = table.Column<int>(type: "int", nullable: true),
-                    AppUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    IsStarred = table.Column<bool>(type: "bit", nullable: false),
+                    ShareToken = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -211,7 +263,36 @@ namespace DosyaYonetimPortali.API.Migrations
                         name: "FK_Files_Folders_FolderId",
                         column: x => x.FolderId,
                         principalTable: "Folders",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FileComments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CommentText = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AppFileId = table.Column<int>(type: "int", nullable: false),
+                    AppUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FileComments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FileComments_AspNetUsers_AppUserId",
+                        column: x => x.AppUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_FileComments_Files_AppFileId",
+                        column: x => x.AppFileId,
+                        principalTable: "Files",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -254,6 +335,16 @@ namespace DosyaYonetimPortali.API.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_FileComments_AppFileId",
+                table: "FileComments",
+                column: "AppFileId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FileComments_AppUserId",
+                table: "FileComments",
+                column: "AppUserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Files_AppUserId",
                 table: "Files",
                 column: "AppUserId");
@@ -272,6 +363,16 @@ namespace DosyaYonetimPortali.API.Migrations
                 name: "IX_Folders_ParentFolderId",
                 table: "Folders",
                 column: "ParentFolderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_AppUserId",
+                table: "Notifications",
+                column: "AppUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SystemLogs_AppUserId",
+                table: "SystemLogs",
+                column: "AppUserId");
         }
 
         /// <inheritdoc />
@@ -293,10 +394,19 @@ namespace DosyaYonetimPortali.API.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Files");
+                name: "FileComments");
+
+            migrationBuilder.DropTable(
+                name: "Notifications");
+
+            migrationBuilder.DropTable(
+                name: "SystemLogs");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Files");
 
             migrationBuilder.DropTable(
                 name: "Folders");

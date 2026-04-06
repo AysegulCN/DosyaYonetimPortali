@@ -206,6 +206,9 @@ namespace DosyaYonetimPortali.API.Migrations
                     b.Property<int?>("ParentFolderId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AppUserId");
@@ -412,7 +415,8 @@ namespace DosyaYonetimPortali.API.Migrations
 
                     b.HasOne("DosyaYonetimPortali.API.Models.Folder", "Folder")
                         .WithMany("Files")
-                        .HasForeignKey("FolderId");
+                        .HasForeignKey("FolderId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("AppUser");
 
