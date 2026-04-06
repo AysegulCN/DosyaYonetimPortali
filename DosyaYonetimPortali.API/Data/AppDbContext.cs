@@ -20,7 +20,6 @@ namespace DosyaYonetimPortali.API.Data
         {
             base.OnModelCreating(builder);
 
-            // KLASÖR İLİŞKİLERİ: Kendi kendine referans (Self-Referencing)
             builder.Entity<Folder>(entity =>
             {
                 entity.HasOne(f => f.ParentFolder)
@@ -28,7 +27,6 @@ namespace DosyaYonetimPortali.API.Data
                       .HasForeignKey(f => f.ParentFolderId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                // Klasör silindiğinde içindeki dosyaların silinme davranışını belirleyebilirsin
                 entity.HasMany(f => f.Files)
                       .WithOne(f => f.Folder)
                       .HasForeignKey(f => f.FolderId)
@@ -36,7 +34,6 @@ namespace DosyaYonetimPortali.API.Data
             });
         }
 
-        // HOCANIN EN ÇOK SEVECEĞİ KISIM: Otomatik Tarih Yönetimi
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var entries = ChangeTracker.Entries()
@@ -44,14 +41,12 @@ namespace DosyaYonetimPortali.API.Data
 
             foreach (var entityEntry in entries)
             {
-                // Eğer modelde UpdatedDate varsa otomatik güncelle
                 var updatedDateProp = entityEntry.Entity.GetType().GetProperty("UpdatedDate");
                 if (updatedDateProp != null)
                 {
                     updatedDateProp.SetValue(entityEntry.Entity, DateTime.Now);
                 }
 
-                // Eğer yeni ekleniyorsa ve CreatedDate varsa otomatik set et
                 if (entityEntry.State == EntityState.Added)
                 {
                     var createdDateProp = entityEntry.Entity.GetType().GetProperty("CreatedDate");
