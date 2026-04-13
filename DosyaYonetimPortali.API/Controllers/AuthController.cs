@@ -21,13 +21,7 @@ namespace DosyaYonetimPortali.API.Controllers
             _userManager = userManager;
         }
 
-        [HttpPost("setup-roles")]
-        public async Task<IActionResult> SetupRoles()
-        {
-            await _authService.CreateDefaultRolesAsync();
-            return Ok(new { Message = "Roller başarıyla oluşturuldu." });
-        }
-
+        
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterDto request)
         {

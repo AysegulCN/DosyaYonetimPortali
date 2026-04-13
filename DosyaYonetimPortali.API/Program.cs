@@ -96,7 +96,6 @@ namespace DosyaYonetimPortali.API
 
             var app = builder.Build();
 
-            // --- DATA SEEDING: ROL OLUŞTURMA (PREMIUM KALDIRILDI) ---
             using (var scope = app.Services.CreateScope())
             {
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -118,6 +117,7 @@ namespace DosyaYonetimPortali.API
             }
 
             app.UseHttpsRedirection();
+            app.UseStaticFiles();
             app.UseCors("AllowAll");
             app.UseAuthentication();
             app.UseAuthorization();
