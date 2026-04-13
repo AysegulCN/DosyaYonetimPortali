@@ -51,7 +51,8 @@ namespace DosyaYonetimPortali.API.Services
                 return new AuthResponseDto { IsSuccessful = true };
             }
 
-            return new AuthResponseDto { IsSuccessful = false, ErrorMessage = "Kayıt işlemi başarısız. Şifrenizi kontrol edin." };
+            var errors = string.Join(" | ", result.Errors.Select(e => e.Description));
+            return new AuthResponseDto { IsSuccessful = false, ErrorMessage = $"Kayıt başarısız: {errors}" };
         }
 
         public async Task<AuthResponseDto> LoginAsync(UserLoginDto request)

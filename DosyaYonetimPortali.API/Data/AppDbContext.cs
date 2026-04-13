@@ -15,6 +15,7 @@ namespace DosyaYonetimPortali.API.Data
         public DbSet<SystemLog> SystemLogs { get; set; }
         public DbSet<FileComment> FileComments { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<DosyaYonetimPortali.API.Models.FileShare> FileShares { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -30,8 +31,15 @@ namespace DosyaYonetimPortali.API.Data
                 entity.HasMany(f => f.Files)
                       .WithOne(f => f.Folder)
                       .HasForeignKey(f => f.FolderId)
-                      .OnDelete(DeleteBehavior.SetNull); // Klasör silinirse dosyalar "Root"a düşsün
+                      .OnDelete(DeleteBehavior.SetNull);
             });
+
+            // 2. EKLEME: Paylaşım İlişkisi Kuralları
+            builder.Entity<DosyaYonetimPortali.API.Models.FileShare>()
+                .HasOne(fs => fs.File)
+                .WithMany(f => f.SharedWithUsers)
+                .HasForeignKey(fs => fs.FileId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

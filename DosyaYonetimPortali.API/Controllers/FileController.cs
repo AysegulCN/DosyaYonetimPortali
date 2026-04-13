@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.IO.Compression;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace DosyaYonetimPortali.API.Controllers
 {
@@ -198,6 +199,45 @@ namespace DosyaYonetimPortali.API.Controllers
             await _fileRepository.SaveAsync();
 
             return Ok(new { Message = "Dosya başarıyla geri getirildi." });
+        }
+        [HttpPost("share-with-user")]
+        public async Task<IActionResult> ShareFile([FromBody] DosyaYonetimPortali.API.DTOs.ShareRequestDto dto)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var file = await _fileRepository.GetByIdAsync(dto.FileId);
+
+            if (file == null || file.AppUserId != currentUserId) return Unauthorized();
+
+            var share = new DosyaYonetimPortali.API.Models.FileShare
+            {
+                FileId = dto.FileId,
+                SharedWithUserId = dto.SharedWithUserId,
+                CanEdit = dto.CanEdit
+            };
+
+            _context.FileShares.Add(share);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Dosya başarıyla paylaşıldı." });
+        }
+
+        [HttpGet("shared-with-me")]
+        public async Task<IActionResult> GetSharedWithMe()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var sharedFiles = await _context.FileShares
+                .Where(fs => fs.SharedWithUserId == userId)
+                .Include(fs => fs.File)
+                .ThenInclude(f => f.AppUser)
+                .Select(fs => new {
+                    fs.File.Id,
+                    fs.File.FileName,
+                    fs.File.Size,
+                    Owner = fs.File.AppUser.FirstName,
+                    fs.CanEdit
+                }).ToListAsync();
+
+            return Ok(sharedFiles);
         }
     }
 }

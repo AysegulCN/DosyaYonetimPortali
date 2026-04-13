@@ -19,5 +19,6 @@
         public Guid? ShareToken { get; set; }
         public DateTime UpdatedDate { get; internal set; }
         public DateTime CreatedDate { get; internal set; }
+        public ICollection<FileShare>? SharedWithUsers { get; set; }
     }
 }
