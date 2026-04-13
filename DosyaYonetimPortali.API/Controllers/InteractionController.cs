@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace DosyaYonetimPortali.API.Controllers
 {
-    [Authorize]
+    [Authorize] 
     [Route("api/[controller]")]
     [ApiController]
     public class InteractionController : ControllerBase

@@ -12,11 +12,9 @@ namespace DosyaYonetimPortali.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            
 
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -33,14 +31,10 @@ namespace DosyaYonetimPortali.API
             .AddDefaultTokenProviders();
 
             builder.Services.AddScoped<IAuthService, AuthService>();
-
-          
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-            builder.Services.AddScoped<IFolderRepository, FolderRepository>();
-            builder.Services.AddScoped<IFileRepository, FileRepository>();
-            builder.Services.AddHostedService<TrashCleanupService>();
-            builder.Services.AddHostedService<TrashCleanupService>();
 
+            // Eğer servislerde hata almıyorsan bunu açabilirsin, 30 günlük silme işlemini bu yapar:
+            // builder.Services.AddHostedService<TrashCleanupService>();
 
             builder.Services.AddAuthentication(options =>
             {
@@ -61,6 +55,7 @@ namespace DosyaYonetimPortali.API
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                 };
             });
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", builder =>
@@ -68,7 +63,6 @@ namespace DosyaYonetimPortali.API
                     builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
                 });
             });
-
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
@@ -102,7 +96,20 @@ namespace DosyaYonetimPortali.API
 
             var app = builder.Build();
 
-            
+            // --- DATA SEEDING: ROL OLUŞTURMA (PREMIUM KALDIRILDI) ---
+            using (var scope = app.Services.CreateScope())
+            {
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+                string[] roles = { "Admin", "User" };
+
+                foreach (var role in roles)
+                {
+                    if (!await roleManager.RoleExistsAsync(role))
+                    {
+                        await roleManager.CreateAsync(new IdentityRole(role));
+                    }
+                }
+            }
 
             if (app.Environment.IsDevelopment())
             {
@@ -112,10 +119,8 @@ namespace DosyaYonetimPortali.API
 
             app.UseHttpsRedirection();
             app.UseCors("AllowAll");
-
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.MapControllers();
 
             app.Run();

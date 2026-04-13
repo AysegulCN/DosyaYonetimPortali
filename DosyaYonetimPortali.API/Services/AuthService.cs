@@ -23,7 +23,7 @@ namespace DosyaYonetimPortali.API.Services
 
         public async Task CreateDefaultRolesAsync()
         {
-            string[] roles = { "Admin", "User", "PremiumUser" };
+            string[] roles = { "Admin", "User" }; // SADECE BU İKİSİ KALDI
             foreach (var role in roles)
             {
                 if (!await _roleManager.RoleExistsAsync(role))
@@ -48,7 +48,6 @@ namespace DosyaYonetimPortali.API.Services
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(user, "User");
-
                 return new AuthResponseDto { IsSuccessful = true };
             }
 
@@ -69,7 +68,7 @@ namespace DosyaYonetimPortali.API.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.FirstName)
+                new Claim(ClaimTypes.Name, user.FirstName ?? "Kullanici")
             };
 
             foreach (var userRole in userRoles)
@@ -95,7 +94,7 @@ namespace DosyaYonetimPortali.API.Services
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
-                expires: DateTime.Now.AddHours(3), 
+                expires: DateTime.Now.AddHours(3),
                 claims: claims,
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
             );

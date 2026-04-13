@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DosyaYonetimPortali.API.Controllers
 {
-    [AllowAnonymous] 
+    [Authorize(Roles = "Admin")] 
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController : ControllerBase

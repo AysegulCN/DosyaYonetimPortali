@@ -171,5 +171,33 @@ namespace DosyaYonetimPortali.API.Controllers
             memoryStream.Position = 0;
             return File(memoryStream.ToArray(), "application/zip", "Dosyalar.zip");
         }
+
+        // FileController'ın içine, diğer metotların altına ekle:
+
+        [HttpGet("trash-bin")]
+        public async Task<IActionResult> GetTrashBin()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            // HERKESE AÇIK: Premium kontrolü yok!
+            var trashedFiles = await _fileRepository.WhereAsync(f => f.AppUserId == userId && f.IsDeleted);
+
+            return Ok(trashedFiles.Select(f => new { f.Id, f.FileName, f.Size, f.UploadDate, f.DeletedDate }));
+        }
+
+        [HttpPut("restore-from-trash/{id}")]
+        public async Task<IActionResult> RestoreFromTrash(int id)
+        {
+            var file = await _fileRepository.GetByIdAsync(id);
+            if (file == null || !file.IsDeleted) return NotFound();
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (file.AppUserId != userId) return Unauthorized();
+
+            file.IsDeleted = false; // Çöpten çıkart
+            _fileRepository.Update(file);
+            await _fileRepository.SaveAsync();
+
+            return Ok(new { Message = "Dosya başarıyla geri getirildi." });
+        }
     }
 }

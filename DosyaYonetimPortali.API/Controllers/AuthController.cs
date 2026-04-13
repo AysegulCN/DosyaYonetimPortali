@@ -4,9 +4,6 @@ using DosyaYonetimPortali.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO; 
 using System.Security.Claims;
 
 namespace DosyaYonetimPortali.API.Controllers
@@ -16,7 +13,7 @@ namespace DosyaYonetimPortali.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly UserManager<AppUser> _userManager; 
+        private readonly UserManager<AppUser> _userManager;
 
         public AuthController(IAuthService authService, UserManager<AppUser> userManager)
         {
@@ -43,40 +40,17 @@ namespace DosyaYonetimPortali.API.Controllers
             return BadRequest(result);
         }
 
+        // BÜYÜK DÜZELTME: Servis üzerinden temiz giriş
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginDto model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
+            var result = await _authService.LoginAsync(model);
+            if (result.IsSuccessful)
             {
-                var userRoles = await _userManager.GetRolesAsync(user);
-
-                var authClaims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Name, user.UserName),
-                };
-
-                foreach (var userRole in userRoles)
-                {
-                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
-                }
-
-                var token = GetToken(authClaims);
-
-                return Ok(new
-                {
-                    token = new JwtSecurityTokenHandler().WriteToken(token), 
-                    roles = userRoles 
-                });
+                return Ok(result); // Token ve detaylar burada dönecek
             }
-            return Unauthorized(new { message = "Giriş başarısız. Şifrenizi veya e-postanızı kontrol edin." });
-        }
 
-        private SecurityToken GetToken(List<Claim> authClaims)
-        {
-            throw new NotImplementedException();
+            return Unauthorized(new { message = result.ErrorMessage });
         }
 
         [Authorize]
@@ -84,7 +58,6 @@ namespace DosyaYonetimPortali.API.Controllers
         public IActionResult GetMyProfile()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             return Ok(new
@@ -101,8 +74,6 @@ namespace DosyaYonetimPortali.API.Controllers
         public async Task<IActionResult> UploadAvatar(IFormFile file)
         {
             if (file == null || file.Length == 0) return BadRequest("Lütfen bir resim seçin.");
-
-          
             if (!file.ContentType.StartsWith("image/")) return BadRequest("Sadece resim dosyası yükleyebilirsiniz.");
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -134,16 +105,10 @@ namespace DosyaYonetimPortali.API.Controllers
         public async Task<IActionResult> ForgotPassword([FromBody] string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
-            if (user == null) return NotFound("Bu e-posta adresine ait bir kullanıcı bulunamadı.");
+            if (user == null) return NotFound("Bu e-posta adresine ait kullanıcı bulunamadı.");
 
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-
-            
-            return Ok(new
-            {
-                Message = "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi (Simülasyon).",
-                SimulatedEmailContent = $"Şifrenizi sıfırlamak için şu kodu kullanın: {resetToken}"
-            });
+            return Ok(new { SimulatedEmailContent = $"Şifrenizi sıfırlamak için şu kodu kullanın: {resetToken}" });
         }
 
         [HttpPost("reset-password")]
@@ -154,12 +119,9 @@ namespace DosyaYonetimPortali.API.Controllers
 
             var result = await _userManager.ResetPasswordAsync(user, resetToken, newPassword);
 
-            if (result.Succeeded)
-            {
-                return Ok(new { Message = "Şifreniz başarıyla sıfırlandı. Yeni şifrenizle giriş yapabilirsiniz." });
-            }
-
+            if (result.Succeeded) return Ok(new { Message = "Şifreniz sıfırlandı." });
             return BadRequest(result.Errors);
         }
+        
     }
 }
