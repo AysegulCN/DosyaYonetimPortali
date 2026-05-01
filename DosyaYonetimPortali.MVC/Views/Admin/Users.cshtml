@@ -1,4 +1,5 @@
-﻿@{
+﻿@model List<DosyaYonetimPortali.MVC.Models.UserViewModel>
+@{
     ViewData["Title"] = "Kullanıcı Yönetimi";
 }
 
@@ -73,3 +74,64 @@
         </div>
     </div>
 </div>
+
+<tbody>
+    @if (Model != null && Model.Count > 0)
+    {
+        foreach (var user in Model)
+        {
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <img src="https://ui-avatars.com/api/?name=@user.FullName&background=random&color=fff" class="rounded-circle me-3" width="40">
+                        <div>
+                            <div class="fw-bold text-dark">@user.FullName</div>
+                            <div class="small text-muted">ID: @user.Id.Substring(0, 8)...</div>
+                        </div>
+                    </div>
+                </td>
+                <td>@user.Email</td>
+                <td>
+                    @if (user.Role == "Admin")
+                    {
+                        <span class="badge bg-danger rounded-pill px-3 py-2">Admin</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-primary rounded-pill px-3 py-2">User</span>
+                    }
+                </td>
+                <td><i class="fas fa-hdd text-muted me-1"></i> Hesaplanan...</td>
+                <td><span class="text-success"><i class="fas fa-circle fa-xs me-1"></i> Aktif</span></td>
+                
+                <!-- İŞTE CANLANDIRDIĞIMIZ BUTONLARIN OLDUĞU KISIM BURASI -->
+                <td class="text-center">
+                    <!-- Yetki Değiştirme Butonu (Sarı Kalkan) -->
+                    <form asp-action="ToggleRole" asp-controller="Admin" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@user.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-warning shadow-sm me-1" title="Yetkiyi Değiştir" onclick="return confirm('Kullanıcının Admin/User yetkisini değiştirmek üzeresiniz. Emin misiniz?');">
+                            <i class="fas fa-user-shield"></i>
+                        </button>
+                    </form>
+
+                    @if (user.Role != "Admin")
+                    {
+                        <!-- Silme Butonu Sadece Normal Kullanıcılarda Çıkar (Kırmızı Çöp Kutusu) -->
+                        <form asp-action="DeleteUser" asp-controller="Admin" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@user.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm" title="Kullanıcıyı Sil" onclick="return confirm('Bu kullanıcıyı sistemden tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz!');">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="6" class="text-center py-4">Henüz kayıtlı kullanıcı bulunamadı.</td>
+        </tr>
+    }
+</tbody>

@@ -1,0 +1,86 @@
+﻿@{
+    ViewData["Title"] = "Paylaşım Denetimi";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800 fw-bold">Aktif Paylaşımlar (Açık Linkler)</h1>
+    
+    <form asp-action="RevokeAllShares" asp-controller="Admin" method="post" class="d-inline">
+        <button type="submit" class="btn btn-danger shadow-sm" style="border-radius: 10px;" onclick="return confirm('Tüm açık bağlantıları kapatmak istediğinize emin misiniz? Bu işlem geri alınamaz!');">
+            <i class="fas fa-unlink fa-sm text-white-50 me-1"></i> Tüm Açık Bağlantıları Kapat
+        </button>
+    </form>
+</div>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-radius: 10px;">
+        <i class="fas fa-check-circle me-2"></i> @TempData["Message"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card shadow mb-4 border-0" style="border-radius: 15px;">
+    <div class="card-header py-3 bg-white" style="border-bottom: 1px solid #e3e6f0; border-radius: 15px 15px 0 0;">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-globe me-2"></i> Dışarıya Açık Dosyalar</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-muted">
+                    <tr>
+                        <th class="border-0 px-4 py-3">Dosya Adı</th>
+                        <th class="border-0 py-3">Paylaşan Kullanıcı</th>
+                        <th class="border-0 py-3">Oluşturulma Tarihi</th>
+                        <th class="border-0 py-3">İndirilme / Tıklanma</th>
+                        <th class="border-0 py-3 text-end px-4">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="px-4 fw-bold text-dark">
+                            <i class="fas fa-file-pdf text-danger me-2"></i> Q3_Maliyet_Analizi.pdf
+                        </td>
+                        <td>aysegul@coredrive.com</td>
+                        <td>01.05.2026</td>
+                        <td><span class="badge bg-success rounded-pill px-3">12 Kez</span></td>
+                        <td class="text-end px-4">
+                            <button type="button" class="btn btn-sm btn-outline-info shadow-sm me-1" title="Linki Kopyala" onclick="copyLink('https://coredrive.com/share/q3-maliyet-analizi')"><i class="fas fa-copy"></i></button>
+                            
+                            <form asp-action="RevokeShare" asp-controller="Admin" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="1" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm" title="Bağlantıyı İptal Et" onclick="return confirm('Bu bağlantıyı iptal etmek istediğinize emin misiniz?');"><i class="fas fa-unlink"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 fw-bold text-dark">
+                            <i class="fas fa-file-archive text-warning me-2"></i> Proje_Yedek_2026.zip
+                        </td>
+                        <td>patron@coredrive.com</td>
+                        <td>28.04.2026</td>
+                        <td><span class="badge bg-secondary rounded-pill px-3">0 Kez</span></td>
+                        <td class="text-end px-4">
+                            <button type="button" class="btn btn-sm btn-outline-info shadow-sm me-1" title="Linki Kopyala" onclick="copyLink('https://coredrive.com/share/proje-yedek-2026')"><i class="fas fa-copy"></i></button>
+                            
+                            <form asp-action="RevokeShare" asp-controller="Admin" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="2" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm" title="Bağlantıyı İptal Et" onclick="return confirm('Bu bağlantıyı iptal etmek istediğinize emin misiniz?');"><i class="fas fa-unlink"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function copyLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Bağlantı panoya kopyalandı!');
+            });
+        }
+    </script>
+}

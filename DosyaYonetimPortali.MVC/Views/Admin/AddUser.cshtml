@@ -1,0 +1,73 @@
+﻿@{
+    ViewData["Title"] = "Yeni Kullanıcı Ekle";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800 fw-bold">Yeni Kullanıcı Hesabı Oluştur</h1>
+    <a href="/Admin/Users" class="btn btn-outline-secondary shadow-sm" style="border-radius: 10px;">
+        <i class="fas fa-arrow-left fa-sm me-1"></i> Listeye Dön
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow border-0" style="border-radius: 15px;">
+            <div class="card-header py-3 bg-white" style="border-radius: 15px 15px 0 0; border-bottom: 1px solid #e3e6f0;">
+                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user-plus me-2"></i> Kullanıcı Bilgileri</h6>
+            </div>
+            <div class="card-body p-4">
+                
+                <!-- BAĞLANTILI FORM BAŞLANGICI -->
+                <form asp-action="AddUser" asp-controller="Admin" method="post">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark">Adı</label>
+                            <input type="text" name="FirstName" class="form-control" placeholder="Örn: Ahmet" required style="border-radius: 10px;">
+                        </div>
+                        <div class="col-md-6 mt-3 mt-md-0">
+                            <label class="form-label fw-bold text-dark">Soyadı</label>
+                            <input type="text" name="LastName" class="form-control" placeholder="Örn: Yılmaz" required style="border-radius: 10px;">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">E-posta Adresi</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light" style="border-radius: 10px 0 0 10px;"><i class="fas fa-envelope text-muted"></i></span>
+                            <input type="email" name="Email" class="form-control" placeholder="ornek@coredrive.com" required style="border-radius: 0 10px 10px 0;">
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark">Geçici Şifre</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light" style="border-radius: 10px 0 0 10px;"><i class="fas fa-key text-muted"></i></span>
+                                <input type="password" name="Password" class="form-control" placeholder="En az 6 karakter" required style="border-radius: 0 10px 10px 0;">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mt-3 mt-md-0">
+                            <label class="form-label fw-bold text-dark">Sistem Yetkisi (Rol)</label>
+                            <select name="Role" class="form-select form-control" style="border-radius: 10px;">
+                                <option value="User" selected>Normal Kullanıcı (User)</option>
+                                <option value="Admin">Sistem Yöneticisi (Admin)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-end">
+                        <button type="reset" class="btn btn-light me-2 shadow-sm" style="border-radius: 10px;">Temizle</button>
+                        <button type="submit" class="btn btn-primary shadow-sm" style="border-radius: 10px;">
+                            <i class="fas fa-save me-1"></i> Hesabı Kaydet
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>

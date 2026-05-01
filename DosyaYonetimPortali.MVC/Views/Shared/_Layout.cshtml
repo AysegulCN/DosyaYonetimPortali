@@ -1,5 +1,4 @@
 ﻿@using System.Security.Claims
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -9,143 +8,215 @@
     <title>CoreDrive - Portal</title>
 
     <link href="~/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-        <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
-        <link href="~/css/sb-admin-2.min.css" rel="stylesheet">
-        </head>
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link href="~/css/sb-admin-2.min.css" rel="stylesheet">
+</head>
 
-        <body id="page-top" class="@(!User.Identity.IsAuthenticated ? "bg-gradient-primary" : "")">
+<body id="page-top" class="@(!User.Identity.IsAuthenticated ? "bg-gradient-primary" : "")">
 
-            @if (!User.Identity.IsAuthenticated)
-            {
-                <div class="container">
-                    @RenderBody()
-                </div>
-            }
-            else
-            {
-                <div id="wrapper">
+    @if (!User.Identity.IsAuthenticated)
+    {
+        <div class="container">
+            @RenderBody()
+        </div>
+    }
+    else
+    {
+        <div id="wrapper">
 
-                    <ul class="navbar-nav bg-gradient-dark sidebar sidebar-dark accordion" id="accordionSidebar">
+            <ul class="navbar-nav bg-gradient-dark sidebar sidebar-dark accordion" id="accordionSidebar">
 
-                        <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/Home/Index">
-                            <div class="sidebar-brand-icon">
-                                <i class="fas fa-cloud text-primary"></i>
-                            </div>
-                            <div class="sidebar-brand-text mx-3">Core-Drive <sup>@(User.IsInRole("Admin") ? "Admin" : "User")</sup></div>
-                        </a>
-
-                        <hr class="sidebar-divider my-0">
-
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <li class="nav-item active">
-                                <a class="nav-link" href="/Admin/Index">
-                                    <i class="fas fa-fw fa-tachometer-alt"></i>
-                                    <span>Admin Dashboard</span>
-                                </a>
-                            </li>
-                            <hr class="sidebar-divider">
-                            <div class="sidebar-heading">Yönetim</div>
-                    
-                            <li class="nav-item">
-                                <a class="nav-link" href="/Admin/Users">
-                                    <i class="fas fa-fw fa-users"></i>
-                                    <span>Kullanıcı Yönetimi</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/Admin/Storage">
-                                    <i class="fas fa-fw fa-hdd"></i>
-                                    <span>Sistem Depolama Analizi</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/Admin/Logs">
-                                    <i class="fas fa-fw fa-list-alt"></i>
-                                    <span>Sistem Logları</span>
-                                </a>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item active">
-                                <a class="nav-link" href="/Drive/MyFiles">
-                                    <i class="fas fa-fw fa-folder-open"></i>
-                                    <span>Dosyalarım</span>
-                                </a>
-                            </li>
-                            <hr class="sidebar-divider">
-                            <div class="sidebar-heading">Erişim</div>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="/Drive/SharedWithMe">
-                                    <i class="fas fa-fw fa-share-alt"></i>
-                                    <span>Benimle Paylaşılanlar</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/Drive/Trash">
-                                    <i class="fas fa-fw fa-trash"></i>
-                                    <span>Çöp Kutusu (30 Gün)</span>
-                                </a>
-                            </li>
-                        }
-
-                        <hr class="sidebar-divider d-none d-md-block">
-
-                        <div class="text-center d-none d-md-inline">
-                            <button class="rounded-circle border-0" id="sidebarToggle"></button>
-                        </div>
-                    </ul>
-                    <div id="content-wrapper" class="d-flex flex-column">
-                        <div id="content">
-
-                            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-                                <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                                    <i class="fa fa-bars"></i>
-                                </button>
-
-                                <ul class="navbar-nav ml-auto">
-                                    <li class="nav-item dropdown no-arrow">
-                                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown">
-                                            <span class="mr-2 d-none d-lg-inline text-gray-600 small fw-bold">@User.Identity.Name</span>
-                                            <img class="img-profile rounded-circle" src="~/img/undraw_profile.svg">
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-                                                <a class="dropdown-item" href="/Auth/Logout">
-                                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                                    Çıkış Yap
-                                                </a>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </nav>
-                                <div class="container-fluid">
-                                    @RenderBody()
-                                </div>
-
-                            </div>
-
-                            <footer class="sticky-footer bg-white">
-                                <div class="container my-auto">
-                                    <div class="copyright text-center my-auto">
-                                        <span>Copyright &copy; CoreDrive 2026</span>
-                                    </div>
-                                </div>
-                            </footer>
-
-                        </div>
+                <!-- Logo Alanı -->
+                <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/Home/Index">
+                    <div class="sidebar-brand-icon">
+                        <i class="fas fa-cloud text-primary"></i>
                     </div>
-                }
-
-                <a class="scroll-to-top rounded" href="#page-top">
-                    <i class="fas fa-angle-up"></i>
+                    <div class="sidebar-brand-text mx-3">Core-Drive <sup>@(User.IsInRole("Admin") ? "Admin" : "User")</sup></div>
                 </a>
 
-                <script src="~/vendor/jquery/jquery.min.js"></script>
-                <script src="~/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-                <script src="~/vendor/jquery-easing/jquery.easing.min.js"></script>
-                <script src="~/js/sb-admin-2.min.js"></script>
-                @await RenderSectionAsync("Scripts", required: false)
-            </body>
-        </html>
+                <hr class="sidebar-divider my-0">
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <!-- BÖLÜM 1: CORE -->
+                    <div class="sidebar-heading mt-3 text-white-50" style="font-size: 0.75rem; letter-spacing: 1px;">CORE</div>
+        
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/Admin/Index">
+                            <i class="fas fa-fw fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+
+                    <hr class="sidebar-divider">
+
+                    <!-- BÖLÜM 2: MANAGEMENT -->
+                    <div class="sidebar-heading text-white-50" style="font-size: 0.75rem; letter-spacing: 1px;">MANAGEMENT</div>
+        
+                    <!-- Dosyalar ve Klasörler Açılır Menüsü -->
+                    <li class="nav-item">
+                        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseFiles" aria-expanded="true" aria-controls="collapseFiles">
+                            <i class="fas fa-fw fa-folder"></i>
+                            <span>Dosyalar & Klasörler</span>
+                        </a>
+                        <div id="collapseFiles" class="collapse" aria-labelledby="headingFiles" data-parent="#accordionSidebar">
+                            <div class="bg-white py-2 collapse-inner rounded">
+                                <h6 class="collapse-header">Dosya Yönetimi:</h6>
+                                <a class="collapse-item" href="/Admin/Storage">Sistem Depolama Analizi</a>
+                                <a class="collapse-item" href="/Admin/Shares">Paylaşım Denetimi</a>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- Kullanıcılar Açılır Menüsü -->
+                    <li class="nav-item">
+                        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUsers" aria-expanded="true" aria-controls="collapseUsers">
+                            <i class="fas fa-fw fa-users"></i>
+                            <span>Kullanıcı Yönetimi</span>
+                        </a>
+                        <div id="collapseUsers" class="collapse" aria-labelledby="headingUsers" data-parent="#accordionSidebar">
+                            <div class="bg-white py-2 collapse-inner rounded">
+                                <h6 class="collapse-header">Hesap İşlemleri:</h6>
+                                <a class="collapse-item" href="/Admin/Users">Kullanıcı Listesi</a>
+                                <a class="collapse-item" href="/Admin/AddUser">Kullanıcı Ekle</a>
+                            </div>
+                        </div>
+                    </li>
+
+                    <hr class="sidebar-divider">
+
+                    <!-- BÖLÜM 3: SYSTEM -->
+                    <div class="sidebar-heading text-white-50" style="font-size: 0.75rem; letter-spacing: 1px;">SYSTEM</div>
+
+                    <!-- Yetkilendirme Açılır Menüsü -->
+                    <li class="nav-item">
+                        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseAuth" aria-expanded="true" aria-controls="collapseAuth">
+                            <i class="fas fa-fw fa-user-shield"></i>
+                            <span>Yetkilendirme</span>
+                        </a>
+                        <div id="collapseAuth" class="collapse" aria-labelledby="headingAuth" data-parent="#accordionSidebar">
+                            <div class="bg-white py-2 collapse-inner rounded">
+                                <h6 class="collapse-header">Güvenlik ve Roller:</h6>
+                                <a class="collapse-item" href="/Admin/Roles">Rol Yönetimi</a>
+                                <a class="collapse-item" href="/Admin/Permissions">Yetki Tanımları</a>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- Raporlar & Loglar Açılır Menüsü -->
+                    <li class="nav-item">
+                        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseLogs" aria-expanded="true" aria-controls="collapseLogs">
+                            <i class="fas fa-fw fa-chart-area"></i>
+                            <span>Raporlar & Loglar</span>
+                        </a>
+                        <div id="collapseLogs" class="collapse" aria-labelledby="headingLogs" data-parent="#accordionSidebar">
+                            <div class="bg-white py-2 collapse-inner rounded">
+                                <h6 class="collapse-header">Sistem Kayıtları:</h6>
+                                <a class="collapse-item" href="/Admin/Logs">İşlem Logları</a>
+                                <a class="collapse-item" href="/Admin/LoginRecords">Giriş Kayıtları</a>
+                                <a class="collapse-item" href="/Admin/FileActivities">Dosya Hareketleri</a>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- Ayarlar Açılır Menüsü -->
+                    <li class="nav-item">
+                        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseSettings" aria-expanded="true" aria-controls="collapseSettings">
+                            <i class="fas fa-fw fa-cogs"></i>
+                            <span>Ayarlar</span>
+                        </a>
+                        <div id="collapseSettings" class="collapse" aria-labelledby="headingSettings" data-parent="#accordionSidebar">
+                            <div class="bg-white py-2 collapse-inner rounded">
+                                <h6 class="collapse-header">Konfigürasyon:</h6>
+                                <a class="collapse-item" href="/Admin/Settings">Genel Ayarlar</a>
+                                <a class="collapse-item" href="/Admin/FileSettings">Dosya Ayarları</a>
+                                <a class="collapse-item" href="/Admin/QuotaManagement">Kota Yönetimi</a>
+                            </div>
+                        </div>
+                    </li>
+                }
+                else
+                {
+                    <!-- NORMAL KULLANICI MENÜSÜ BURADA KALIYOR -->
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/Drive/Dashboard">
+                            <i class="fas fa-fw fa-folder-open"></i>
+                            <span>Dosyalarım</span>
+                        </a>
+                    </li>
+                    <hr class="sidebar-divider">
+                    <div class="sidebar-heading">Erişim</div>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Drive/Shared">
+                            <i class="fas fa-fw fa-share-alt"></i>
+                            <span>Benimle Paylaşılanlar</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Drive/Trash">
+                            <i class="fas fa-fw fa-trash"></i>
+                            <span>Çöp Kutusu (30 Gün)</span>
+                        </a>
+                    </li>
+                }
+
+                <hr class="sidebar-divider d-none d-md-block">
+
+                <!-- Menüyü Daraltma Butonu -->
+                <div class="text-center d-none d-md-inline">
+                    <button class="rounded-circle border-0" id="sidebarToggle"></button>
+                </div>
+            </ul>
+
+            <div id="content-wrapper" class="d-flex flex-column">
+                <div id="content">
+
+                    <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                        <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                            <i class="fa fa-bars"></i>
+                        </button>
+
+                        <ul class="navbar-nav ml-auto">
+                            <li class="nav-item dropdown no-arrow">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown">
+                                    <span class="mr-2 d-none d-lg-inline text-gray-600 small fw-bold">@User.Identity.Name</span>
+                                    <img class="img-profile rounded-circle" src="~/img/undraw_profile.svg">
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                                    <a class="dropdown-item" href="/Auth/Logout">
+                                        <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Çıkış Yap
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
+                    </nav>
+                    <div class="container-fluid">
+                        @RenderBody()
+                    </div>
+
+                </div>
+
+                <footer class="sticky-footer bg-white">
+                    <div class="container my-auto">
+                        <div class="copyright text-center my-auto">
+                            <span>Copyright &copy; CoreDrive 2026</span>
+                        </div>
+                    </div>
+                </footer>
+
+            </div>
+        </div>
+    }
+
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <script src="~/vendor/jquery/jquery.min.js"></script>
+    <script src="~/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="~/js/sb-admin-2.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

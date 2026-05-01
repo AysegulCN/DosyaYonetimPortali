@@ -1,0 +1,48 @@
+﻿@{
+    ViewData["Title"] = "Yetki Tanımları";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800 fw-bold">Yetki Matrisi</h1>
+    <button class="btn btn-success shadow-sm" style="border-radius: 10px;">
+        <i class="fas fa-save fa-sm text-white-50 me-1"></i> Değişiklikleri Kaydet
+    </button>
+</div>
+
+<div class="card shadow border-0" style="border-radius: 15px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="bg-light text-dark fw-bold text-center">
+                    <tr>
+                        <th class="text-start px-4 border-0">Sistem Modülü / Yetki</th>
+                        <th class="text-danger border-0">Admin</th>
+                        <th class="text-primary border-0">User</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center">
+                    <tr>
+                        <td class="text-start px-4 fw-bold text-dark">Dosya Yükleme ve İndirme</td>
+                        <td><input class="form-check-input" type="checkbox" checked disabled style="transform: scale(1.3);"></td>
+                        <td><input class="form-check-input" type="checkbox" checked style="transform: scale(1.3);"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-start px-4 fw-bold text-dark">Dosya Silme (Kalıcı)</td>
+                        <td><input class="form-check-input" type="checkbox" checked disabled style="transform: scale(1.3);"></td>
+                        <td><input class="form-check-input" type="checkbox" style="transform: scale(1.3);"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-start px-4 fw-bold text-dark">Dışarıya Açık Paylaşım İptali</td>
+                        <td><input class="form-check-input" type="checkbox" checked disabled style="transform: scale(1.3);"></td>
+                        <td><input class="form-check-input" type="checkbox" style="transform: scale(1.3);"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-start px-4 fw-bold text-dark">Sistem ve Kullanıcı Yönetimi</td>
+                        <td><input class="form-check-input" type="checkbox" checked disabled style="transform: scale(1.3);"></td>
+                        <td><input class="form-check-input" type="checkbox" disabled style="transform: scale(1.3);"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

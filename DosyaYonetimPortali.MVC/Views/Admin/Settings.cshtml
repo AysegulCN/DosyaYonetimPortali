@@ -1,0 +1,87 @@
+﻿@{
+    ViewData["Title"] = "Sistem Ayarları";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem ve Güvenlik Ayarları</h1>
+    <button class="btn btn-success shadow-sm" style="border-radius: 10px;">
+        <i class="fas fa-save fa-sm text-white-50 me-1"></i> Ayarları Kaydet
+    </button>
+</div>
+
+<div class="row">
+    <!-- Dosya Yükleme Kuralları -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow border-0" style="border-radius: 15px;">
+            <div class="card-header py-3 bg-white" style="border-radius: 15px 15px 0 0;">
+                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-upload me-2"></i> Yükleme ve Kota Kuralları</h6>
+            </div>
+            <div class="card-body">
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark">Maksimum Dosya Boyutu (Tek Seferde)</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" value="2048" style="border-radius: 10px 0 0 10px;">
+                        <span class="input-group-text bg-light fw-bold" style="border-radius: 0 10px 10px 0;">MB</span>
+                    </div>
+                    <small class="text-muted">Kullanıcıların tek seferde yükleyebileceği en büyük dosya sınırı.</small>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark">Yeni Kullanıcı Başlangıç Kotası</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" value="15" style="border-radius: 10px 0 0 10px;">
+                        <span class="input-group-text bg-light fw-bold" style="border-radius: 0 10px 10px 0;">GB</span>
+                    </div>
+                    <small class="text-muted">Sisteme yeni kayıt olan kullanıcılara otomatik tanımlanacak alan.</small>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Güvenlik ve Uzantı İzinleri -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow border-0" style="border-radius: 15px;">
+            <div class="card-header py-3 bg-white" style="border-radius: 15px 15px 0 0;">
+                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-shield-alt me-2"></i> Güvenlik & Dosya Uzantıları</h6>
+            </div>
+            <div class="card-body">
+                
+                <!-- Toggle Switch 1 -->
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                    <div>
+                        <div class="fw-bold text-dark mb-1">Medya Dosyalarına İzin Ver</div>
+                        <div class="small text-muted">.jpg, .png, .mp4, .mp3 vb. formalar</div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="switchMedia" checked style="transform: scale(1.5);">
+                    </div>
+                </div>
+
+                <!-- Toggle Switch 2 -->
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                    <div>
+                        <div class="fw-bold text-dark mb-1">Arşiv Dosyalarına İzin Ver</div>
+                        <div class="small text-muted">.zip, .rar, .7z, .tar formaları</div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="switchArchive" checked style="transform: scale(1.5);">
+                    </div>
+                </div>
+
+                <!-- Toggle Switch 3 (Kapalı ve Kırmızı) -->
+                <div class="d-flex justify-content-between align-items-center pb-2">
+                    <div>
+                        <div class="fw-bold text-danger mb-1">Çalıştırılabilir Dosyalar (TEHLİKE)</div>
+                        <div class="small text-muted">.exe, .bat, .cmd, .sh formaları (Virüs riski içerir)</div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="switchExe" style="transform: scale(1.5);">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
