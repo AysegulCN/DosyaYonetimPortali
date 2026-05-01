@@ -26,8 +26,7 @@
 
             <ul class="navbar-nav bg-gradient-dark sidebar sidebar-dark accordion" id="accordionSidebar">
 
-                <!-- Logo Alanı -->
-                <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/Home/Index">
+                <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/Admin/Dashboard">
                     <div class="sidebar-brand-icon">
                         <i class="fas fa-cloud text-primary"></i>
                     </div>
@@ -38,7 +37,6 @@
 
                 @if (User.IsInRole("Admin"))
                 {
-                    <!-- BÖLÜM 1: CORE -->
                     <div class="sidebar-heading mt-3 text-white-50" style="font-size: 0.75rem; letter-spacing: 1px;">CORE</div>
         
                     <li class="nav-item active">
@@ -50,10 +48,8 @@
 
                     <hr class="sidebar-divider">
 
-                    <!-- BÖLÜM 2: MANAGEMENT -->
                     <div class="sidebar-heading text-white-50" style="font-size: 0.75rem; letter-spacing: 1px;">MANAGEMENT</div>
         
-                    <!-- Dosyalar ve Klasörler Açılır Menüsü -->
                     <li class="nav-item">
                         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseFiles" aria-expanded="true" aria-controls="collapseFiles">
                             <i class="fas fa-fw fa-folder"></i>
@@ -68,7 +64,6 @@
                         </div>
                     </li>
 
-                    <!-- Kullanıcılar Açılır Menüsü -->
                     <li class="nav-item">
                         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUsers" aria-expanded="true" aria-controls="collapseUsers">
                             <i class="fas fa-fw fa-users"></i>

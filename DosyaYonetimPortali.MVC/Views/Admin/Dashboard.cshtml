@@ -2,75 +2,110 @@
     ViewData["Title"] = "Admin Dashboard";
 }
 
+<style>
+    .hover-zoom-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+        .hover-zoom-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+
+    .btn-animated:active {
+        transform: scale(0.95);
+    }
+</style>
+
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem Genel Özeti</h1>
-    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-        <i class="fas fa-download fa-sm text-white-50"></i> Sistem Raporu Al
-    </a>
+    
+    <form asp-action="GenerateSystemReport" asp-controller="Admin" method="post" class="d-inline">
+        <button type="submit" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm btn-animated" style="border-radius: 8px; padding: 8px 15px;" onclick="this.querySelector('i').classList.add('fa-spin');">
+            <i class="fas fa-download fa-sm text-white-50 me-1"></i> Sistem Raporu Al
+        </button>
+    </form>
 </div>
 
-<!-- Dörtlü İstatistik Kartları (Tepeden Bakış) -->
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-radius: 10px;">
+        <i class="fas fa-check-circle me-2"></i> @TempData["Message"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <div class="row mb-4">
     <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
-        <div class="card border-left-primary shadow h-100 py-2" style="border-radius: 15px;">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Toplam Kullanıcı</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">124</div>
+        <a href="/Admin/Users" class="text-decoration-none">
+            <div class="card border-left-primary shadow h-100 py-2 hover-zoom-card" style="border-radius: 15px;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Toplam Kullanıcı</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">124</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-users fa-2x text-gray-300"></i></div>
                     </div>
-                    <div class="col-auto"><i class="fas fa-users fa-2x text-gray-300"></i></div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
+
     <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
-        <div class="card border-left-success shadow h-100 py-2" style="border-radius: 15px;">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Yüklenen Dosyalar</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">3,458</div>
+        <a href="/Admin/FileActivities" class="text-decoration-none">
+            <div class="card border-left-success shadow h-100 py-2 hover-zoom-card" style="border-radius: 15px;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Yüklenen Dosyalar</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">3,458</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-file-alt fa-2x text-gray-300"></i></div>
                     </div>
-                    <div class="col-auto"><i class="fas fa-file-alt fa-2x text-gray-300"></i></div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
+
     <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
-        <div class="card border-left-info shadow h-100 py-2" style="border-radius: 15px;">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Depolama (500GB)</div>
-                        <div class="row no-gutters align-items-center">
-                            <div class="col-auto"><div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">45%</div></div>
-                            <div class="col">
-                                <div class="progress progress-sm mr-2"><div class="progress-bar bg-info" style="width: 45%"></div></div>
+        <a href="/Admin/Storage" class="text-decoration-none">
+            <div class="card border-left-info shadow h-100 py-2 hover-zoom-card" style="border-radius: 15px;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Depolama (500GB)</div>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto"><div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">45%</div></div>
+                                <div class="col">
+                                    <div class="progress progress-sm mr-2"><div class="progress-bar bg-info" style="width: 45%"></div></div>
+                                </div>
                             </div>
                         </div>
+                        <div class="col-auto"><i class="fas fa-hdd fa-2x text-gray-300"></i></div>
                     </div>
-                    <div class="col-auto"><i class="fas fa-hdd fa-2x text-gray-300"></i></div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
+
     <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
-        <div class="card border-left-warning shadow h-100 py-2" style="border-radius: 15px;">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Aktif Paylaşımlar</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">86</div>
+        <a href="/Admin/Shares" class="text-decoration-none">
+            <div class="card border-left-warning shadow h-100 py-2 hover-zoom-card" style="border-radius: 15px;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Aktif Paylaşımlar</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">86</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-link fa-2x text-gray-300"></i></div>
                     </div>
-                    <div class="col-auto"><i class="fas fa-link fa-2x text-gray-300"></i></div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
-<!-- Senin Fikrin: Son Sistem Hareketleri (Aktivite Akışı) -->
 <div class="card shadow mb-4" style="border-radius: 15px; border: none;">
     <div class="card-header py-3 bg-white" style="border-bottom: 1px solid #e3e6f0; border-top-left-radius: 15px; border-top-right-radius: 15px;">
         <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-bell text-warning me-2"></i> Sistemdeki Son Hareketler</h6>

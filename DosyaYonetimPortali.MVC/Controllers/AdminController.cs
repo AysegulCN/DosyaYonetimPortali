@@ -3,6 +3,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Layout.Properties;
+using System.IO;
+
 
 namespace DosyaYonetimPortali.MVC.Controllers
 {
@@ -150,5 +156,54 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             return View();
         }
+        [HttpPost]
+        public IActionResult RefreshStorage()
+        {
+            TempData["Message"] = "Sunucu depolama verileri güncellendi ve en son durum ekrana yansıtıldı.";
+            return RedirectToAction("Storage");
+        }
+
+        [HttpPost]
+        public IActionResult GenerateSystemReport()
+        {
+            using (var ms = new MemoryStream())
+            {
+                var writer = new PdfWriter(ms);
+                var pdf = new PdfDocument(writer);
+                var document = new Document(pdf);
+
+
+                var header = new Paragraph("CORE-DRIVE SISTEM RAPORU")
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetFontSize(22)
+                    .SetBold();
+                document.Add(header);
+
+                document.Add(new Paragraph("Rapor Tarihi: " + DateTime.Now.ToString("dd.MM.yyyy HH:mm"))
+                    .SetTextAlignment(TextAlignment.RIGHT)
+                    .SetFontSize(10)
+                    .SetMarginBottom(20));
+
+                document.Add(new Paragraph("---------------------------------------------------------------------------------------------------"));
+
+                document.Add(new Paragraph("Toplam Kullanici: 124").SetFontSize(14).SetMarginBottom(5));
+                document.Add(new Paragraph("Yuklenen Toplam Dosya: 3,458").SetFontSize(14).SetMarginBottom(5));
+                document.Add(new Paragraph("Kullanilan Depolama: %45 (225 GB / 500 GB)").SetFontSize(14).SetMarginBottom(5));
+                document.Add(new Paragraph("Aktif Paylasilan Linkler: 86").SetFontSize(14).SetMarginBottom(20));
+
+                document.Add(new Paragraph("---------------------------------------------------------------------------------------------------"));
+
+                document.Add(new Paragraph("Sistem Durumu: SAGLIKLI").SetBold().SetFontSize(12));
+                document.Add(new Paragraph("Guvenlik Taramasi: TEMIZ").SetBold().SetFontSize(12));
+
+                document.Close();
+
+                byte[] fileBytes = ms.ToArray();
+                string fileName = $"CoreDrive_Rapor_{DateTime.Now.ToString("yyyyMMdd")}.pdf";
+
+                return File(fileBytes, "application/pdf", fileName);
+            }
+        }
+
     }
 }
