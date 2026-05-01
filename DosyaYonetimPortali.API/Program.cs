@@ -33,9 +33,6 @@ namespace DosyaYonetimPortali.API
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
-            // Eğer servislerde hata almıyorsan bunu açabilirsin, 30 günlük silme işlemini bu yapar:
-            // builder.Services.AddHostedService<TrashCleanupService>();
-
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -99,6 +96,8 @@ namespace DosyaYonetimPortali.API
             using (var scope = app.Services.CreateScope())
             {
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+
                 string[] roles = { "Admin", "User" };
 
                 foreach (var role in roles)
@@ -106,6 +105,27 @@ namespace DosyaYonetimPortali.API
                     if (!await roleManager.RoleExistsAsync(role))
                     {
                         await roleManager.CreateAsync(new IdentityRole(role));
+                    }
+                }
+
+                string adminEmail = "aysegulcoban@gmail.com";
+                string adminPassword = "aysegul123";
+
+                var adminUser = await userManager.FindByEmailAsync(adminEmail);
+                if (adminUser == null)
+                {
+                    var newAdmin = new AppUser
+                    {
+                        UserName = adminEmail,
+                        Email = adminEmail,
+                        FirstName = "Sistem",
+                        LastName = "Yöneticisi"
+                    };
+
+                    var createResult = await userManager.CreateAsync(newAdmin, adminPassword);
+                    if (createResult.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(newAdmin, "Admin");
                     }
                 }
             }

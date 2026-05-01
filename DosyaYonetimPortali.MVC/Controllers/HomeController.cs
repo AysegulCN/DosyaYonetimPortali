@@ -15,6 +15,16 @@ namespace DosyaYonetimPortali.MVC.Controllers
 
         public IActionResult Index()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                if (User.IsInRole("Admin"))
+                {
+                    return RedirectToAction("Dashboard", "Admin");
+                }
+
+                return RedirectToAction("Dashboard", "Drive");
+            }
+
             return View();
         }
 

@@ -1,8 +1,78 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model DosyaYonetimPortali.MVC.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Sisteme Giriş";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="row justify-content-center align-items-center" style="min-height: 100vh; margin-top: -30px;">
+    <div class="col-xl-10 col-lg-12 col-md-9">
+        
+        <div class="card o-hidden border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+            <div class="card-body p-0">
+                <div class="row" style="min-height: 600px;">
+                    
+                    <div class="col-lg-6 d-none d-lg-block"
+                         style="background: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop') center center; background-size: cover; position: relative;">
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 50px 40px;">
+                            <h2 class="text-white fw-bold mb-2">Verileriniz Güvende.</h2>
+                            <p class="text-white-50" style="font-size: 1.1rem;">CoreDrive ile tüm dosyalarınızı tek bir yerden yönetin, dilediğinizle güvenle paylaşın.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6 d-flex align-items-center justify-content-center bg-white">
+                        <div class="p-5 w-100" style="max-width: 480px;">
+                            
+                            <div class="text-center mb-5">
+                                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow" style="width: 65px; height: 65px;">
+                                    <i class="fas fa-cloud fa-2x"></i>
+                                </div>
+                                <h1 class="h4 text-gray-900 mb-2 fw-bold">CoreDrive Portalı</h1>
+                                <p class="text-muted">Yönetim paneline erişmek için giriş yapın</p>
+                            </div>
+                            
+                            @if (!ViewData.ModelState.IsValid)
+                            {
+                                <div class="alert alert-danger" style="border-radius: 12px; font-size: 0.9rem;">
+                                    <div asp-validation-summary="All" class="mb-0 text-danger font-weight-bold"></div>
+                                </div>
+                            }
+
+                            <form asp-action="Login" asp-controller="Auth" method="post" class="user">
+                                
+                                <div class="form-group mb-4 position-relative">
+                                    <i class="fas fa-envelope position-absolute text-muted" style="left: 20px; top: 18px; font-size: 1.1rem; z-index: 5;"></i>
+                                    <input type="email" asp-for="Email" class="form-control form-control-user"
+                                           placeholder="E-posta Adresiniz" required
+                                           style="border-radius: 16px; padding: 15px 20px 15px 50px; font-size: 1rem; background-color: #f8f9fc; border: 1px solid #eaecf4;">
+                                </div>
+
+                                <div class="form-group mb-4 position-relative">
+                                    <i class="fas fa-lock position-absolute text-muted" style="left: 20px; top: 18px; font-size: 1.1rem; z-index: 5;"></i>
+                                    <input type="password" asp-for="Password" class="form-control form-control-user"
+                                           placeholder="Şifreniz" required
+                                           style="border-radius: 16px; padding: 15px 20px 15px 50px; font-size: 1rem; background-color: #f8f9fc; border: 1px solid #eaecf4;">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-user btn-block w-100 fw-bold shadow-sm mt-2"
+                                        style="border-radius: 16px; padding: 14px; font-size: 1.1rem; letter-spacing: 0.5px;">
+                                    Giriş Yap <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </form>
+                            
+                            <hr class="my-4">
+                            
+                            <div class="text-center">
+                                <a class="small text-primary fw-bold text-decoration-none" href="#">Şifremi Unuttum</a>
+                            </div>
+                            <div class="text-center mt-2">
+                                <span class="small text-muted">Sistemde kaydınız yok mu?</span>
+                                <a href="/Auth/Register" class="...">Hesap Oluştur</a>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

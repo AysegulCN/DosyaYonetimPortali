@@ -1,0 +1,78 @@
+﻿@model DosyaYonetimPortali.MVC.Models.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Yeni Hesap Oluştur";
+}
+
+<div class="row justify-content-center align-items-center" style="min-height: 100vh; margin-top: -30px;">
+    <div class="col-xl-10 col-lg-12 col-md-9">
+        <div class="card o-hidden border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+            <div class="card-body p-0">
+                <div class="row" style="min-height: 600px;">
+                    
+                    <div class="col-lg-6 d-none d-lg-block"
+                         style="background: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1000&auto=format&fit=crop') center center; background-size: cover; position: relative;">
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 50px 40px;">
+                            <h2 class="text-white fw-bold mb-2">Sınırları Kaldırın.</h2>
+                            <p class="text-white-50" style="font-size: 1.1rem;">Dünyanın neresinde olursanız olun, dosyalarınız her zaman yanınızda.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6 d-flex align-items-center justify-content-center bg-white">
+                        <div class="p-5 w-100" style="max-width: 480px;">
+                            <div class="text-center mb-4">
+                                <h1 class="h4 text-gray-900 mb-2 fw-bold">Aramıza Katılın!</h1>
+                                <p class="text-muted">Dakikalar içinde ücretsiz hesabınızı oluşturun.</p>
+                            </div>
+
+                            @if (!ViewData.ModelState.IsValid)
+                            {
+                                <div class="alert alert-danger" style="border-radius: 12px; font-size: 0.9rem;">
+                                    <div asp-validation-summary="All" class="mb-0 text-danger font-weight-bold"></div>
+                                </div>
+                            }
+
+                            <form asp-action="Register" asp-controller="Auth" method="post" class="user">
+                                <div class="row">
+                                    <div class="col-sm-6 mb-3 position-relative">
+                                        <i class="fas fa-user position-absolute text-muted" style="left: 25px; top: 15px; font-size: 1rem; z-index: 5;"></i>
+                                        <input type="text" asp-for="FirstName" class="form-control form-control-user" placeholder="Adınız" required
+                                               style="border-radius: 16px; padding: 12px 20px 12px 45px; background-color: #f8f9fc; border: 1px solid #eaecf4;">
+                                    </div>
+                                    <div class="col-sm-6 mb-3 position-relative">
+                                        <i class="fas fa-user position-absolute text-muted" style="left: 25px; top: 15px; font-size: 1rem; z-index: 5;"></i>
+                                        <input type="text" asp-for="LastName" class="form-control form-control-user" placeholder="Soyadınız" required
+                                               style="border-radius: 16px; padding: 12px 20px 12px 45px; background-color: #f8f9fc; border: 1px solid #eaecf4;">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group mb-3 position-relative">
+                                    <i class="fas fa-envelope position-absolute text-muted" style="left: 20px; top: 15px; font-size: 1rem; z-index: 5;"></i>
+                                    <input type="email" asp-for="Email" class="form-control form-control-user" placeholder="E-posta Adresiniz" required
+                                           style="border-radius: 16px; padding: 12px 20px 12px 45px; background-color: #f8f9fc; border: 1px solid #eaecf4;">
+                                </div>
+                                
+                                <div class="form-group mb-4 position-relative">
+                                    <i class="fas fa-lock position-absolute text-muted" style="left: 20px; top: 15px; font-size: 1rem; z-index: 5;"></i>
+                                    <input type="password" asp-for="Password" class="form-control form-control-user" placeholder="Şifreniz (En az 6 karakter)" required
+                                           style="border-radius: 16px; padding: 12px 20px 12px 45px; background-color: #f8f9fc; border: 1px solid #eaecf4;">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-success btn-user btn-block w-100 fw-bold shadow-sm"
+                                        style="border-radius: 16px; padding: 12px; font-size: 1.1rem; letter-spacing: 0.5px;">
+                                    Hesabımı Oluştur <i class="fas fa-check ms-2"></i>
+                                </button>
+                            </form>
+                            
+                            <hr class="my-4">
+                            <div class="text-center">
+                                <span class="small text-muted">Zaten bir hesabınız var mı?</span>
+                                <a class="small text-primary fw-bold text-decoration-none" href="/Home/Index">Giriş Yapın</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,118 @@
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem Genel Özeti</h1>
+    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+        <i class="fas fa-download fa-sm text-white-50"></i> Sistem Raporu Al
+    </a>
+</div>
+
+<!-- Dörtlü İstatistik Kartları (Tepeden Bakış) -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
+        <div class="card border-left-primary shadow h-100 py-2" style="border-radius: 15px;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Toplam Kullanıcı</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">124</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-users fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
+        <div class="card border-left-success shadow h-100 py-2" style="border-radius: 15px;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Yüklenen Dosyalar</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">3,458</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-file-alt fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
+        <div class="card border-left-info shadow h-100 py-2" style="border-radius: 15px;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Depolama (500GB)</div>
+                        <div class="row no-gutters align-items-center">
+                            <div class="col-auto"><div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">45%</div></div>
+                            <div class="col">
+                                <div class="progress progress-sm mr-2"><div class="progress-bar bg-info" style="width: 45%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-hdd fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
+        <div class="card border-left-warning shadow h-100 py-2" style="border-radius: 15px;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Aktif Paylaşımlar</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">86</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-link fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Senin Fikrin: Son Sistem Hareketleri (Aktivite Akışı) -->
+<div class="card shadow mb-4" style="border-radius: 15px; border: none;">
+    <div class="card-header py-3 bg-white" style="border-bottom: 1px solid #e3e6f0; border-top-left-radius: 15px; border-top-right-radius: 15px;">
+        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-bell text-warning me-2"></i> Sistemdeki Son Hareketler</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-muted">
+                    <tr>
+                        <th class="border-0 px-4 py-3">Kullanıcı</th>
+                        <th class="border-0 py-3">Yapılan İşlem</th>
+                        <th class="border-0 py-3">Zaman</th>
+                        <th class="border-0 py-3 text-end px-4">Durum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="px-4 fw-bold text-dark">Ayşegül Yılmaz</td>
+                        <td>Yeni bir klasör oluşturdu (Müşteri Raporları)</td>
+                        <td class="text-muted small">5 dakika önce</td>
+                        <td class="text-end px-4"><span class="badge bg-success rounded-pill px-3">Başarılı</span></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 fw-bold text-dark">Sistem Yöneticisi</td>
+                        <td>Kullanıcı yetkilerini güncelledi (ID: #0045)</td>
+                        <td class="text-muted small">22 dakika önce</td>
+                        <td class="text-end px-4"><span class="badge bg-primary rounded-pill px-3">Admin İşlemi</span></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 fw-bold text-dark">Mehmet K.</td>
+                        <td>Sisteme 2.4 GB boyutunda dosya yüklemeyi denedi.</td>
+                        <td class="text-muted small">1 saat önce</td>
+                        <td class="text-end px-4"><span class="badge bg-danger rounded-pill px-3">Kota Aşıldı</span></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 fw-bold text-dark">Sistem Otomasyonu</td>
+                        <td>Çöp kutusundaki 30 günü dolduran dosyalar temizlendi.</td>
+                        <td class="text-muted small">Dün, 23:59</td>
+                        <td class="text-end px-4"><span class="badge bg-info rounded-pill px-3">Otomatik</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

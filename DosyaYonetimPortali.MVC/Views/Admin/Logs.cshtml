@@ -1,0 +1,56 @@
+﻿@{
+    ViewData["Title"] = "Sistem Logları";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem Logları (Aktiviteler)</h1>
+    <button class="btn btn-outline-danger shadow-sm" style="border-radius: 10px;">
+        <i class="fas fa-trash-alt fa-sm"></i> Eski Logları Temizle
+    </button>
+</div>
+
+<div class="card shadow mb-4" style="border-radius: 15px; border: none;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0" width="100%" cellspacing="0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0 px-4 py-3">Tarih / Saat</th>
+                        <th class="border-0 py-3">Seviye</th>
+                        <th class="border-0 py-3">Kullanıcı</th>
+                        <th class="border-0 py-3 w-50">Açıklama (Eylem)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="px-4 text-muted small">26.04.2026 - 15:42:10</td>
+                        <td><span class="badge bg-danger text-white rounded-pill px-3 py-1">ERROR</span></td>
+                        <td class="fw-bold">-</td>
+                        <td>Veritabanı bağlantısı zaman aşımına uğradı (Timeout). Sistem otomatik yeniden denedi.</td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 text-muted small">26.04.2026 - 15:30:05</td>
+                        <td><span class="badge bg-success text-white rounded-pill px-3 py-1">INFO</span></td>
+                        <td class="fw-bold">Ayşegül Yılmaz</td>
+                        <td>Kullanıcı başarıyla sisteme giriş yaptı (IP: 192.168.1.45).</td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 text-muted small">26.04.2026 - 14:15:22</td>
+                        <td><span class="badge bg-warning text-dark rounded-pill px-3 py-1">WARN</span></td>
+                        <td class="fw-bold">Sistem Yöneticisi</td>
+                        <td>'Yedekleme_2026.zip' dosyası paylaşıma açıldı ancak şifre belirlenmedi.</td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 text-muted small">26.04.2026 - 10:05:00</td>
+                        <td><span class="badge bg-info text-white rounded-pill px-3 py-1">SYSTEM</span></td>
+                        <td class="fw-bold">API Servisi</td>
+                        <td>Günlük çöp kutusu temizliği başlatıldı. 30 günü dolduran 12 dosya kalıcı olarak silindi.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white text-center py-3" style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+        <a href="#" class="text-primary text-decoration-none fw-bold small">Tüm Logları Gör (Sayfa 1/45)</a>
+    </div>
+</div>
