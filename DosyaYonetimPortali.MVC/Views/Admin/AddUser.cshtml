@@ -2,66 +2,121 @@
     ViewData["Title"] = "Yeni Kullanıcı Ekle";
 }
 
+<style>
+    .modern-input {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #d1d3e2;
+        height: 52px !important;
+        font-size: 1rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+        .modern-input:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.1);
+            outline: none;
+        }
+
+    select.modern-input {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        line-height: 50px !important;
+    }
+    
+    .input-group-text {
+        border-radius: 10px 0 0 10px;
+        border: 1px solid #d1d3e2;
+        background-color: #f8f9fc;
+    }
+    /* Şifre Göster/Gizle butonu için özel köşe ayarı */
+    .input-group .modern-input.password-input {
+        border-radius: 0;
+        border-right: none;
+    }
+
+    .input-group-text.password-toggle {
+        border-radius: 0 10px 10px 0;
+        background-color: #fff;
+        cursor: pointer;
+        border-left: none;
+        transition: color 0.2s;
+    }
+
+        .input-group-text.password-toggle:hover i {
+            color: #4e73df !important;
+        }
+    
+    .btn-animated:active {
+        transform: scale(0.95);
+    }
+</style>
+
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800 fw-bold">Yeni Kullanıcı Hesabı Oluştur</h1>
-    <a href="/Admin/Users" class="btn btn-outline-secondary shadow-sm" style="border-radius: 10px;">
+    <a href="/Admin/Users" class="btn btn-outline-secondary shadow-sm btn-animated" style="border-radius: 10px;">
         <i class="fas fa-arrow-left fa-sm me-1"></i> Listeye Dön
     </a>
 </div>
 
 <div class="row justify-content-center">
     <div class="col-lg-8">
-        <div class="card shadow border-0" style="border-radius: 15px;">
-            <div class="card-header py-3 bg-white" style="border-radius: 15px 15px 0 0; border-bottom: 1px solid #e3e6f0;">
-                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user-plus me-2"></i> Kullanıcı Bilgileri</h6>
+        <div class="card shadow mb-5" style="border-radius: 15px; border: none;">
+            <div class="card-header py-4 bg-white" style="border-radius: 15px 15px 0 0; border-bottom: 1px solid #f1f3f5;">
+                <h6 class="m-0 font-weight-bold text-primary" style="font-size: 1.1rem;">
+                    <i class="fas fa-user-plus me-2"></i> Kullanıcı Bilgileri
+                </h6>
             </div>
-            <div class="card-body p-4">
+            <div class="card-body p-5">
                 
-                <!-- BAĞLANTILI FORM BAŞLANGICI -->
                 <form asp-action="AddUser" asp-controller="Admin" method="post">
                     
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-dark">Adı</label>
-                            <input type="text" name="FirstName" class="form-control" placeholder="Örn: Ahmet" required style="border-radius: 10px;">
-                        </div>
-                        <div class="col-md-6 mt-3 mt-md-0">
-                            <label class="form-label fw-bold text-dark">Soyadı</label>
-                            <input type="text" name="LastName" class="form-control" placeholder="Örn: Yılmaz" required style="border-radius: 10px;">
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-dark">E-posta Adresi</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light" style="border-radius: 10px 0 0 10px;"><i class="fas fa-envelope text-muted"></i></span>
-                            <input type="email" name="Email" class="form-control" placeholder="ornek@coredrive.com" required style="border-radius: 0 10px 10px 0;">
-                        </div>
-                    </div>
-
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-dark">Geçici Şifre</label>
+                            <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Adı</label>
+                            <input type="text" name="FirstName" class="form-control modern-input" placeholder="Örn: Ahmet" required>
+                        </div>
+                        <div class="col-md-6 mt-4 mt-md-0">
+                            <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Soyadı</label>
+                            <input type="text" name="LastName" class="form-control modern-input" placeholder="Örn: Yılmaz" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">E-posta Adresi</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope text-muted"></i></span>
+                            <input type="email" name="Email" class="form-control modern-input" style="border-radius: 0 10px 10px 0;" placeholder="ornek@coredrive.com" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-5">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Geçici Şifre</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light" style="border-radius: 10px 0 0 10px;"><i class="fas fa-key text-muted"></i></span>
-                                <input type="password" name="Password" class="form-control" placeholder="En az 6 karakter" required style="border-radius: 0 10px 10px 0;">
+                                <span class="input-group-text"><i class="fas fa-key text-muted"></i></span>
+                                <input type="password" name="Password" id="tempPassword" class="form-control modern-input password-input" placeholder="En az 6 karakter" required>
+                                <!-- Tıklanabilir Göz İkonu -->
+                                <span class="input-group-text password-toggle" onclick="togglePasswordVisibility()">
+                                    <i class="fas fa-eye text-muted" id="toggleIcon"></i>
+                                </span>
                             </div>
                         </div>
-                        <div class="col-md-6 mt-3 mt-md-0">
-                            <label class="form-label fw-bold text-dark">Sistem Yetkisi (Rol)</label>
-                            <select name="Role" class="form-select form-control" style="border-radius: 10px;">
+                        <div class="col-md-6 mt-4 mt-md-0">
+                            <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Sistem Yetkisi (Rol)</label>
+                            <select name="Role" class="form-control modern-input">
                                 <option value="User" selected>Normal Kullanıcı (User)</option>
                                 <option value="Admin">Sistem Yöneticisi (Admin)</option>
                             </select>
                         </div>
                     </div>
 
-                    <hr class="my-4">
+                    <hr class="my-4" style="background-color: #f1f3f5; height: 2px; border: none;">
 
                     <div class="d-flex justify-content-end">
-                        <button type="reset" class="btn btn-light me-2 shadow-sm" style="border-radius: 10px;">Temizle</button>
-                        <button type="submit" class="btn btn-primary shadow-sm" style="border-radius: 10px;">
-                            <i class="fas fa-save me-1"></i> Hesabı Kaydet
+                        <button type="reset" class="btn btn-light me-3 shadow-sm btn-animated" style="border-radius: 10px; padding: 10px 25px; font-weight: 600;">Temizle</button>
+                        <button type="submit" class="btn btn-primary shadow-sm btn-animated" style="border-radius: 10px; padding: 10px 25px; font-weight: 600;">
+                            <i class="fas fa-save me-2"></i> Hesabı Kaydet
                         </button>
                     </div>
 
@@ -71,3 +126,23 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Şifre Göster/Gizle Fonksiyonu
+        function togglePasswordVisibility() {
+            var pwdInput = document.getElementById("tempPassword");
+            var toggleIcon = document.getElementById("toggleIcon");
+            
+            if (pwdInput.type === "password") {
+                pwdInput.type = "text";
+                toggleIcon.classList.remove("fa-eye");
+                toggleIcon.classList.add("fa-eye-slash");
+            } else {
+                pwdInput.type = "password";
+                toggleIcon.classList.remove("fa-eye-slash");
+                toggleIcon.classList.add("fa-eye");
+            }
+        }
+    </script>
+}

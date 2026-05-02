@@ -3,18 +3,76 @@
 }
 
 <style>
-    .hover-zoom-card {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-
-        .hover-zoom-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-        }
-
-    .btn-animated:active {
+   .btn-animated:active {
         transform: scale(0.95);
     }
+    
+    .modern-table tbody tr {
+        transition: all 0.25s ease-in-out;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .modern-table tbody tr:hover {
+        background-color: #ffffff;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+        z-index: 10;
+        position: relative;
+    }
+    .modern-table td {
+        border-top: none !important; 
+        padding: 1.25rem 1rem !important; 
+        vertical-align: middle;
+    }
+    .modern-badge {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 8px 16px !important;
+        box-shadow: 0 3px 5px rgba(0,0,0,0.05);
+    }
+
+    .modern-stat-card {
+        border: none !important;
+        border-radius: 15px !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03) !important;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+        overflow: hidden;
+        background-color: #fff;
+    }
+    .modern-stat-card::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        border-radius: 15px 0 0 15px;
+    }
+    .modern-stat-card.primary-card::before { background: linear-gradient(180deg, #4e73df 0%, #224abe 100%); }
+    .modern-stat-card.success-card::before { background: linear-gradient(180deg, #1cc88a 0%, #13855c 100%); }
+    .modern-stat-card.info-card::before { background: linear-gradient(180deg, #36b9cc 0%, #258391 100%); }
+    .modern-stat-card.warning-card::before { background: linear-gradient(180deg, #f6c23e 0%, #dda20a 100%); }
+
+    .modern-stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.08) !important;
+    }
+    .modern-stat-card .icon-circle {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .modern-stat-card:hover .icon-circle {
+        transform: scale(1.15) rotate(5deg);
+    }
+    .icon-primary { background-color: rgba(78, 115, 223, 0.1); color: #4e73df; }
+    .icon-success { background-color: rgba(28, 200, 138, 0.1); color: #1cc88a; }
+    .icon-info { background-color: rgba(54, 185, 204, 0.1); color: #36b9cc; }
+    .icon-warning { background-color: rgba(246, 194, 62, 0.1); color: #f6c23e; }
 </style>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -38,14 +96,18 @@
 <div class="row mb-4">
     <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
         <a href="/Admin/Users" class="text-decoration-none">
-            <div class="card border-left-primary shadow h-100 py-2 hover-zoom-card" style="border-radius: 15px;">
-                <div class="card-body">
+            <div class="card modern-stat-card primary-card h-100 py-3">
+                <div class="card-body px-4">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Toplam Kullanıcı</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">124</div>
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1" style="letter-spacing: 0.8px;">Toplam Kullanıcı</div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-800">124</div>
                         </div>
-                        <div class="col-auto"><i class="fas fa-users fa-2x text-gray-300"></i></div>
+                        <div class="col-auto">
+                            <div class="icon-circle icon-primary">
+                                <i class="fas fa-users fa-lg"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -54,14 +116,18 @@
 
     <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
         <a href="/Admin/FileActivities" class="text-decoration-none">
-            <div class="card border-left-success shadow h-100 py-2 hover-zoom-card" style="border-radius: 15px;">
-                <div class="card-body">
+            <div class="card modern-stat-card success-card h-100 py-3">
+                <div class="card-body px-4">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Yüklenen Dosyalar</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">3,458</div>
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1" style="letter-spacing: 0.8px;">Yüklenen Dosyalar</div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-800">3,458</div>
                         </div>
-                        <div class="col-auto"><i class="fas fa-file-alt fa-2x text-gray-300"></i></div>
+                        <div class="col-auto">
+                            <div class="icon-circle icon-success">
+                                <i class="fas fa-file-alt fa-lg"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -70,19 +136,27 @@
 
     <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
         <a href="/Admin/Storage" class="text-decoration-none">
-            <div class="card border-left-info shadow h-100 py-2 hover-zoom-card" style="border-radius: 15px;">
-                <div class="card-body">
+            <div class="card modern-stat-card info-card h-100 py-3">
+                <div class="card-body px-4">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Depolama (500GB)</div>
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1" style="letter-spacing: 0.8px;">Depolama (500GB)</div>
                             <div class="row no-gutters align-items-center">
-                                <div class="col-auto"><div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">45%</div></div>
+                                <div class="col-auto">
+                                    <div class="h3 mb-0 mr-3 font-weight-bold text-gray-800">45%</div>
+                                </div>
                                 <div class="col">
-                                    <div class="progress progress-sm mr-2"><div class="progress-bar bg-info" style="width: 45%"></div></div>
+                                    <div class="progress progress-sm mr-2" style="border-radius: 10px;">
+                                        <div class="progress-bar bg-info" style="width: 45%"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-auto"><i class="fas fa-hdd fa-2x text-gray-300"></i></div>
+                        <div class="col-auto">
+                            <div class="icon-circle icon-info">
+                                <i class="fas fa-hdd fa-lg"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -91,14 +165,18 @@
 
     <div class="col-xl-3 col-md-6 mb-4 mb-xl-0">
         <a href="/Admin/Shares" class="text-decoration-none">
-            <div class="card border-left-warning shadow h-100 py-2 hover-zoom-card" style="border-radius: 15px;">
-                <div class="card-body">
+            <div class="card modern-stat-card warning-card h-100 py-3">
+                <div class="card-body px-4">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Aktif Paylaşımlar</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">86</div>
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1" style="letter-spacing: 0.8px;">Aktif Paylaşımlar</div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-800">86</div>
                         </div>
-                        <div class="col-auto"><i class="fas fa-link fa-2x text-gray-300"></i></div>
+                        <div class="col-auto">
+                            <div class="icon-circle icon-warning">
+                                <i class="fas fa-link fa-lg"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -106,14 +184,16 @@
     </div>
 </div>
 
-<div class="card shadow mb-4" style="border-radius: 15px; border: none;">
-    <div class="card-header py-3 bg-white" style="border-bottom: 1px solid #e3e6f0; border-top-left-radius: 15px; border-top-right-radius: 15px;">
-        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-bell text-warning me-2"></i> Sistemdeki Son Hareketler</h6>
+<div class="card shadow mb-5" style="border-radius: 15px; border: none; overflow: hidden;">
+    <div class="card-header py-4 bg-white" style="border-bottom: 1px solid #f1f3f5;">
+        <h6 class="m-0 font-weight-bold text-primary" style="font-size: 1.1rem;">
+            <i class="fas fa-bolt text-warning me-2"></i> Sistemdeki Son Hareketler
+        </h6>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light text-muted">
+        <div class="table-responsive" style="overflow-x: hidden;">
+            <table class="table modern-table align-middle mb-0">
+                <thead class="bg-light" style="color: #858796; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
                     <tr>
                         <th class="border-0 px-4 py-3">Kullanıcı</th>
                         <th class="border-0 py-3">Yapılan İşlem</th>
@@ -123,28 +203,48 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="px-4 fw-bold text-dark">Ayşegül Yılmaz</td>
-                        <td>Yeni bir klasör oluşturdu (Müşteri Raporları)</td>
-                        <td class="text-muted small">5 dakika önce</td>
-                        <td class="text-end px-4"><span class="badge bg-success rounded-pill px-3">Başarılı</span></td>
+                        <td class="px-4">
+                            <div class="d-flex align-items-center">
+                                <img src="https://ui-avatars.com/api/?name=Ayşegül+Yılmaz&background=e3f2fd&color=0d47a1&rounded=true" class="shadow-sm me-3" width="38" height="38">
+                                <span class="fw-bold text-dark">Ayşegül Yılmaz</span>
+                            </div>
+                        </td>
+                        <td class="text-secondary"><i class="fas fa-folder-plus text-success me-2"></i> Yeni bir klasör oluşturdu (Müşteri Raporları)</td>
+                        <td class="text-muted small"><i class="far fa-clock me-1 text-gray-400"></i> 5 dakika önce</td>
+                        <td class="text-end px-4"><span class="badge bg-success modern-badge rounded-pill">Başarılı</span></td>
                     </tr>
                     <tr>
-                        <td class="px-4 fw-bold text-dark">Sistem Yöneticisi</td>
-                        <td>Kullanıcı yetkilerini güncelledi (ID: #0045)</td>
-                        <td class="text-muted small">22 dakika önce</td>
-                        <td class="text-end px-4"><span class="badge bg-primary rounded-pill px-3">Admin İşlemi</span></td>
+                        <td class="px-4">
+                            <div class="d-flex align-items-center">
+                                <img src="https://ui-avatars.com/api/?name=Sistem+Yöneticisi&background=ffebee&color=b71c1c&rounded=true" class="shadow-sm me-3" width="38" height="38">
+                                <span class="fw-bold text-dark">Sistem Yöneticisi</span>
+                            </div>
+                        </td>
+                        <td class="text-secondary"><i class="fas fa-user-shield text-primary me-2"></i> Kullanıcı yetkilerini güncelledi (ID: #0045)</td>
+                        <td class="text-muted small"><i class="far fa-clock me-1 text-gray-400"></i> 22 dakika önce</td>
+                        <td class="text-end px-4"><span class="badge bg-primary modern-badge rounded-pill">Admin İşlemi</span></td>
                     </tr>
                     <tr>
-                        <td class="px-4 fw-bold text-dark">Mehmet K.</td>
-                        <td>Sisteme 2.4 GB boyutunda dosya yüklemeyi denedi.</td>
-                        <td class="text-muted small">1 saat önce</td>
-                        <td class="text-end px-4"><span class="badge bg-danger rounded-pill px-3">Kota Aşıldı</span></td>
+                        <td class="px-4">
+                            <div class="d-flex align-items-center">
+                                <img src="https://ui-avatars.com/api/?name=Mehmet+K&background=fff8e1&color=f57f17&rounded=true" class="shadow-sm me-3" width="38" height="38">
+                                <span class="fw-bold text-dark">Mehmet K.</span>
+                            </div>
+                        </td>
+                        <td class="text-secondary"><i class="fas fa-exclamation-circle text-danger me-2"></i> Sisteme 2.4 GB boyutunda dosya yüklemeyi denedi.</td>
+                        <td class="text-muted small"><i class="far fa-clock me-1 text-gray-400"></i> 1 saat önce</td>
+                        <td class="text-end px-4"><span class="badge bg-danger modern-badge rounded-pill">Kota Aşıldı</span></td>
                     </tr>
                     <tr>
-                        <td class="px-4 fw-bold text-dark">Sistem Otomasyonu</td>
-                        <td>Çöp kutusundaki 30 günü dolduran dosyalar temizlendi.</td>
-                        <td class="text-muted small">Dün, 23:59</td>
-                        <td class="text-end px-4"><span class="badge bg-info rounded-pill px-3">Otomatik</span></td>
+                        <td class="px-4">
+                            <div class="d-flex align-items-center">
+                                <img src="https://ui-avatars.com/api/?name=Sistem+Oto&background=e0f2f1&color=004d40&rounded=true" class="shadow-sm me-3" width="38" height="38">
+                                <span class="fw-bold text-dark">Sistem Otomasyonu</span>
+                            </div>
+                        </td>
+                        <td class="text-secondary"><i class="fas fa-trash-alt text-info me-2"></i> Çöp kutusundaki 30 günü dolduran dosyalar temizlendi.</td>
+                        <td class="text-muted small"><i class="far fa-clock me-1 text-gray-400"></i> Dün, 23:59</td>
+                        <td class="text-end px-4"><span class="badge bg-info modern-badge rounded-pill text-white">Otomatik</span></td>
                     </tr>
                 </tbody>
             </table>

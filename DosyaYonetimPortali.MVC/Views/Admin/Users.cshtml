@@ -1,137 +1,157 @@
-﻿@model List<DosyaYonetimPortali.MVC.Models.UserViewModel>
-@{
+﻿@{
     ViewData["Title"] = "Kullanıcı Yönetimi";
 }
 
+<style>
+    .btn-animated:active {
+        transform: scale(0.95);
+    }
+    
+    .modern-table tbody tr {
+        transition: all 0.25s ease-in-out;
+        border-bottom: 1px solid #f1f3f5;
+    }
+
+        .modern-table tbody tr:hover {
+            background-color: #ffffff;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+            z-index: 10;
+            position: relative;
+        }
+
+    .modern-table td {
+        border-top: none !important;
+        padding: 1.25rem 1rem !important;
+        vertical-align: middle;
+    }
+
+    .modern-badge {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 8px 16px !important;
+        box-shadow: 0 3px 5px rgba(0,0,0,0.05);
+    }
+</style>
+
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem Kullanıcıları</h1>
-    <button class="btn btn-primary shadow-sm" style="border-radius: 10px;">
-        <i class="fas fa-user-plus fa-sm text-white-50"></i> Yeni Kullanıcı
-    </button>
+    <a href="/Admin/AddUser" class="btn btn-primary shadow-sm btn-animated" style="border-radius: 10px; padding: 8px 15px;">
+        <i class="fas fa-user-plus fa-sm text-white-50 me-1"></i> Yeni Kullanıcı
+    </a>
 </div>
 
-<!-- Tablo Kartı -->
-<div class="card shadow mb-4" style="border-radius: 15px; border: none;">
-    <div class="card-header py-3 bg-white" style="border-bottom: 1px solid #e3e6f0; border-top-left-radius: 15px; border-top-right-radius: 15px;">
-        <h6 class="m-0 font-weight-bold text-primary">Kayıtlı Tüm Hesaplar</h6>
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-radius: 10px;">
+        <i class="fas fa-check-circle me-2"></i> @TempData["Message"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle" width="100%" cellspacing="0">
-                <thead class="table-light">
+}
+
+<div class="card shadow mb-5" style="border-radius: 15px; border: none; overflow: hidden;">
+    <div class="card-header py-4 bg-white" style="border-bottom: 1px solid #f1f3f5;">
+        <h6 class="m-0 font-weight-bold text-primary" style="font-size: 1.1rem;">
+            <i class="fas fa-users text-primary me-2"></i> Kayıtlı Tüm Hesaplar
+        </h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive" style="overflow-x: hidden;">
+            <table class="table modern-table align-middle mb-0">
+                <thead class="bg-light" style="color: #858796; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
                     <tr>
-                        <th>Kullanıcı Bilgisi</th>
-                        <th>E-posta</th>
-                        <th>Rol</th>
-                        <th>Depolama Alanı</th>
-                        <th>Durum</th>
-                        <th class="text-center">İşlem</th>
+                        <th class="border-0 px-4 py-3">Kullanıcı Bilgisi</th>
+                        <th class="border-0 py-3">E-posta</th>
+                        <th class="border-0 py-3 text-center">Rol</th>
+                        <th class="border-0 py-3">Durum</th>
+                        <th class="border-0 py-3 text-end px-4">İşlem</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Admin Satırı -->
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="https://ui-avatars.com/api/?name=Sistem+Yonetici&background=4e73df&color=fff" class="rounded-circle me-3" width="40">
-                                <div>
-                                    <div class="fw-bold text-dark">Sistem Yöneticisi</div>
-                                    <div class="small text-muted">ID: #0001</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>patron@coredrive.com</td>
-                        <td><span class="badge bg-danger rounded-pill px-3 py-2">Admin</span></td>
-                        <td><i class="fas fa-hdd text-muted me-1"></i> 1.2 GB</td>
-                        <td><span class="text-success"><i class="fas fa-circle fa-xs me-1"></i> Aktif</span></td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-outline-primary shadow-sm"><i class="fas fa-edit"></i></button>
-                        </td>
-                    </tr>
-                    
-                    <!-- Normal User Satırı -->
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="https://ui-avatars.com/api/?name=Aysegul+Yilmaz&background=1cc88a&color=fff" class="rounded-circle me-3" width="40">
-                                <div>
-                                    <div class="fw-bold text-dark">Ayşegül Yılmaz</div>
-                                    <div class="small text-muted">ID: #0045</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>aysegul@coredrive.com</td>
-                        <td><span class="badge bg-primary rounded-pill px-3 py-2">User</span></td>
-                        <td><i class="fas fa-hdd text-muted me-1"></i> 14.5 GB</td>
-                        <td><span class="text-success"><i class="fas fa-circle fa-xs me-1"></i> Aktif</span></td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-outline-primary shadow-sm me-1"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-sm btn-outline-danger shadow-sm"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
+                    @if (Model != null && Model.Count > 0)
+                    {
+                        foreach (var user in Model)
+                        {
+                            <tr>
+                                <td class="px-4">
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://ui-avatars.com/api/?name=@user.FullName&background=random&color=fff&rounded=true" class="shadow-sm me-3" width="42" height="42">
+                                        <div>
+                                            <div class="fw-bold text-dark" style="font-size: 1.05rem;">@user.FullName</div>
+                                            <div class="small text-muted">ID: #@user.Id.Substring(0, 8)</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-secondary">@user.Email</td>
+                                <td class="text-center">
+                                    @if (user.Role == "Admin")
+                                    {
+                                        <span class="badge bg-danger modern-badge rounded-pill">Admin</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary modern-badge rounded-pill">User</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="text-success fw-bold"><i class="fas fa-circle fa-xs me-1"></i> Aktif</span>
+                                </td>
+                                <td class="text-end px-4">
+                                    <form asp-action="ToggleRole" asp-controller="Admin" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@user.Id" />
+                                        <button type="button" class="btn btn-sm btn-outline-warning shadow-sm me-1 btn-animated" title="Yetkiyi Değiştir" onclick="confirmAction(event, this.closest('form'), 'Kullanıcının yetkisini değiştirmek üzeresiniz. Emin misiniz?', 'Evet, Değiştir', '#f6c23e')">
+                                            <i class="fas fa-user-shield"></i>
+                                        </button>
+                                    </form>
+
+                                    @if (user.Role != "Admin")
+                                    {
+                                        <form asp-action="DeleteUser" asp-controller="Admin" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@user.Id" />
+                                            <button type="button" class="btn btn-sm btn-outline-danger shadow-sm btn-animated" title="Kullanıcıyı Sil" onclick="confirmAction(event, this.closest('form'), 'Bu kullanıcıyı sistemden tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz!', 'Evet, Sil', '#e74a3b')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fas fa-users-slash fa-3x mb-3 opacity-50"></i>
+                                <h5>Henüz kayıtlı kullanıcı bulunamadı.</h5>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<tbody>
-    @if (Model != null && Model.Count > 0)
-    {
-        foreach (var user in Model)
-        {
-            <tr>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <img src="https://ui-avatars.com/api/?name=@user.FullName&background=random&color=fff" class="rounded-circle me-3" width="40">
-                        <div>
-                            <div class="fw-bold text-dark">@user.FullName</div>
-                            <div class="small text-muted">ID: @user.Id.Substring(0, 8)...</div>
-                        </div>
-                    </div>
-                </td>
-                <td>@user.Email</td>
-                <td>
-                    @if (user.Role == "Admin")
-                    {
-                        <span class="badge bg-danger rounded-pill px-3 py-2">Admin</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-primary rounded-pill px-3 py-2">User</span>
-                    }
-                </td>
-                <td><i class="fas fa-hdd text-muted me-1"></i> Hesaplanan...</td>
-                <td><span class="text-success"><i class="fas fa-circle fa-xs me-1"></i> Aktif</span></td>
-                
-                <!-- İŞTE CANLANDIRDIĞIMIZ BUTONLARIN OLDUĞU KISIM BURASI -->
-                <td class="text-center">
-                    <!-- Yetki Değiştirme Butonu (Sarı Kalkan) -->
-                    <form asp-action="ToggleRole" asp-controller="Admin" method="post" class="d-inline">
-                        <input type="hidden" name="id" value="@user.Id" />
-                        <button type="submit" class="btn btn-sm btn-outline-warning shadow-sm me-1" title="Yetkiyi Değiştir" onclick="return confirm('Kullanıcının Admin/User yetkisini değiştirmek üzeresiniz. Emin misiniz?');">
-                            <i class="fas fa-user-shield"></i>
-                        </button>
-                    </form>
-
-                    @if (user.Role != "Admin")
-                    {
-                        <!-- Silme Butonu Sadece Normal Kullanıcılarda Çıkar (Kırmızı Çöp Kutusu) -->
-                        <form asp-action="DeleteUser" asp-controller="Admin" method="post" class="d-inline">
-                            <input type="hidden" name="id" value="@user.Id" />
-                            <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm" title="Kullanıcıyı Sil" onclick="return confirm('Bu kullanıcıyı sistemden tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz!');">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                    }
-                </td>
-            </tr>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function confirmAction(event, form, message, confirmText, color) {
+        event.preventDefault();
+        Swal.fire({
+        title: 'Emin misiniz?',
+        text: message,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: color,
+        cancelButtonColor: '#858796',
+        confirmButtonText: confirmText,
+        cancelButtonText: 'Vazgeç',
+        reverseButtons: true
+        }).then((result) => {
+        if (result.isConfirmed) {
+        form.submit();
         }
-    }
-    else
-    {
-        <tr>
-            <td colspan="6" class="text-center py-4">Henüz kayıtlı kullanıcı bulunamadı.</td>
-        </tr>
-    }
-</tbody>
+        });
+        }
+    </script>
+}
