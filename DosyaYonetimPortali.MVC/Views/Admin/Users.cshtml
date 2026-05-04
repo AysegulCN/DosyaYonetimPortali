@@ -41,13 +41,7 @@
     </a>
 </div>
 
-@if (TempData["Message"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-radius: 10px;">
-        <i class="fas fa-check-circle me-2"></i> @TempData["Message"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
+
 
 <div class="card shadow mb-5" style="border-radius: 15px; border: none; overflow: hidden;">
     <div class="card-header py-4 bg-white" style="border-bottom: 1px solid #f1f3f5;">
@@ -146,12 +140,36 @@
         cancelButtonColor: '#858796',
         confirmButtonText: confirmText,
         cancelButtonText: 'Vazgeç',
-        reverseButtons: true
+        reverseButtons: true,
+        borderRadius: '15px'
         }).then((result) => {
         if (result.isConfirmed) {
         form.submit();
         }
         });
+        }
+
+        // İŞTE EFSANEVİ TOAST BİLDİRİM KODUMUZ
+        @if (TempData["ToastMessage"] != null)
+        {
+            <text>
+                const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+                });
+
+                Toast.fire({
+                icon: '@TempData["ToastIcon"]',
+                title: '@TempData["ToastMessage"]'
+                });
+            </text>
         }
     </script>
 }

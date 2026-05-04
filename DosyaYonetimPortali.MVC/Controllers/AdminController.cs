@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text;
 using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
 using System.IO;
-
 
 namespace DosyaYonetimPortali.MVC.Controllers
 {
@@ -32,27 +32,6 @@ namespace DosyaYonetimPortali.MVC.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Users()
-        {
-            var client = _httpClientFactory.CreateClient();
-
-            var token = User.Claims.FirstOrDefault(c => c.Type == "access_token")?.Value;
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.GetAsync("https://localhost:7145/api/users");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var jsonData = await response.Content.ReadAsStringAsync();
-                var users = JsonSerializer.Deserialize<List<UserViewModel>>(jsonData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                return View(users);
-            }
-
-            return View(new List<UserViewModel>());
-        }
-
         public IActionResult Storage()
         {
             return View();
@@ -61,29 +40,6 @@ namespace DosyaYonetimPortali.MVC.Controllers
         public IActionResult Logs()
         {
             return View();
-        }
-        [HttpPost]
-        public async Task<IActionResult> DeleteUser(string id)
-        {
-            var client = _httpClientFactory.CreateClient();
-            var token = User.Claims.FirstOrDefault(c => c.Type == "access_token")?.Value;
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-            await client.DeleteAsync($"https://localhost:7145/api/users/{id}");
-
-            return RedirectToAction("Users");
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ToggleRole(string id)
-        {
-            var client = _httpClientFactory.CreateClient();
-            var token = User.Claims.FirstOrDefault(c => c.Type == "access_token")?.Value;
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-            await client.PostAsync($"https://localhost:7145/api/users/toggle-role/{id}", null);
-
-            return RedirectToAction("Users");
         }
 
         public IActionResult Shares()
@@ -109,24 +65,105 @@ namespace DosyaYonetimPortali.MVC.Controllers
             TempData["Message"] = "Sistemdeki tüm açık paylaşım bağlantıları başarıyla kapatıldı.";
             return RedirectToAction("Shares");
         }
-        [HttpGet]
-        public IActionResult AddUser()
+
+        private static List<UserViewModel> _tempUsers = new List<UserViewModel>
         {
-            return View();
+            new UserViewModel { Id = "1", FirstName = "Ayşegül", LastName = "Yılmaz", Email = "aysegul@coredrive.com", Role = "User" },
+            new UserViewModel { Id = "2", FirstName = "Sistem", LastName = "Yöneticisi", Email = "patron@coredrive.com", Role = "Admin" }
+        };
+
+        [HttpGet]
+        public IActionResult Users()
+        {
+            return View(_tempUsers);
         }
 
         [HttpPost]
-        public IActionResult AddUser(string FirstName, string LastName, string Email, string Password, string Role)
+        public IActionResult AddUser(UserViewModel model)
         {
-            
-            TempData["Message"] = $"{FirstName} {LastName} isimli kullanıcı ({Role}) olarak sisteme başarıyla eklendi.";
+            model.Id = Guid.NewGuid().ToString().Substring(0, 8);
+            _tempUsers.Add(model);
+
+            TempData["ToastMessage"] = $"{model.FirstName} {model.LastName} isimli kullanıcı ({model.Role}) olarak sisteme başarıyla eklendi.";
+            TempData["ToastIcon"] = "success";
 
             return RedirectToAction("Users");
         }
+
+        [HttpPost]
+        public IActionResult DeleteUser(string id)
+        {
+            var user = _tempUsers.FirstOrDefault(u => u.Id == id);
+            if (user != null)
+            {
+                _tempUsers.Remove(user);
+                TempData["ToastMessage"] = "Kullanıcı sistemden kalıcı olarak silindi.";
+                TempData["ToastIcon"] = "success";
+            }
+            return RedirectToAction("Users");
+        }
+
+        [HttpPost]
+        public IActionResult ToggleRole(string id)
+        {
+            var user = _tempUsers.FirstOrDefault(u => u.Id == id);
+            if (user != null)
+            {
+                user.Role = user.Role == "Admin" ? "User" : "Admin";
+                TempData["ToastMessage"] = $"Kullanıcının yetkisi '{user.Role}' olarak güncellendi.";
+                TempData["ToastIcon"] = "info";
+            }
+            return RedirectToAction("Users");
+        }
+
+        private static List<RoleViewModel> _tempRoles = new List<RoleViewModel>
+        {
+             new RoleViewModel { RoleName = "Admin", UserCount = 2, IsSystemRole = true },
+             new RoleViewModel { RoleName = "User", UserCount = 122, IsSystemRole = false }
+        };
+
         [HttpGet]
         public IActionResult Roles()
         {
-            return View();
+            return View(_tempRoles);
+        }
+
+        [HttpPost]
+        public IActionResult AddRole(string RoleName)
+        {
+            if (!string.IsNullOrEmpty(RoleName) && !_tempRoles.Any(r => r.RoleName.ToLower() == RoleName.ToLower()))
+            {
+                _tempRoles.Add(new RoleViewModel { RoleName = RoleName, UserCount = 0, IsSystemRole = false });
+                TempData["ToastMessage"] = $"'{RoleName}' rolü sisteme başarıyla eklendi.";
+                TempData["ToastIcon"] = "success";
+            }
+            return RedirectToAction("Roles");
+        }
+
+        [HttpPost]
+        public IActionResult EditRole(string OldRoleName, string NewRoleName)
+        {
+            var role = _tempRoles.FirstOrDefault(r => r.RoleName == OldRoleName);
+            if (role != null && !role.IsSystemRole)
+            {
+                role.RoleName = NewRoleName;
+                TempData["ToastMessage"] = $"Rol adı '{NewRoleName}' olarak güncellendi.";
+                TempData["ToastIcon"] = "success";
+            }
+            return RedirectToAction("Roles");
+        }
+
+        [HttpPost]
+        public IActionResult DeleteRole(string RoleName)
+        {
+            var role = _tempRoles.FirstOrDefault(r => r.RoleName == RoleName);
+            if (role != null && !role.IsSystemRole)
+            {
+                _tempRoles.Remove(role);
+                TempData["ToastMessage"] = $"'{RoleName}' rolü sistemden kalıcı olarak silindi.";
+                TempData["ToastIcon"] = "success";
+            }
+            return RedirectToAction("Roles");
         }
 
         [HttpGet]
@@ -134,6 +171,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             return View();
         }
+
         [HttpGet]
         public IActionResult LoginRecords()
         {
@@ -145,6 +183,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             return View();
         }
+
         [HttpGet]
         public IActionResult FileSettings()
         {
@@ -156,6 +195,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             return View();
         }
+
         [HttpPost]
         public IActionResult RefreshStorage()
         {
@@ -171,7 +211,6 @@ namespace DosyaYonetimPortali.MVC.Controllers
                 var writer = new PdfWriter(ms);
                 var pdf = new PdfDocument(writer);
                 var document = new Document(pdf);
-
 
                 var header = new Paragraph("CORE-DRIVE SISTEM RAPORU")
                     .SetTextAlignment(TextAlignment.CENTER)
@@ -204,6 +243,5 @@ namespace DosyaYonetimPortali.MVC.Controllers
                 return File(fileBytes, "application/pdf", fileName);
             }
         }
-
     }
 }

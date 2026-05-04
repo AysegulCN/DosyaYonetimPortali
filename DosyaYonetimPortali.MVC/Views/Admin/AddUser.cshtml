@@ -29,7 +29,6 @@
         border: 1px solid #d1d3e2;
         background-color: #f8f9fc;
     }
-    /* Şifre Göster/Gizle butonu için özel köşe ayarı */
     .input-group .modern-input.password-input {
         border-radius: 0;
         border-right: none;
@@ -96,7 +95,6 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-key text-muted"></i></span>
                                 <input type="password" name="Password" id="tempPassword" class="form-control modern-input password-input" placeholder="En az 6 karakter" required>
-                                <!-- Tıklanabilir Göz İkonu -->
                                 <span class="input-group-text password-toggle" onclick="togglePasswordVisibility()">
                                     <i class="fas fa-eye text-muted" id="toggleIcon"></i>
                                 </span>
@@ -129,7 +127,6 @@
 
 @section Scripts {
     <script>
-        // Şifre Göster/Gizle Fonksiyonu
         function togglePasswordVisibility() {
             var pwdInput = document.getElementById("tempPassword");
             var toggleIcon = document.getElementById("toggleIcon");
