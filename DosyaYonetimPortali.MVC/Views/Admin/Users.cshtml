@@ -1,37 +1,41 @@
-﻿@{
+﻿@model List<DosyaYonetimPortali.MVC.Models.UserViewModel>
+@{
     ViewData["Title"] = "Kullanıcı Yönetimi";
 }
 
 <style>
-    .btn-animated:active {
-        transform: scale(0.95);
-    }
+    .btn-animated:active { transform: scale(0.95); }
     
     .modern-table tbody tr {
         transition: all 0.25s ease-in-out;
         border-bottom: 1px solid #f1f3f5;
     }
-
-        .modern-table tbody tr:hover {
-            background-color: #ffffff;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
-            transform: translateY(-2px);
-            z-index: 10;
-            position: relative;
-        }
-
+    .modern-table tbody tr:hover {
+        background-color: #ffffff;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+        z-index: 10;
+        position: relative;
+    }
     .modern-table td {
-        border-top: none !important;
-        padding: 1.25rem 1rem !important;
+        border-top: none !important; 
+        padding: 1.5rem 1rem !important; /* Üst üste binmeyi engellemek için padding artırıldı */
         vertical-align: middle;
     }
-
     .modern-badge {
         font-weight: 600;
         letter-spacing: 0.5px;
         padding: 8px 16px !important;
         box-shadow: 0 3px 5px rgba(0,0,0,0.05);
     }
+    .modern-input { border-radius: 10px; padding: 0.75rem 1rem; border: 1px solid #d1d3e2; height: 52px; }
+    .modern-input:focus { border-color: #4e73df; box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.1); outline: none; }
+    
+    .custom-close-btn {
+        background: #f8f9fc; border: none; border-radius: 50%; width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center; color: #858796; transition: all 0.2s;
+    }
+    .custom-close-btn:hover { background: #e74a3b; color: white; }
 </style>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -40,8 +44,6 @@
         <i class="fas fa-user-plus fa-sm text-white-50 me-1"></i> Yeni Kullanıcı
     </a>
 </div>
-
-
 
 <div class="card shadow mb-5" style="border-radius: 15px; border: none; overflow: hidden;">
     <div class="card-header py-4 bg-white" style="border-bottom: 1px solid #f1f3f5;">
@@ -62,41 +64,41 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model != null && Model.Count > 0)
+                    @if (Model != null && Model.Any())
                     {
                         foreach (var user in Model)
                         {
                             <tr>
                                 <td class="px-4">
                                     <div class="d-flex align-items-center">
-                                        <img src="https://ui-avatars.com/api/?name=@user.FullName&background=random&color=fff&rounded=true" class="shadow-sm me-3" width="42" height="42">
+                                        <img src="https://ui-avatars.com/api/?name=@user.FirstName+@user.LastName&background=random&color=fff&rounded=true" class="shadow-sm me-3" width="45" height="45">
                                         <div>
-                                            <div class="fw-bold text-dark" style="font-size: 1.05rem;">@user.FullName</div>
-                                            <div class="small text-muted">ID: #@user.Id.Substring(0, 8)</div>
+                                            <!-- Line-height eklendi, üst üste binme çözüldü -->
+                                            <div class="fw-bold text-dark mb-1" style="font-size: 1.05rem; line-height: 1.2;">@user.FirstName @user.LastName</div>
+                                            <div class="small text-muted" style="line-height: 1;">ID: #@user.Id</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="text-secondary">@user.Email</td>
                                 <td class="text-center">
+                                    <!-- text-white eklendi, artık renkler mükemmel okunuyor -->
                                     @if (user.Role == "Admin")
                                     {
-                                        <span class="badge bg-danger modern-badge rounded-pill">Admin</span>
+                                        <span class="badge bg-danger text-white modern-badge rounded-pill">Admin</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-primary modern-badge rounded-pill">User</span>
+                                        <span class="badge bg-primary text-white modern-badge rounded-pill">User</span>
                                     }
                                 </td>
                                 <td>
                                     <span class="text-success fw-bold"><i class="fas fa-circle fa-xs me-1"></i> Aktif</span>
                                 </td>
                                 <td class="text-end px-4">
-                                    <form asp-action="ToggleRole" asp-controller="Admin" method="post" class="d-inline">
-                                        <input type="hidden" name="id" value="@user.Id" />
-                                        <button type="button" class="btn btn-sm btn-outline-warning shadow-sm me-1 btn-animated" title="Yetkiyi Değiştir" onclick="confirmAction(event, this.closest('form'), 'Kullanıcının yetkisini değiştirmek üzeresiniz. Emin misiniz?', 'Evet, Değiştir', '#f6c23e')">
-                                            <i class="fas fa-user-shield"></i>
-                                        </button>
-                                    </form>
+                                    <!-- Düzenle Butonu (Sarı uyarı butonu yerine Mavi Edit butonu yapıldı) -->
+                                    <button type="button" class="btn btn-sm btn-outline-info shadow-sm me-1 btn-animated" title="Düzenle" onclick="openEditModal('@user.Id', '@user.FirstName', '@user.LastName', '@user.Role')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
 
                                     @if (user.Role != "Admin")
                                     {
@@ -126,49 +128,102 @@
     </div>
 </div>
 
+<!-- KULLANICI DÜZENLE MODAL PENCERESİ -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 15px; border: none;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-info"><i class="fas fa-user-edit me-2"></i>Kullanıcıyı Düzenle</h5>
+                <button type="button" class="custom-close-btn" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form asp-action="EditUser" asp-controller="Admin" method="post">
+                <div class="modal-body py-4">
+                    <input type="hidden" name="Id" id="editUserId" />
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Adı</label>
+                            <input type="text" name="FirstName" id="editUserFirstName" class="form-control modern-input" required autocomplete="off">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Soyadı</label>
+                            <input type="text" name="LastName" id="editUserLastName" class="form-control modern-input" required autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Sistem Yetkisi (Rol)</label>
+                        <select name="Role" id="editUserRole" class="form-control modern-input">
+                            <option value="User">Normal Kullanıcı (User)</option>
+                            <option value="Admin">Sistem Yöneticisi (Admin)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light shadow-sm" data-bs-dismiss="modal" data-dismiss="modal" style="border-radius: 10px;">İptal</button>
+                    <button type="submit" class="btn btn-info text-white shadow-sm btn-animated" style="border-radius: 10px;">Güncelle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        function confirmAction(event, form, message, confirmText, color) {
-        event.preventDefault();
-        Swal.fire({
-        title: 'Emin misiniz?',
-        text: message,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: color,
-        cancelButtonColor: '#858796',
-        confirmButtonText: confirmText,
-        cancelButtonText: 'Vazgeç',
-        reverseButtons: true,
-        borderRadius: '15px'
-        }).then((result) => {
-        if (result.isConfirmed) {
-        form.submit();
-        }
-        });
+        // Modalın içini doldurup açan fonksiyon
+        function openEditModal(id, firstName, lastName, role) {
+            document.getElementById('editUserId').value = id;
+            document.getElementById('editUserFirstName').value = firstName;
+            document.getElementById('editUserLastName').value = lastName;
+            document.getElementById('editUserRole').value = role;
+            
+            $('#editUserModal').modal('show');
         }
 
-        // İŞTE EFSANEVİ TOAST BİLDİRİM KODUMUZ
+        // Silme uyarı mesajı
+        function confirmAction(event, form, message, confirmText, color) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: color,
+                cancelButtonColor: '#858796',
+                confirmButtonText: confirmText,
+                cancelButtonText: 'Vazgeç',
+                reverseButtons: true,
+                borderRadius: '15px'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+
+        // Toast Bildirimi
         @if (TempData["ToastMessage"] != null)
         {
             <text>
-                const Toast = Swal.mixin({
+            const Toast = Swal.mixin({
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
                 timer: 4000,
                 timerProgressBar: true,
                 didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
                 }
-                });
+            });
 
-                Toast.fire({
+            Toast.fire({
                 icon: '@TempData["ToastIcon"]',
                 title: '@TempData["ToastMessage"]'
-                });
+            });
             </text>
         }
     </script>

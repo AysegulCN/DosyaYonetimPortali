@@ -78,6 +78,12 @@ namespace DosyaYonetimPortali.MVC.Controllers
             return View(_tempUsers);
         }
 
+        [HttpGet]
+        public IActionResult AddUser()
+        {
+            return View();
+        }
+
         [HttpPost]
         public IActionResult AddUser(UserViewModel model)
         {
@@ -103,18 +109,24 @@ namespace DosyaYonetimPortali.MVC.Controllers
             return RedirectToAction("Users");
         }
 
+
         [HttpPost]
-        public IActionResult ToggleRole(string id)
+        public IActionResult EditUser(string Id, string FirstName, string LastName, string Role)
         {
-            var user = _tempUsers.FirstOrDefault(u => u.Id == id);
+            var user = _tempUsers.FirstOrDefault(u => u.Id == Id);
             if (user != null)
             {
-                user.Role = user.Role == "Admin" ? "User" : "Admin";
-                TempData["ToastMessage"] = $"Kullanıcının yetkisi '{user.Role}' olarak güncellendi.";
-                TempData["ToastIcon"] = "info";
+                user.FirstName = FirstName;
+                user.LastName = LastName;
+                user.Role = Role; // Eğer Admin seçilirse artık sistem onu Admin olarak tanıyacak
+
+                TempData["ToastMessage"] = "Kullanıcı bilgileri başarıyla güncellendi.";
+                TempData["ToastIcon"] = "success";
             }
             return RedirectToAction("Users");
         }
+
+
 
         private static List<RoleViewModel> _tempRoles = new List<RoleViewModel>
         {
@@ -166,11 +178,64 @@ namespace DosyaYonetimPortali.MVC.Controllers
             return RedirectToAction("Roles");
         }
 
+        private static List<PermissionViewModel> _tempPermissions = new List<PermissionViewModel>
+{
+    new PermissionViewModel { ModuleName = "Dosya Yükleme ve İndirme", AdminAccess = true, UserAccess = true, IsCore = true },
+    new PermissionViewModel { ModuleName = "Klasör Oluşturma ve Hiyerarşi Yönetimi", AdminAccess = true, UserAccess = true, IsCore = false },
+    new PermissionViewModel { ModuleName = "Dosya Silme (Kalıcı Silme)", AdminAccess = true, UserAccess = false, IsCore = true },
+    new PermissionViewModel { ModuleName = "Çöp Kutusu Yönetimi (Geri Getirme)", AdminAccess = true, UserAccess = true, IsCore = false },
+    new PermissionViewModel { ModuleName = "Dışarıya Açık Paylaşım (Link Oluşturma)", AdminAccess = true, UserAccess = true, IsCore = false },
+    new PermissionViewModel { ModuleName = "Paylaşım Bağlantılarına Şifre ve Süre Koyma", AdminAccess = true, UserAccess = false, IsCore = false },
+    new PermissionViewModel { ModuleName = "Ortak Çalışma Klasörleri (Workspace) Oluşturma", AdminAccess = true, UserAccess = false, IsCore = false },
+    new PermissionViewModel { ModuleName = "Dosya Versiyon Geçmişi (Sürüm Kontrolü)", AdminAccess = true, UserAccess = true, IsCore = false },
+    new PermissionViewModel { ModuleName = "Dosya İçi Yorum Yapma ve Etiketleme", AdminAccess = true, UserAccess = true, IsCore = false },
+    new PermissionViewModel { ModuleName = "Sistem ve Kullanıcı Yönetimi", AdminAccess = true, UserAccess = false, IsCore = true },
+    new PermissionViewModel { ModuleName = "Depolama Kotası Belirleme ve Yönetme", AdminAccess = true, UserAccess = false, IsCore = true }
+};
+
         [HttpGet]
         public IActionResult Permissions()
         {
-            return View();
+            return View(_tempPermissions);
         }
+
+        [HttpPost]
+        public IActionResult SavePermissions(List<PermissionViewModel> permissions)
+        {
+            if (permissions != null && permissions.Any())
+            {
+                _tempPermissions = permissions;
+                foreach (var p in _tempPermissions)
+                {
+                    if (p.IsCore) p.AdminAccess = true;
+                }
+            }
+
+            TempData["ToastMessage"] = "Tüm yetki ayarları ve modüller başarıyla güncellendi.";
+            TempData["ToastIcon"] = "success";
+            return RedirectToAction("Permissions");
+        }
+
+        [HttpPost]
+        public IActionResult AddPermission(string ModuleName, string ModuleType)
+        {
+            if (!string.IsNullOrWhiteSpace(ModuleName) && !_tempPermissions.Any(p => p.ModuleName.Equals(ModuleName, StringComparison.OrdinalIgnoreCase)))
+            {
+                bool isCore = ModuleType == "Core";
+                _tempPermissions.Add(new PermissionViewModel
+                {
+                    ModuleName = ModuleName,
+                    IsCore = isCore,
+                    AdminAccess = true,
+                    UserAccess = false
+                });
+
+                TempData["ToastMessage"] = $"Yeni yetki modülü ({ModuleName}) sisteme başarıyla entegre edildi.";
+                TempData["ToastIcon"] = "success";
+            }
+            return RedirectToAction("Permissions");
+        }
+
 
         [HttpGet]
         public IActionResult LoginRecords()

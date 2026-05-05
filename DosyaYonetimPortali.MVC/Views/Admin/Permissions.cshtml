@@ -1,48 +1,225 @@
-﻿@{
-    ViewData["Title"] = "Yetki Tanımları";
+﻿@model List<DosyaYonetimPortali.MVC.Models.PermissionViewModel>
+@{
+    ViewData["Title"] = "Yetki Matrisi";
 }
 
+<style>
+    .btn-animated:active { transform: scale(0.95); }
+    
+    .modern-table tbody tr {
+        transition: all 0.25s ease-in-out;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .modern-table tbody tr:hover {
+        background-color: #f8f9fc;
+    }
+    .modern-table td {
+        border-top: none !important; 
+        padding: 1.25rem 1rem !important; 
+        vertical-align: middle;
+        font-weight: 500;
+        color: #5a5c69;
+    }
+    .modern-table th {
+        font-weight: 700;
+        color: #858796;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.85rem;
+        padding: 1.5rem 1rem;
+    }
+    .core-badge {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+        margin-left: 10px;
+        background-color: #e74a3b;
+        color: white;
+        border-radius: 12px;
+        font-weight: bold;
+    }
+    
+    .custom-checkbox {
+        width: 1.5rem;
+        height: 1.5rem;
+        cursor: pointer;
+    }
+    .custom-checkbox:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .modern-input { border-radius: 10px; padding: 0.75rem 1rem; border: 1px solid #d1d3e2; height: 52px; }
+    .modern-input:focus { border-color: #4e73df; box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.1); outline: none; }
+    
+    .custom-close-btn {
+        background: #f8f9fc; border: none; border-radius: 50%; width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center; color: #858796; transition: all 0.2s;
+    }
+    .custom-close-btn:hover { background: #e74a3b; color: white; }
+
+    .option-input { display: none; }
+    .option-card {
+        border: 2px solid #eaecf4;
+        border-radius: 12px;
+        padding: 1.25rem;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        height: 100%;
+    }
+    .option-card:hover { border-color: #d1d3e2; }
+    
+    .option-input:checked + .option-card.free-type {
+        border-color: #4e73df;
+        background-color: #f0f4ff;
+    }
+    .option-input:checked + .option-card.core-type {
+        border-color: #e74a3b;
+        background-color: #fdf3f2;
+    }
+</style>
+
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800 fw-bold">Yetki Matrisi</h1>
-    <button class="btn btn-success shadow-sm" style="border-radius: 10px;">
-        <i class="fas fa-save fa-sm text-white-50 me-1"></i> Değişiklikleri Kaydet
-    </button>
+    <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem Yetki Matrisi</h1>
+    <div>
+        <button type="button" class="btn btn-primary shadow-sm btn-animated me-2" data-bs-toggle="modal" data-bs-target="#addPermissionModal" data-toggle="modal" data-target="#addPermissionModal" style="border-radius: 10px; padding: 10px 15px; font-weight: 600;">
+            <i class="fas fa-plus fa-sm text-white-50 me-2"></i> Yeni Yetki Ekle
+        </button>
+        <button type="button" onclick="document.getElementById('savePermissionsForm').submit();" class="btn btn-success shadow-sm btn-animated" style="border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+            <i class="fas fa-save fa-sm text-white-50 me-2"></i> Değişiklikleri Kaydet
+        </button>
+    </div>
 </div>
 
-<div class="card shadow border-0" style="border-radius: 15px;">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle mb-0">
-                <thead class="bg-light text-dark fw-bold text-center">
-                    <tr>
-                        <th class="text-start px-4 border-0">Sistem Modülü / Yetki</th>
-                        <th class="text-danger border-0">Admin</th>
-                        <th class="text-primary border-0">User</th>
-                    </tr>
-                </thead>
-                <tbody class="text-center">
-                    <tr>
-                        <td class="text-start px-4 fw-bold text-dark">Dosya Yükleme ve İndirme</td>
-                        <td><input class="form-check-input" type="checkbox" checked disabled style="transform: scale(1.3);"></td>
-                        <td><input class="form-check-input" type="checkbox" checked style="transform: scale(1.3);"></td>
-                    </tr>
-                    <tr>
-                        <td class="text-start px-4 fw-bold text-dark">Dosya Silme (Kalıcı)</td>
-                        <td><input class="form-check-input" type="checkbox" checked disabled style="transform: scale(1.3);"></td>
-                        <td><input class="form-check-input" type="checkbox" style="transform: scale(1.3);"></td>
-                    </tr>
-                    <tr>
-                        <td class="text-start px-4 fw-bold text-dark">Dışarıya Açık Paylaşım İptali</td>
-                        <td><input class="form-check-input" type="checkbox" checked disabled style="transform: scale(1.3);"></td>
-                        <td><input class="form-check-input" type="checkbox" style="transform: scale(1.3);"></td>
-                    </tr>
-                    <tr>
-                        <td class="text-start px-4 fw-bold text-dark">Sistem ve Kullanıcı Yönetimi</td>
-                        <td><input class="form-check-input" type="checkbox" checked disabled style="transform: scale(1.3);"></td>
-                        <td><input class="form-check-input" type="checkbox" disabled style="transform: scale(1.3);"></td>
-                    </tr>
-                </tbody>
-            </table>
+<form id="savePermissionsForm" asp-action="SavePermissions" asp-controller="Admin" method="post">
+    <div class="card shadow mb-5" style="border-radius: 15px; border: none; overflow: hidden;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table modern-table align-middle mb-0 text-center">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0 text-start px-5 w-50">Sistem Modülü / Özellik</th>
+                            <th class="border-0 text-danger w-25"><i class="fas fa-user-shield me-2"></i>Admin</th>
+                            <th class="border-0 text-primary w-25"><i class="fas fa-user me-2"></i>User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Count; i++)
+                        {
+                            <tr>
+                                <td class="text-start px-5">
+                                    <input type="hidden" asp-for="@Model[i].ModuleName" />
+                                    <input type="hidden" asp-for="@Model[i].IsCore" />
+                                    
+                                    <span style="font-size: 1.05rem;">@Model[i].ModuleName</span>
+                                    
+                                    @if (Model[i].IsCore)
+                                    {
+                                        <span class="core-badge">ÇEKİRDEK</span>
+                                    }
+                                </td>
+                                <td>
+                                    <input class="form-check-input custom-checkbox" type="checkbox" asp-for="@Model[i].AdminAccess" disabled="@(Model[i].IsCore ? "disabled" : null)">
+                                    @if (Model[i].IsCore)
+                                    {
+                                        <input type="hidden" asp-for="@Model[i].AdminAccess" value="true" />
+                                    }
+                                </td>
+                                <td>
+                                    <input class="form-check-input custom-checkbox" type="checkbox" asp-for="@Model[i].UserAccess" disabled="@(Model[i].IsCore && !Model[i].UserAccess ? "disabled" : null)">
+                                    @if (Model[i].IsCore && !Model[i].UserAccess)
+                                    {
+                                        <input type="hidden" asp-for="@Model[i].UserAccess" value="false" />
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="modal fade" id="addPermissionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius: 15px; border: none;">
+            <div class="modal-header border-0 pb-0 mt-3 px-4">
+                <h5 class="modal-title fw-bold text-primary"><i class="fas fa-layer-group me-2"></i>Yeni Sistem Yetkisi Ekle</h5>
+                <button type="button" class="custom-close-btn" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form asp-action="AddPermission" asp-controller="Admin" method="post">
+                <div class="modal-body py-4 px-4">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">Yetki / Modül Adı</label>
+                        <input type="text" name="ModuleName" class="form-control modern-input" placeholder="Örn: Gelişmiş Log Görüntüleme" required autocomplete="off">
+                    </div>
+
+                    <label class="form-label fw-bold text-dark small text-uppercase mb-3" style="letter-spacing: 0.5px;">Modül Tipi (Seviyesi)</label>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="w-100 h-100">
+                                <input type="radio" name="ModuleType" value="Free" class="option-input" checked>
+                                <div class="option-card free-type">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-unlock"></i>
+                                        </div>
+                                        <h6 class="fw-bold mb-0 text-dark">Serbest Modül</h6>
+                                    </div>
+                                    <p class="small text-muted mb-0">Hem Admin hem de User yetkileri daha sonradan isteğe bağlı olarak açılıp kapatılabilir.</p>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="w-100 h-100">
+                                <input type="radio" name="ModuleType" value="Core" class="option-input">
+                                <div class="option-card core-type">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-lock"></i>
+                                        </div>
+                                        <h6 class="fw-bold mb-0 text-dark">Çekirdek Modül</h6>
+                                    </div>
+                                    <p class="small text-muted mb-0">Sistemin temel yapısıdır. Admin yetkisi asla kapatılamaz, kritik güvenlik sağlar.</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 mb-3">
+                    <button type="button" class="btn btn-light shadow-sm" data-bs-dismiss="modal" data-dismiss="modal" style="border-radius: 10px;">İptal</button>
+                    <button type="submit" class="btn btn-primary shadow-sm btn-animated" style="border-radius: 10px; padding: 8px 25px;">Kayıt Oluştur</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        @if (TempData["ToastMessage"] != null)
+        {
+            <text>
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            Toast.fire({
+                icon: '@TempData["ToastIcon"]',
+                title: '@TempData["ToastMessage"]'
+            });
+            </text>
+        }
+    </script>
+}
