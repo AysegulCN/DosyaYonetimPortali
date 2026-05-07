@@ -1,56 +1,147 @@
-﻿@{
+﻿@model List<DosyaYonetimPortali.MVC.Models.LogViewModel>
+@{
     ViewData["Title"] = "Sistem Logları";
 }
 
+<style>
+    .btn-animated:active { transform: scale(0.95); }
+    .modern-table tbody tr { transition: all 0.25s ease-in-out; border-bottom: 1px solid #f1f3f5; }
+    .modern-table tbody tr:hover { background-color: #f8f9fc; }
+    .modern-table td { border-top: none !important; padding: 1.25rem 1rem !important; vertical-align: middle; font-weight: 500; color: #5a5c69; }
+    .modern-table th { font-weight: 700; color: #858796; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; padding: 1.5rem 1rem; }
+    
+    .level-badge {
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        padding: 6px 12px !important;
+        border-radius: 20px;
+        font-size: 0.75rem;
+    }
+    .badge-error { background-color: #e74a3b; color: white; }
+    .badge-info { background-color: #1cc88a; color: white; }
+    .badge-warn { background-color: #f6c23e; color: #fff; }
+    .badge-system { background-color: #36b9cc; color: white; }
+</style>
+
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem Logları (Aktiviteler)</h1>
-    <button class="btn btn-outline-danger shadow-sm" style="border-radius: 10px;">
-        <i class="fas fa-trash-alt fa-sm"></i> Eski Logları Temizle
-    </button>
+    
+    @if (Model != null && Model.Any())
+    {
+        <form asp-action="ClearOldLogs" asp-controller="Admin" method="post" id="clearLogsForm">
+            <button type="button" onclick="confirmClearLogs()" class="btn btn-outline-danger shadow-sm btn-animated" style="border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+                <i class="fas fa-trash-alt fa-sm me-2"></i> Eski Logları Temizle
+            </button>
+        </form>
+    }
 </div>
 
-<div class="card shadow mb-4" style="border-radius: 15px; border: none;">
+<div class="card shadow mb-5" style="border-radius: 15px; border: none; overflow: hidden;">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle mb-0" width="100%" cellspacing="0">
+            <table class="table modern-table align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th class="border-0 px-4 py-3">Tarih / Saat</th>
-                        <th class="border-0 py-3">Seviye</th>
-                        <th class="border-0 py-3">Kullanıcı</th>
-                        <th class="border-0 py-3 w-50">Açıklama (Eylem)</th>
+                        <th class="border-0 px-4 w-20">Tarih / Saat</th>
+                        <th class="border-0 text-center w-10">Seviye</th>
+                        <th class="border-0 w-20">Kullanıcı</th>
+                        <th class="border-0 px-4 w-50">Açıklama (Eylem)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td class="px-4 text-muted small">26.04.2026 - 15:42:10</td>
-                        <td><span class="badge bg-danger text-white rounded-pill px-3 py-1">ERROR</span></td>
-                        <td class="fw-bold">-</td>
-                        <td>Veritabanı bağlantısı zaman aşımına uğradı (Timeout). Sistem otomatik yeniden denedi.</td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 text-muted small">26.04.2026 - 15:30:05</td>
-                        <td><span class="badge bg-success text-white rounded-pill px-3 py-1">INFO</span></td>
-                        <td class="fw-bold">Ayşegül Yılmaz</td>
-                        <td>Kullanıcı başarıyla sisteme giriş yaptı (IP: 192.168.1.45).</td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 text-muted small">26.04.2026 - 14:15:22</td>
-                        <td><span class="badge bg-warning text-dark rounded-pill px-3 py-1">WARN</span></td>
-                        <td class="fw-bold">Sistem Yöneticisi</td>
-                        <td>'Yedekleme_2026.zip' dosyası paylaşıma açıldı ancak şifre belirlenmedi.</td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 text-muted small">26.04.2026 - 10:05:00</td>
-                        <td><span class="badge bg-info text-white rounded-pill px-3 py-1">SYSTEM</span></td>
-                        <td class="fw-bold">API Servisi</td>
-                        <td>Günlük çöp kutusu temizliği başlatıldı. 30 günü dolduran 12 dosya kalıcı olarak silindi.</td>
-                    </tr>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var log in Model)
+                        {
+                            <tr>
+                                <td class="px-4 text-muted small">@log.Date</td>
+                                <td class="text-center">
+                                    @if (log.Level == "ERROR")
+                                    {
+                                        <span class="level-badge badge-error">ERROR</span>
+                                    }
+                                    else if (log.Level == "INFO")
+                                    {
+                                        <span class="level-badge badge-info">INFO</span>
+                                    }
+                                    else if (log.Level == "WARN")
+                                    {
+                                        <span class="level-badge badge-warn">WARN</span>
+                                    }
+                                    else if (log.Level == "SYSTEM")
+                                    {
+                                        <span class="level-badge badge-system">SYSTEM</span>
+                                    }
+                                </td>
+                                <td>@log.User</td>
+                                <td class="px-4 text-dark" style="font-size: 0.95rem;">@log.Description</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="fas fa-clipboard-check fa-3x mb-3 opacity-50 text-success"></i>
+                                <h5>Sistem şu an tertemiz. Kayıtlı log bulunmuyor.</h5>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
-    </div>
-    <div class="card-footer bg-white text-center py-3" style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
-        <a href="#" class="text-primary text-decoration-none fw-bold small">Tüm Logları Gör (Sayfa 1/45)</a>
+        @if (Model != null && Model.Any())
+        {
+            <div class="card-footer bg-white py-3 border-0 text-center">
+                <a href="#" class="text-decoration-none text-primary fw-bold" style="font-size: 0.9rem;">
+                    Tüm Logları Gör (Sayfa 1/45)
+                </a>
+            </div>
+        }
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function confirmClearLogs() {
+        Swal.fire({
+        title: 'Emin misiniz?',
+        text: 'Eski sistem loglarını tamamen temizlemek üzeresiniz. Bu işlem geri alınamaz.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e74a3b',
+        cancelButtonColor: '#858796',
+        confirmButtonText: 'Evet, Temizle',
+        cancelButtonText: 'Vazgeç',
+        reverseButtons: true,
+        borderRadius: '15px'
+        }).then((result) => {
+        if (result.isConfirmed) {
+        document.getElementById('clearLogsForm').submit();
+        }
+        });
+        }
+
+        @if (TempData["ToastMessage"] != null)
+        {
+            <text>
+                const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+                });
+                Toast.fire({
+                icon: '@TempData["ToastIcon"]',
+                title: '@TempData["ToastMessage"]'
+                });
+            </text>
+        }
+    </script>
+}

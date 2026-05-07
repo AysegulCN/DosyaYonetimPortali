@@ -37,9 +37,21 @@ namespace DosyaYonetimPortali.MVC.Controllers
             return View();
         }
 
+        [HttpGet]
         public IActionResult Logs()
         {
-            return View();
+            return View(SystemLogger.Logs);
+        }
+
+        [HttpPost]
+        public IActionResult ClearOldLogs()
+        {
+            SystemLogger.ClearLogs();
+            SystemLogger.AddLog("SYSTEM", "Sistem Yöneticisi", "Tüm eski log kayıtları manuel olarak temizlendi.");
+
+            TempData["ToastMessage"] = "Sistemdeki tüm eski log kayıtları başarıyla temizlendi.";
+            TempData["ToastIcon"] = "success";
+            return RedirectToAction("Logs");
         }
 
         public IActionResult Shares()
@@ -47,10 +59,28 @@ namespace DosyaYonetimPortali.MVC.Controllers
             return View();
         }
 
+        private static SystemSettingsViewModel _systemSettings = new SystemSettingsViewModel();
+
+        [HttpGet]
         public IActionResult Settings()
         {
-            return View();
+            return View(_systemSettings);
         }
+
+        [HttpPost]
+        public IActionResult SaveSettings(SystemSettingsViewModel model)
+        {
+            _systemSettings = model;
+
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sistem yükleme limitleri ve güvenlik ayarları güncellendi.");
+
+            TempData["ToastMessage"] = "Sistem ve güvenlik ayarları başarıyla kaydedildi.";
+            TempData["ToastIcon"] = "success";
+
+            return RedirectToAction("Settings");
+        }
+
+
 
         [HttpPost]
         public IActionResult RevokeShare(string id)
@@ -90,6 +120,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
             model.Id = Guid.NewGuid().ToString().Substring(0, 8);
             _tempUsers.Add(model);
 
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", $"'{model.FirstName} {model.LastName}' isimli yeni bir kullanıcı sisteme eklendi.");
+
             TempData["ToastMessage"] = $"{model.FirstName} {model.LastName} isimli kullanıcı ({model.Role}) olarak sisteme başarıyla eklendi.";
             TempData["ToastIcon"] = "success";
 
@@ -103,6 +135,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
             if (user != null)
             {
                 _tempUsers.Remove(user);
+                SystemLogger.AddLog("WARN", "Sistem Yöneticisi", $"'{user.FirstName} {user.LastName}' isimli kullanıcı sistemden silindi.");
+
                 TempData["ToastMessage"] = "Kullanıcı sistemden kalıcı olarak silindi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -118,6 +152,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
                 user.FirstName = FirstName;
                 user.LastName = LastName;
                 user.Role = Role;
+
+                SystemLogger.AddLog("INFO", "Sistem Yöneticisi", $"'{FirstName} {LastName}' kullanıcısının bilgileri güncellendi.");
 
                 TempData["ToastMessage"] = "Kullanıcı bilgileri başarıyla güncellendi.";
                 TempData["ToastIcon"] = "success";
@@ -150,6 +186,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
                     perm.RoleAccesses.Add(new RoleAccessViewModel { RoleName = RoleName, HasAccess = false });
                 }
 
+                SystemLogger.AddLog("INFO", "Sistem Yöneticisi", $"'{RoleName}' isimli yeni sistem rolü oluşturuldu.");
+
                 TempData["ToastMessage"] = $"'{RoleName}' rolü sisteme başarıyla eklendi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -173,6 +211,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
                     }
                 }
 
+                SystemLogger.AddLog("INFO", "Sistem Yöneticisi", $"'{OldRoleName}' rolünün adı '{NewRoleName}' olarak değiştirildi.");
+
                 TempData["ToastMessage"] = $"Rol adı '{NewRoleName}' olarak güncellendi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -191,6 +231,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
                 {
                     perm.RoleAccesses?.RemoveAll(ra => ra.RoleName == RoleName);
                 }
+
+                SystemLogger.AddLog("WARN", "Sistem Yöneticisi", $"'{RoleName}' isimli sistem rolü silindi.");
 
                 TempData["ToastMessage"] = $"'{RoleName}' rolü sistemden kalıcı olarak silindi.";
                 TempData["ToastIcon"] = "success";
@@ -246,6 +288,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
                 }
             }
 
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sistem yetki matrisi ve rol izinleri güncellendi.");
+
             TempData["ToastMessage"] = "Tüm yetki ayarları ve modüller başarıyla güncellendi.";
             TempData["ToastIcon"] = "success";
             return RedirectToAction("Permissions");
@@ -266,6 +310,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
 
                 _tempPermissions.Add(newPerm);
 
+                SystemLogger.AddLog("INFO", "Sistem Yöneticisi", $"'{ModuleName}' modülü için yeni sistem yetkisi eklendi.");
+
                 TempData["ToastMessage"] = $"Yeni yetki modülü ({ModuleName}) sisteme başarıyla entegre edildi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -279,6 +325,9 @@ namespace DosyaYonetimPortali.MVC.Controllers
             if (permission != null)
             {
                 _tempPermissions.Remove(permission);
+
+                SystemLogger.AddLog("WARN", "Sistem Yöneticisi", $"'{ModuleName}' modülü sistem yetki matrisinden silindi.");
+
                 TempData["ToastMessage"] = $"'{ModuleName}' modülü sistemden kalıcı olarak silindi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -288,30 +337,88 @@ namespace DosyaYonetimPortali.MVC.Controllers
         [HttpGet]
         public IActionResult LoginRecords()
         {
-            return View();
+            return View(SystemLogger.LoginRecords);
+        }
+
+        [HttpPost]
+        public IActionResult DownloadLoginRecordsCsv()
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine("Tarih/Saat,Kullanici,IP Adresi,Tarayici/Cihaz,Durum");
+
+            foreach (var record in SystemLogger.LoginRecords)
+            {
+                builder.AppendLine($"{record.Date},{record.UserEmail},{record.IpAddress},{record.BrowserDevice},{record.Status}");
+            }
+
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Kullanıcı giriş kayıtları CSV formatında dışa aktarıldı.");
+
+            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "GirisKayitlari_CoreDrive.csv");
         }
 
         [HttpGet]
         public IActionResult FileActivities()
         {
-            return View();
+            return View(SystemLogger.FileActivities);
         }
+
+        [HttpPost]
+        public IActionResult DownloadFileActivitiesCsv()
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine("Dosya Adi,Islem Yapan,Aksiyon,Tarih");
+
+            foreach (var activity in SystemLogger.FileActivities)
+            {
+                builder.AppendLine($"{activity.FileName},{activity.UserEmail},{activity.ActionType},{activity.Date}");
+            }
+
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sistem dosya hareketleri CSV formatında dışa aktarıldı.");
+
+            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "DosyaHareketleri_CoreDrive.csv");
+        }
+
+        private static FileSettingsViewModel _fileSettings = new FileSettingsViewModel();
+        private static QuotaSettingsViewModel _quotaSettings = new QuotaSettingsViewModel();
 
         [HttpGet]
         public IActionResult FileSettings()
         {
-            return View();
+            return View(_fileSettings);
+        }
+
+        [HttpPost]
+        public IActionResult SaveFileSettings(FileSettingsViewModel model)
+        {
+            _fileSettings = model;
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Dosya izinleri ve güvenlik (beyaz/kara liste) ayarları güncellendi.");
+            TempData["ToastMessage"] = "Dosya güvenlik ayarları başarıyla kaydedildi.";
+            TempData["ToastIcon"] = "success";
+            return RedirectToAction("FileSettings");
         }
 
         [HttpGet]
         public IActionResult QuotaManagement()
         {
-            return View();
+            return View(_quotaSettings);
         }
+
+        [HttpPost]
+        public IActionResult SaveQuotaSettings(QuotaSettingsViewModel model)
+        {
+            _quotaSettings = model;
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sistem kota limitleri ve doluluk uyarı tetikleyicileri güncellendi.");
+            TempData["ToastMessage"] = "Sistem kota ayarları başarıyla kaydedildi.";
+            TempData["ToastIcon"] = "success";
+            return RedirectToAction("QuotaManagement");
+        }
+
 
         [HttpPost]
         public IActionResult RefreshStorage()
         {
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sunucu depolama verileri manuel olarak yenilendi.");
+
             TempData["Message"] = "Sunucu depolama verileri güncellendi ve en son durum ekrana yansıtıldı.";
             return RedirectToAction("Storage");
         }
@@ -319,6 +426,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
         [HttpPost]
         public IActionResult GenerateSystemReport()
         {
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Genel sistem durumu PDF raporu oluşturuldu.");
+
             using (var ms = new MemoryStream())
             {
                 var writer = new PdfWriter(ms);

@@ -23,6 +23,9 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             if (!ModelState.IsValid) return View("~/Views/Home/Index.cshtml", model);
 
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "192.168.1.15";
+            var browserInfo = "Chrome / Windows 11";
+
             if (model.Email == "aysegulcoban@gmail.com" && model.Password == "aysegul123")
             {
                 var testClaims = new List<Claim>
@@ -38,6 +41,9 @@ namespace DosyaYonetimPortali.MVC.Controllers
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     new ClaimsPrincipal(testIdentity),
                     new AuthenticationProperties { IsPersistent = true });
+
+                SystemLogger.AddLoginRecord(model.Email, ipAddress, browserInfo, "Başarılı", true);
+                SystemLogger.AddLog("INFO", model.Email, "Sisteme başarılı giriş yapıldı.");
 
                 return RedirectToAction("Dashboard", "Admin");
             }
@@ -79,6 +85,9 @@ namespace DosyaYonetimPortali.MVC.Controllers
                         new ClaimsPrincipal(claimsIdentity),
                         authProperties);
 
+                    SystemLogger.AddLoginRecord(model.Email, ipAddress, browserInfo, "Başarılı", true);
+                    SystemLogger.AddLog("INFO", model.Email, "Sisteme başarılı giriş yapıldı.");
+
                     if (claims.Any(c => c.Type == ClaimTypes.Role && c.Value.Equals("Admin", StringComparison.OrdinalIgnoreCase)))
                     {
                         return RedirectToAction("Dashboard", "Admin");
@@ -87,6 +96,9 @@ namespace DosyaYonetimPortali.MVC.Controllers
                     return RedirectToAction("Dashboard", "Drive");
                 }
             }
+
+            SystemLogger.AddLoginRecord(model.Email, ipAddress, browserInfo, "Hatalı Şifre", false);
+            SystemLogger.AddLog("WARN", model.Email, "Sisteme hatalı giriş denemesi yapıldı.");
 
             ModelState.AddModelError(string.Empty, "E-posta veya şifreniz hatalı. Lütfen tekrar deneyin.");
             return View("~/Views/Home/Index.cshtml", model);

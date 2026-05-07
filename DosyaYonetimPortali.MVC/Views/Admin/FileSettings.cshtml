@@ -1,50 +1,69 @@
-﻿@{
-    ViewData["Title"] = "Dosya Ayarları";
+﻿@model DosyaYonetimPortali.MVC.Models.FileSettingsViewModel
+@{
+    ViewData["Title"] = "Dosya İzinleri ve Güvenlik";
 }
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800 fw-bold">Dosya İzinleri ve Güvenlik</h1>
-    <button class="btn btn-success shadow-sm" style="border-radius: 10px;">
-        <i class="fas fa-save fa-sm text-white-50 me-1"></i> Ayarları Kaydet
-    </button>
-</div>
+<style>
+    .btn-animated:active { transform: scale(0.95); }
+    .settings-card { border-radius: 15px; border: none; padding: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .modern-input { border-radius: 10px; padding: 0.75rem 1rem; border: 1px solid #d1d3e2; height: 52px; font-weight: 500; color: #5a5c69; }
+    .modern-input:focus { border-color: #4e73df; box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.1); outline: none; }
+    .custom-checkbox-wrapper { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 0; border-bottom: 1px solid #f1f3f5; }
+    .custom-checkbox-wrapper:last-child { border-bottom: none; padding-bottom: 0; }
+    .custom-checkbox { width: 1.4rem; height: 1.4rem; cursor: pointer; }
+    .custom-checkbox:checked { background-color: #4e73df; border-color: #4e73df; }
+</style>
 
-<div class="row">
-    <div class="col-lg-12 mb-4">
-        <div class="card shadow border-0" style="border-radius: 15px;">
-            <div class="card-body p-4">
-                
-                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-check-circle me-2"></i>İzin Verilen Uzantılar (Beyaz Liste)</h6>
-                <div class="mb-4">
-                    <input type="text" class="form-control" value=".jpg, .png, .pdf, .docx, .xlsx, .zip, .rar, .mp4" style="border-radius: 10px;">
-                </div>
-                
-                <h6 class="fw-bold text-danger mb-3"><i class="fas fa-ban me-2"></i>Yasaklı Uzantılar (Kara Liste)</h6>
-                <div class="mb-4">
-                    <input type="text" class="form-control" value=".exe, .bat, .cmd, .sh, .js, .vbs" style="border-radius: 10px;">
-                </div>
+<form asp-action="SaveFileSettings" asp-controller="Admin" method="post">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800 fw-bold">Dosya İzinleri ve Güvenlik</h1>
+        <button type="submit" class="btn btn-success shadow-sm btn-animated" style="border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+            <i class="fas fa-save fa-sm text-white-50 me-2"></i> Ayarları Kaydet
+        </button>
+    </div>
 
-                <div class="d-flex justify-content-between align-items-center border-top pt-3 pb-3">
-                    <div>
-                        <div class="fw-bold text-dark">Otomatik Virüs Taraması</div>
-                        <div class="small text-muted">Sisteme yüklenen her dosya arka planda güvenlik taramasından geçirilir.</div>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" checked style="transform: scale(1.5);">
-                    </div>
-                </div>
+    <div class="card settings-card mb-5">
+        <div class="mb-4">
+            <label class="form-label text-primary fw-bold mb-2"><i class="fas fa-check-circle me-1"></i> İzin Verilen Uzantılar (Beyaz Liste)</label>
+            <input type="text" asp-for="AllowedExtensions" class="form-control modern-input" required autocomplete="off">
+        </div>
 
-                <div class="d-flex justify-content-between align-items-center border-top pt-3">
-                    <div>
-                        <div class="fw-bold text-dark">Aynı İsimli Dosyaların Üzerine Yaz</div>
-                        <div class="small text-muted">Aynı isimde dosya yüklendiğinde eski dosyayı silip yenisini kaydeder.</div>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" style="transform: scale(1.5);">
-                    </div>
-                </div>
+        <div class="mb-4">
+            <label class="form-label text-danger fw-bold mb-2"><i class="fas fa-ban me-1"></i> Yasaklı Uzantılar (Kara Liste)</label>
+            <input type="text" asp-for="BlockedExtensions" class="form-control modern-input" required autocomplete="off">
+        </div>
 
+        <div class="custom-checkbox-wrapper">
+            <div>
+                <div class="text-dark fw-bold mb-1" style="font-size: 1.05rem;">Otomatik Virüs Taraması</div>
+                <div class="small text-muted">Sisteme yüklenen her dosya arka planda güvenlik taramasından geçirilir.</div>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input custom-checkbox" type="checkbox" asp-for="AutoVirusScan">
+            </div>
+        </div>
+
+        <div class="custom-checkbox-wrapper">
+            <div>
+                <div class="text-dark fw-bold mb-1" style="font-size: 1.05rem;">Aynı İsimli Dosyaların Üzerine Yaz</div>
+                <div class="small text-muted">Aynı isimde dosya yüklendiğinde eski dosyayı silip yenisini kaydeder.</div>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input custom-checkbox" type="checkbox" asp-for="OverwriteSameName">
             </div>
         </div>
     </div>
-</div>
+</form>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        @if (TempData["ToastMessage"] != null)
+        {
+            <text>
+            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true });
+            Toast.fire({ icon: '@TempData["ToastIcon"]', title: '@TempData["ToastMessage"]' });
+            </text>
+        }
+    </script>
+}

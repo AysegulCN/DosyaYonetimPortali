@@ -1,87 +1,126 @@
-﻿@{
+﻿@model DosyaYonetimPortali.MVC.Models.SystemSettingsViewModel
+@{
     ViewData["Title"] = "Sistem Ayarları";
 }
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem ve Güvenlik Ayarları</h1>
-    <button class="btn btn-success shadow-sm" style="border-radius: 10px;">
-        <i class="fas fa-save fa-sm text-white-50 me-1"></i> Ayarları Kaydet
-    </button>
-</div>
+<style>
+    .btn-animated:active { transform: scale(0.95); }
+    .settings-card { border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .settings-header { background-color: transparent; border-bottom: 1px solid #f1f3f5; padding: 1.5rem; }
+    .settings-body { padding: 1.5rem; }
+    
+    .modern-input { border-radius: 8px 0 0 8px; padding: 0.75rem 1rem; border: 1px solid #d1d3e2; height: 50px; }
+    .modern-input:focus { border-color: #4e73df; box-shadow: none; outline: none; }
+    .input-group-text-modern { border-radius: 0 8px 8px 0; background-color: #f8f9fc; border: 1px solid #d1d3e2; border-left: none; color: #858796; font-weight: 600; padding: 0 1.25rem; }
+    
+    .custom-checkbox-wrapper { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #f1f3f5; }
+    .custom-checkbox-wrapper:last-child { border-bottom: none; }
+    .custom-checkbox { width: 1.3rem; height: 1.3rem; cursor: pointer; }
+    .custom-checkbox:checked { background-color: #4e73df; border-color: #4e73df; }
+</style>
 
-<div class="row">
-    <!-- Dosya Yükleme Kuralları -->
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow border-0" style="border-radius: 15px;">
-            <div class="card-header py-3 bg-white" style="border-radius: 15px 15px 0 0;">
-                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-upload me-2"></i> Yükleme ve Kota Kuralları</h6>
+<form asp-action="SaveSettings" asp-controller="Admin" method="post">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem ve Güvenlik Ayarları</h1>
+        
+        <button type="submit" class="btn btn-success shadow-sm btn-animated" style="border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+            <i class="fas fa-save fa-sm text-white-50 me-2"></i> Ayarları Kaydet
+        </button>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card settings-card h-100">
+                <div class="card-header settings-header">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-upload me-2"></i>Yükleme ve Kota Kuralları</h6>
+                </div>
+                <div class="card-body settings-body">
+                    <div class="mb-4">
+                        <label class="form-label text-dark fw-bold mb-2">Maksimum Dosya Boyutu (Tek Seferde)</label>
+                        <div class="input-group">
+                            <input type="number" asp-for="MaxFileSizeMB" class="form-control modern-input" required min="1">
+                            <span class="input-group-text input-group-text-modern">MB</span>
+                        </div>
+                        <small class="text-muted d-block mt-2">Kullanıcıların tek seferde yükleyebileceği en büyük dosya sınırı.</small>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label text-dark fw-bold mb-2">Yeni Kullanıcı Başlangıç Kotası</label>
+                        <div class="input-group">
+                            <input type="number" asp-for="DefaultUserQuotaGB" class="form-control modern-input" required min="1">
+                            <span class="input-group-text input-group-text-modern">GB</span>
+                        </div>
+                        <small class="text-muted d-block mt-2">Sisteme yeni kayıt olan kullanıcılara otomatik tanımlanacak alan.</small>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                
-                <div class="mb-4">
-                    <label class="form-label fw-bold text-dark">Maksimum Dosya Boyutu (Tek Seferde)</label>
-                    <div class="input-group">
-                        <input type="number" class="form-control" value="2048" style="border-radius: 10px 0 0 10px;">
-                        <span class="input-group-text bg-light fw-bold" style="border-radius: 0 10px 10px 0;">MB</span>
-                    </div>
-                    <small class="text-muted">Kullanıcıların tek seferde yükleyebileceği en büyük dosya sınırı.</small>
-                </div>
+        </div>
 
-                <div class="mb-4">
-                    <label class="form-label fw-bold text-dark">Yeni Kullanıcı Başlangıç Kotası</label>
-                    <div class="input-group">
-                        <input type="number" class="form-control" value="15" style="border-radius: 10px 0 0 10px;">
-                        <span class="input-group-text bg-light fw-bold" style="border-radius: 0 10px 10px 0;">GB</span>
-                    </div>
-                    <small class="text-muted">Sisteme yeni kayıt olan kullanıcılara otomatik tanımlanacak alan.</small>
+        <div class="col-lg-6 mb-4">
+            <div class="card settings-card h-100">
+                <div class="card-header settings-header">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-shield-alt me-2"></i>Güvenlik & Dosya Uzantıları</h6>
                 </div>
+                <div class="card-body settings-body">
+                    
+                    <div class="custom-checkbox-wrapper">
+                        <div>
+                            <div class="text-dark fw-bold mb-1">Medya Dosyalarına İzin Ver</div>
+                            <div class="small text-muted">.jpg, .png, .mp4, .mp3 vb. formatlar</div>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input custom-checkbox" type="checkbox" asp-for="AllowMediaFiles">
+                        </div>
+                    </div>
 
+                    <div class="custom-checkbox-wrapper">
+                        <div>
+                            <div class="text-dark fw-bold mb-1">Arşiv Dosyalarına İzin Ver</div>
+                            <div class="small text-muted">.zip, .rar, .7z, .tar formatları</div>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input custom-checkbox" type="checkbox" asp-for="AllowArchiveFiles">
+                        </div>
+                    </div>
+
+                    <div class="custom-checkbox-wrapper pt-3">
+                        <div>
+                            <div class="text-danger fw-bold mb-1">Çalıştırılabilir Dosyalar (TEHLİKE)</div>
+                            <div class="small text-muted">.exe, .bat, .cmd, .sh formatları (Virüs riski içerir)</div>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input custom-checkbox border-danger" type="checkbox" asp-for="AllowExecutableFiles">
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
     </div>
+</form>
 
-    <!-- Güvenlik ve Uzantı İzinleri -->
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow border-0" style="border-radius: 15px;">
-            <div class="card-header py-3 bg-white" style="border-radius: 15px 15px 0 0;">
-                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-shield-alt me-2"></i> Güvenlik & Dosya Uzantıları</h6>
-            </div>
-            <div class="card-body">
-                
-                <!-- Toggle Switch 1 -->
-                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
-                    <div>
-                        <div class="fw-bold text-dark mb-1">Medya Dosyalarına İzin Ver</div>
-                        <div class="small text-muted">.jpg, .png, .mp4, .mp3 vb. formalar</div>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" id="switchMedia" checked style="transform: scale(1.5);">
-                    </div>
-                </div>
-
-                <!-- Toggle Switch 2 -->
-                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
-                    <div>
-                        <div class="fw-bold text-dark mb-1">Arşiv Dosyalarına İzin Ver</div>
-                        <div class="small text-muted">.zip, .rar, .7z, .tar formaları</div>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" id="switchArchive" checked style="transform: scale(1.5);">
-                    </div>
-                </div>
-
-                <!-- Toggle Switch 3 (Kapalı ve Kırmızı) -->
-                <div class="d-flex justify-content-between align-items-center pb-2">
-                    <div>
-                        <div class="fw-bold text-danger mb-1">Çalıştırılabilir Dosyalar (TEHLİKE)</div>
-                        <div class="small text-muted">.exe, .bat, .cmd, .sh formaları (Virüs riski içerir)</div>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" id="switchExe" style="transform: scale(1.5);">
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        @if (TempData["ToastMessage"] != null)
+        {
+            <text>
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+            Toast.fire({
+                icon: '@TempData["ToastIcon"]',
+                title: '@TempData["ToastMessage"]'
+            });
+            </text>
+        }
+    </script>
+}

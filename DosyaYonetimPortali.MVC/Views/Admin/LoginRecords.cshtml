@@ -1,42 +1,87 @@
-﻿@{
+﻿@model List<DosyaYonetimPortali.MVC.Models.LoginRecordViewModel>
+@{
     ViewData["Title"] = "Giriş Kayıtları";
 }
 
+<style>
+    .btn-animated:active { transform: scale(0.95); }
+    .modern-table tbody tr { transition: all 0.25s ease-in-out; border-bottom: 1px solid #f1f3f5; }
+    .modern-table tbody tr:hover { background-color: #f8f9fc; }
+    .modern-table td { border-top: none !important; padding: 1.25rem 1rem !important; vertical-align: middle; font-weight: 500; color: #5a5c69; }
+    .modern-table th { font-weight: 700; color: #858796; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; padding: 1.5rem 1rem; }
+    
+    .status-badge {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 6px 14px !important;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    .badge-success { background-color: #1cc88a; color: white; }
+    .badge-danger { background-color: #e74a3b; color: white; }
+    
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+</style>
+
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800 fw-bold">Kullanıcı Giriş Kayıtları</h1>
-    <button class="btn btn-primary shadow-sm" style="border-radius: 10px;">
-        <i class="fas fa-download fa-sm text-white-50 me-1"></i> Rapor İndir (CSV)
-    </button>
+    
+    <form asp-action="DownloadLoginRecordsCsv" asp-controller="Admin" method="post">
+        <button type="submit" class="btn btn-primary shadow-sm btn-animated" style="border-radius: 10px; padding: 10px 20px; font-weight: 600;" @(Model == null || !Model.Any() ? "disabled" : "")>
+            <i class="fas fa-file-csv fa-sm text-white-50 me-2"></i> Rapor İndir (CSV)
+        </button>
+    </form>
 </div>
 
-<div class="card shadow border-0" style="border-radius: 15px;">
+<div class="card shadow mb-5" style="border-radius: 15px; border: none; overflow: hidden;">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light text-muted">
+            <table class="table modern-table align-middle mb-0">
+                <thead class="bg-light">
                     <tr>
-                        <th class="border-0 px-4 py-3">Tarih / Saat</th>
-                        <th class="border-0 py-3">Kullanıcı</th>
-                        <th class="border-0 py-3">IP Adresi</th>
-                        <th class="border-0 py-3">Tarayıcı / Cihaz</th>
-                        <th class="border-0 py-3 text-end px-4">Durum</th>
+                        <th class="border-0 px-4">Tarih / Saat</th>
+                        <th class="border-0">Kullanıcı</th>
+                        <th class="border-0">IP Adresi</th>
+                        <th class="border-0">Tarayıcı / Cihaz</th>
+                        <th class="border-0 text-center px-4">Durum</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td class="px-4 text-dark fw-bold">01.05.2026 18:05</td>
-                        <td>patron@coredrive.com</td>
-                        <td>192.168.1.10</td>
-                        <td class="text-muted small">Chrome / Windows 11</td>
-                        <td class="text-end px-4"><span class="badge bg-success rounded-pill px-3">Başarılı</span></td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 text-dark fw-bold">01.05.2026 17:42</td>
-                        <td>aysegul@coredrive.com</td>
-                        <td>10.0.0.55</td>
-                        <td class="text-muted small">Safari / macOS</td>
-                        <td class="text-end px-4"><span class="badge bg-danger rounded-pill px-3">Hatalı Şifre</span></td>
-                    </tr>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var record in Model)
+                        {
+                            <tr>
+                                <td class="px-4 text-muted">@record.Date</td>
+                                <td class="text-primary fw-bold">@record.UserEmail</td>
+                                <td class="text-secondary">@record.IpAddress</td>
+                                <td class="text-secondary">@record.BrowserDevice</td>
+                                <td class="text-center px-4">
+                                    @if (record.IsSuccess)
+                                    {
+                                        <span class="status-badge badge-success">@record.Status</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge badge-danger">@record.Status</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fas fa-history fa-3x mb-3 opacity-50 text-primary"></i>
+                                <h5>Sistemde henüz giriş kaydı bulunmuyor.</h5>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>

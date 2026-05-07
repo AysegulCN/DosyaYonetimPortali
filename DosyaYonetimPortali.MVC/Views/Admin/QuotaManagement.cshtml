@@ -1,60 +1,86 @@
-﻿@{
-    ViewData["Title"] = "Kota Yönetimi";
+﻿@model DosyaYonetimPortali.MVC.Models.QuotaSettingsViewModel
+@{
+    ViewData["Title"] = "Kota Ayarları";
 }
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem Kota Ayarları</h1>
-    <button class="btn btn-success shadow-sm" style="border-radius: 10px;">
-        <i class="fas fa-save fa-sm text-white-50 me-1"></i> Değişiklikleri Kaydet
-    </button>
-</div>
+<style>
+    .btn-animated:active { transform: scale(0.95); }
+    .settings-card { border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .settings-header { background-color: transparent; border-bottom: 1px solid #f1f3f5; padding: 1.5rem; }
+    .settings-body { padding: 2rem; }
+    .modern-input { border-radius: 8px 0 0 8px; padding: 0.75rem 1rem; border: 1px solid #d1d3e2; height: 50px; font-weight: 500; color: #5a5c69; }
+    .modern-input:focus { border-color: #4e73df; box-shadow: none; outline: none; }
+    .input-group-text-modern { border-radius: 0 8px 8px 0; background-color: #f8f9fc; border: 1px solid #d1d3e2; border-left: none; color: #858796; font-weight: 600; padding: 0 1.25rem; }
+</style>
 
-<div class="row">
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow border-0 h-100" style="border-radius: 15px;">
-            <div class="card-body p-4">
-                <h6 class="fw-bold text-primary mb-4"><i class="fas fa-hdd me-2"></i>Varsayılan Limitler</h6>
-                
-                <div class="mb-4">
-                    <label class="form-label fw-bold text-dark">Yeni Kullanıcı Başlangıç Kotası</label>
-                    <div class="input-group">
-                        <input type="number" class="form-control" value="15" style="border-radius: 10px 0 0 10px;">
-                        <span class="input-group-text bg-light fw-bold" style="border-radius: 0 10px 10px 0;">GB</span>
+<form asp-action="SaveQuotaSettings" asp-controller="Admin" method="post">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem Kota Ayarları</h1>
+        <button type="submit" class="btn btn-success shadow-sm btn-animated" style="border-radius: 10px; padding: 10px 20px; font-weight: 600;">
+            <i class="fas fa-save fa-sm text-white-50 me-2"></i> Değişiklikleri Kaydet
+        </button>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card settings-card h-100">
+                <div class="card-header settings-header">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-hdd me-2"></i>Varsayılan Limitler</h6>
+                </div>
+                <div class="card-body settings-body">
+                    <div class="mb-4">
+                        <label class="form-label text-dark fw-bold mb-2">Yeni Kullanıcı Başlangıç Kotası</label>
+                        <div class="input-group shadow-sm">
+                            <input type="number" asp-for="DefaultUserQuotaGB" class="form-control modern-input" required min="1">
+                            <span class="input-group-text input-group-text-modern">GB</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label text-dark fw-bold mb-2">Maksimum Dosya Yükleme Boyutu</label>
+                        <div class="input-group shadow-sm">
+                            <input type="number" asp-for="MaxFileUploadMB" class="form-control modern-input" required min="1">
+                            <span class="input-group-text input-group-text-modern">MB</span>
+                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold text-dark">Maksimum Dosya Yükleme Boyutu</label>
-                    <div class="input-group">
-                        <input type="number" class="form-control" value="2048" style="border-radius: 10px 0 0 10px;">
-                        <span class="input-group-text bg-light fw-bold" style="border-radius: 0 10px 10px 0;">MB</span>
+        <div class="col-lg-6 mb-4">
+            <div class="card settings-card h-100">
+                <div class="card-header settings-header">
+                    <h6 class="m-0 font-weight-bold text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Sistem Uyarı Tetikleyicileri</h6>
+                </div>
+                <div class="card-body settings-body">
+                    <div class="mb-4">
+                        <label class="form-label text-dark fw-bold mb-2">Kullanıcı Kota Uyarı Sınırı</label>
+                        <div class="input-group shadow-sm">
+                            <input type="number" asp-for="UserQuotaWarningPercent" class="form-control modern-input" required min="1" max="100">
+                            <span class="input-group-text input-group-text-modern">%</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label text-dark fw-bold mb-2">Sunucu Kritik Doluluk Alarmı</label>
+                        <div class="input-group shadow-sm">
+                            <input type="number" asp-for="ServerCriticalAlarmPercent" class="form-control modern-input" required min="1" max="100">
+                            <span class="input-group-text input-group-text-modern">%</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</form>
 
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow border-0 h-100" style="border-radius: 15px;">
-            <div class="card-body p-4">
-                <h6 class="fw-bold text-warning mb-4"><i class="fas fa-exclamation-triangle me-2"></i>Sistem Uyarı Tetikleyicileri</h6>
-                
-                <div class="mb-4">
-                    <label class="form-label fw-bold text-dark">Kullanıcı Kota Uyarı Sınırı</label>
-                    <div class="input-group">
-                        <input type="number" class="form-control" value="85" style="border-radius: 10px 0 0 10px;">
-                        <span class="input-group-text bg-light fw-bold" style="border-radius: 0 10px 10px 0;">%</span>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-bold text-dark">Sunucu Kritik Doluluk Alarmı</label>
-                    <div class="input-group">
-                        <input type="number" class="form-control" value="90" style="border-radius: 10px 0 0 10px;">
-                        <span class="input-group-text bg-light fw-bold" style="border-radius: 0 10px 10px 0;">%</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        @if (TempData["ToastMessage"] != null)
+        {
+            <text>
+            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true });
+            Toast.fire({ icon: '@TempData["ToastIcon"]', title: '@TempData["ToastMessage"]' });
+            </text>
+        }
+    </script>
+}
