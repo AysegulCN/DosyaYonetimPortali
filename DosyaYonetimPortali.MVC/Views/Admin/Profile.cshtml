@@ -1,0 +1,152 @@
+﻿@model DosyaYonetimPortali.MVC.Models.ProfileViewModel
+@{
+    ViewData["Title"] = "Profilim";
+}
+
+<style>
+    .btn-animated:active { transform: scale(0.95); }
+    .profile-card { border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .profile-header { background-color: transparent; border-bottom: 1px solid #f1f3f5; padding: 1.5rem; }
+    .modern-input { border-radius: 10px; padding: 0.75rem 1rem; border: 1px solid #d1d3e2; height: 50px; font-weight: 500; color: #5a5c69; }
+    .modern-input:focus { border-color: #4e73df; box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.1); outline: none; }
+    
+    .avatar-wrapper { position: relative; width: 140px; height: 140px; margin: 0 auto; }
+    .avatar-preview { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .avatar-upload-btn { position: absolute; bottom: 5px; right: 5px; background: #4e73df; color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #fff; transition: all 0.2s; }
+    .avatar-upload-btn:hover { background: #2e59d9; transform: scale(1.1); }
+
+    .password-group { position: relative; }
+    .password-group .modern-input { padding-right: 2.8rem; }
+    .password-toggle { 
+        position: absolute; 
+        right: 15px; 
+        top: 50%; 
+        transform: translateY(-50%); 
+        cursor: pointer; 
+        color: #858796; 
+        z-index: 10;
+        background: transparent;
+        border: none;
+        padding: 0;
+    }
+    .password-toggle:hover { color: #4e73df; }
+    .password-toggle:focus { outline: none; }
+</style>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800 fw-bold">Yönetici Profili</h1>
+</div>
+
+<form asp-action="UpdateProfile" asp-controller="Admin" method="post" enctype="multipart/form-data">
+    <div class="row">
+        <div class="col-xl-4 mb-4">
+            <div class="card profile-card h-100 text-center py-5">
+                <div class="card-body">
+                    <div class="avatar-wrapper mb-4">
+                        <img src="@Model.ProfilePictureUrl" id="avatarPreview" class="avatar-preview">
+                        <label for="avatarUpload" class="avatar-upload-btn shadow-sm">
+                            <i class="fas fa-camera fa-sm"></i>
+                        </label>
+                        <input type="file" id="avatarUpload" name="avatarFile" accept="image/png, image/jpeg" style="display: none;" onchange="previewImage(event)">
+                    </div>
+                    <h5 class="fw-bold text-dark mb-1">@Model.FirstName @Model.LastName</h5>
+                    <p class="text-muted mb-3">@Model.Email</p>
+                    <span class="badge bg-danger text-white px-3 py-2 rounded-pill" style="letter-spacing: 1px;"><i class="fas fa-shield-alt me-1"></i> SUPER ADMIN</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8 mb-4">
+            <div class="card profile-card h-100">
+                <div class="card-header profile-header">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user-edit me-2"></i>Kişisel Bilgiler & Güvenlik</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-dark fw-bold small text-uppercase">Adınız</label>
+                            <input type="text" asp-for="FirstName" class="form-control modern-input" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-dark fw-bold small text-uppercase">Soyadınız</label>
+                            <input type="text" asp-for="LastName" class="form-control modern-input" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label text-dark fw-bold small text-uppercase">E-Posta Adresi (Giriş ID)</label>
+                            <input type="email" asp-for="Email" class="form-control modern-input" required>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h6 class="fw-bold text-dark mb-3"><i class="fas fa-key text-warning me-2"></i>Şifre Değiştirme</h6>
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-dark fw-bold small text-uppercase">Mevcut Şifreniz</label>
+                            <div class="password-group">
+                                <input type="password" asp-for="CurrentPassword" class="form-control modern-input" id="currentPassword" placeholder="••••••••">
+                                <button type="button" class="password-toggle" onclick="togglePassword('currentPassword', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-dark fw-bold small text-uppercase">Yeni Şifreniz</label>
+                            <div class="password-group">
+                                <input type="password" asp-for="NewPassword" class="form-control modern-input" id="newPassword" placeholder="••••••••">
+                                <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary shadow-sm btn-animated" style="border-radius: 10px; padding: 12px 30px; font-weight: 600;">
+                            <i class="fas fa-save me-2"></i> Değişiklikleri Kaydet
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function previewImage(event) {
+            var reader = new FileReader();
+            reader.onload = function() {
+                var output = document.getElementById('avatarPreview');
+                output.src = reader.result;
+            }
+            if(event.target.files[0]) {
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        }
+
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        @if (TempData["ToastMessage"] != null)
+        {
+            <text>
+            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true });
+            Toast.fire({ icon: '@TempData["ToastIcon"]', title: '@TempData["ToastMessage"]' });
+            </text>
+        }
+    </script>
+}

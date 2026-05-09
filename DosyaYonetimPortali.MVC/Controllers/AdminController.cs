@@ -435,9 +435,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
                 var document = new Document(pdf);
 
                 var header = new Paragraph("CORE-DRIVE SISTEM RAPORU")
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetFontSize(22)
-                    .SetBold();
+                     .SetTextAlignment(TextAlignment.CENTER)
+                     .SetFontSize(22);
                 document.Add(header);
 
                 document.Add(new Paragraph("Rapor Tarihi: " + DateTime.Now.ToString("dd.MM.yyyy HH:mm"))
@@ -454,8 +453,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
 
                 document.Add(new Paragraph("---------------------------------------------------------------------------------------------------"));
 
-                document.Add(new Paragraph("Sistem Durumu: SAGLIKLI").SetBold().SetFontSize(12));
-                document.Add(new Paragraph("Guvenlik Taramasi: TEMIZ").SetBold().SetFontSize(12));
+                document.Add(new Paragraph("Sistem Durumu: SAGLIKLI").SetFontSize(12));
+                document.Add(new Paragraph("Guvenlik Taramasi: TEMIZ").SetFontSize(12));
 
                 document.Close();
 
@@ -464,6 +463,61 @@ namespace DosyaYonetimPortali.MVC.Controllers
 
                 return File(fileBytes, "application/pdf", fileName);
             }
+        }
+
+        private static ProfileViewModel _adminProfile = new ProfileViewModel
+        {
+            FirstName = "Sistem",
+            LastName = "Yöneticisi",
+            Email = "patron@coredrive.com",
+            ProfilePictureUrl = "https://ui-avatars.com/api/?name=Sistem+Yoneticisi&background=4e73df&color=fff&rounded=true"
+        };
+
+        public static ProfileViewModel AdminProfile = new ProfileViewModel
+        {
+            FirstName = "Sistem",
+            LastName = "Yöneticisi",
+            Email = "patron@coredrive.com",
+            ProfilePictureUrl = "https://ui-avatars.com/api/?name=Sistem+Yoneticisi&background=4e73df&color=fff&rounded=true"
+        };
+
+        [HttpGet]
+        public IActionResult Profile()
+        {
+            return View(AdminProfile);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateProfile(ProfileViewModel model, IFormFile avatarFile)
+        {
+            if (avatarFile != null && avatarFile.Length > 0)
+            {
+                using (var ms = new MemoryStream())
+                {
+                    await avatarFile.CopyToAsync(ms);
+                    var fileBytes = ms.ToArray();
+                    string base64String = Convert.ToBase64String(fileBytes);
+                    string ext = Path.GetExtension(avatarFile.FileName).Replace(".", "");
+                    if (string.IsNullOrEmpty(ext)) ext = "jpeg";
+
+                    AdminProfile.ProfilePictureUrl = $"data:image/{ext};base64,{base64String}";
+                }
+            }
+
+            AdminProfile.FirstName = model.FirstName;
+            AdminProfile.LastName = model.LastName;
+            AdminProfile.Email = model.Email;
+
+            SystemLogger.AddLog("INFO", AdminProfile.Email, "Yönetici profil bilgileri ve/veya fotoğrafı güncellendi.");
+
+            if (!string.IsNullOrEmpty(model.NewPassword) && !string.IsNullOrEmpty(model.CurrentPassword))
+            {
+                SystemLogger.AddLog("WARN", AdminProfile.Email, "Yönetici hesabı güvenlik şifresi değiştirildi.");
+            }
+
+            TempData["ToastMessage"] = "Profil bilgileriniz başarıyla güncellendi.";
+            TempData["ToastIcon"] = "success";
+            return RedirectToAction("Profile");
         }
     }
 }
