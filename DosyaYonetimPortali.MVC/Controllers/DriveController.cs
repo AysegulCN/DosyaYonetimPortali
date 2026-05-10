@@ -2,8 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
-using System.Net;
-using System.Net.Mail;
 using System.Text.Json;
 using System.IO;
 
@@ -13,6 +11,67 @@ namespace DosyaYonetimPortali.MVC.Controllers
     public class DriveController : Controller
     {
         private readonly string _dbPath = Path.Combine(Directory.GetCurrentDirectory(), "coredrive_db.json");
+
+        public static long UserTotalQuotaMB = 15360;
+        public static int PendingQuotaRequestGB = 0;
+
+        public static string CurrentFullName = "Kullanıcı";
+        public static string CurrentEmail = "kullanici@coredrive.com";
+        public static string CurrentPhone = "";
+        public static string CurrentAvatarBase64 = "";
+
+        [HttpPost]
+        public IActionResult UpdateProfile(string fullName, string email, string phone, string currentPassword, string newPassword, IFormFile avatarFile, string returnUrl)
+        {
+            if (string.IsNullOrEmpty(currentPassword))
+            {
+                TempData["StorageError"] = "Güvenliğiniz için profil güncellemelerinde mevcut şifrenizi girmelisiniz.";
+            }
+            else
+            {
+                CurrentFullName = fullName ?? "Kullanıcı";
+                CurrentEmail = email ?? "kullanici@coredrive.com";
+                CurrentPhone = phone;
+
+                if (avatarFile != null && avatarFile.Length > 0)
+                {
+                    using (var ms = new MemoryStream())
+                    {
+                        avatarFile.CopyTo(ms);
+                        CurrentAvatarBase64 = $"data:{avatarFile.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+                    }
+                }
+                TempData["SuccessMessage"] = "Profil bilgileriniz başarıyla güncellendi.";
+            }
+            return Redirect(returnUrl ?? "/Drive/Dashboard");
+        }
+
+        public static (string Used, string Total, int Percent) GetStorageInfo()
+        {
+            long usedBytes = 0;
+            string dbPath = Path.Combine(Directory.GetCurrentDirectory(), "coredrive_db.json");
+            if (System.IO.File.Exists(dbPath))
+            {
+                var json = System.IO.File.ReadAllText(dbPath);
+                var db = JsonSerializer.Deserialize<List<DriveItemViewModel>>(json) ?? new List<DriveItemViewModel>();
+                usedBytes = db.Where(i => i.Owner != "patron@coredrive.com" && i.Owner != "muhasebe@coredrive.com").Sum(i => i.SizeBytes);
+            }
+
+            double usedMB = usedBytes / 1048576.0;
+            int percent = (int)((usedMB / UserTotalQuotaMB) * 100);
+            string usedStr = usedMB >= 1024 ? $"{(usedMB / 1024):F2} GB" : $"{usedMB:F1} MB";
+            string totalStr = UserTotalQuotaMB >= 1024 ? $"{(UserTotalQuotaMB / 1024)} GB" : $"{UserTotalQuotaMB} MB";
+
+            return (usedStr, totalStr, percent > 100 ? 100 : percent);
+        }
+
+        [HttpPost]
+        public IActionResult RequestQuotaUpgrade(int requestedQuotaGB, string returnUrl)
+        {
+            PendingQuotaRequestGB = requestedQuotaGB;
+            TempData["SuccessMessage"] = $"{requestedQuotaGB} GB depolama alanı talebiniz sistem yöneticisine iletildi. Onaylandığında kotanız güncellenecektir.";
+            return Redirect(returnUrl ?? "/Drive/Dashboard");
+        }
 
         private List<DriveItemViewModel> GetDatabase()
         {
@@ -24,9 +83,9 @@ namespace DosyaYonetimPortali.MVC.Controllers
 
             var initialData = new List<DriveItemViewModel>
             {
-                new DriveItemViewModel { Id = "s2", Name = "Proje_Butcesi.xlsx", IsFolder = false, Extension = "xlsx", Size = "1.1 MB", ModifiedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"), Owner = "Ben", IsShared = true, SharedWith = "muhasebe@coredrive.com" },
-                new DriveItemViewModel { Id = "t1", Name = "Eski_Tasarimlar.zip", IsFolder = false, Extension = "zip", Size = "145 MB", ModifiedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"), Owner = "Ben", IsDeleted = true },
-                new DriveItemViewModel { Id = "s1", Name = "Yillik_Rapor_2025.pdf", IsFolder = false, Extension = "pdf", Size = "4.2 MB", ModifiedDate = "08.05.2026 14:30", Owner = "patron@coredrive.com", IsShared = true }
+                new DriveItemViewModel { Id = "s2", Name = "Proje_Butcesi.xlsx", IsFolder = false, Extension = "xlsx", Size = "1.1 MB", SizeBytes = 1153433, ModifiedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"), Owner = "Ben", IsShared = true, SharedWith = "muhasebe@coredrive.com" },
+                new DriveItemViewModel { Id = "t1", Name = "Eski_Tasarimlar.zip", IsFolder = false, Extension = "zip", Size = "145 MB", SizeBytes = 152043520, ModifiedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"), Owner = "Ben", IsDeleted = true },
+                new DriveItemViewModel { Id = "s1", Name = "Yillik_Rapor_2025.pdf", IsFolder = false, Extension = "pdf", Size = "4.2 MB", SizeBytes = 4404019, ModifiedDate = "08.05.2026 14:30", Owner = "patron@coredrive.com", IsShared = true }
             };
             SaveDatabase(initialData);
             return initialData;
@@ -43,15 +102,9 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             var db = GetDatabase();
             ViewBag.CurrentFolderId = folderId;
-
-            if (!string.IsNullOrEmpty(folderId))
-            {
-                var currentFolder = db.FirstOrDefault(f => f.Id == folderId);
-                ViewBag.CurrentFolderName = currentFolder?.Name;
-            }
-
-            var itemsToShow = db.Where(i => i.ParentId == folderId && !i.IsDeleted && !i.IsShared).ToList();
-            return View(itemsToShow);
+            if (!string.IsNullOrEmpty(folderId)) { ViewBag.CurrentFolderName = db.FirstOrDefault(f => f.Id == folderId)?.Name; }
+            string currentUser = User.Identity.Name ?? "Kullanıcı";
+            return View(db.Where(i => i.ParentId == folderId && !i.IsDeleted && (i.Owner == "Ben" || i.Owner == currentUser)).ToList());
         }
 
         [HttpPost]
@@ -60,7 +113,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
             if (!string.IsNullOrEmpty(folderName))
             {
                 var db = GetDatabase();
-                db.Insert(0, new DriveItemViewModel { Id = Guid.NewGuid().ToString(), ParentId = parentId, Name = folderName, IsFolder = true, ModifiedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"), Owner = User.Identity.Name ?? "Kullanıcı" });
+                db.Insert(0, new DriveItemViewModel { Id = Guid.NewGuid().ToString(), ParentId = parentId, Name = folderName, IsFolder = true, ModifiedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"), Owner = User.Identity.Name ?? "Kullanıcı", SizeBytes = 0 });
                 SaveDatabase(db);
             }
             return RedirectToAction("Dashboard", new { folderId = parentId });
@@ -72,12 +125,18 @@ namespace DosyaYonetimPortali.MVC.Controllers
             if (file != null && file.Length > 0)
             {
                 var db = GetDatabase();
-                string base64Data = null;
-                using (var ms = new MemoryStream())
+                string currentUser = User.Identity.Name ?? "Kullanıcı";
+                long usedBytes = db.Where(i => i.Owner == "Ben" || i.Owner == currentUser).Sum(i => i.SizeBytes);
+
+                double totalRequestedMB = (usedBytes + file.Length) / 1048576.0;
+                if (totalRequestedMB > UserTotalQuotaMB)
                 {
-                    file.CopyTo(ms);
-                    base64Data = Convert.ToBase64String(ms.ToArray());
+                    TempData["StorageError"] = "Yetersiz depolama alanı! Lütfen dosya silerek yer açın veya kotanızı yükseltin.";
+                    return RedirectToAction("Dashboard", new { folderId = parentId });
                 }
+
+                string base64Data = null;
+                using (var ms = new MemoryStream()) { file.CopyTo(ms); base64Data = Convert.ToBase64String(ms.ToArray()); }
 
                 db.Add(new DriveItemViewModel
                 {
@@ -87,8 +146,9 @@ namespace DosyaYonetimPortali.MVC.Controllers
                     IsFolder = false,
                     Extension = Path.GetExtension(file.FileName).Replace(".", "").ToLower(),
                     Size = (file.Length / 1024) > 1024 ? $"{(file.Length / 1048576f):F1} MB" : $"{(file.Length / 1024)} KB",
+                    SizeBytes = file.Length,
                     ModifiedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"),
-                    Owner = User.Identity.Name ?? "Kullanıcı",
+                    Owner = currentUser,
                     FileData = base64Data,
                     ContentType = file.ContentType
                 });
@@ -105,38 +165,14 @@ namespace DosyaYonetimPortali.MVC.Controllers
 
             if (!string.IsNullOrEmpty(item.FileData) && item.ContentType != null && item.ContentType.StartsWith("image/"))
             {
-                string imgSrc = $"data:{item.ContentType};base64,{item.FileData}";
-                string imgHtml = $@"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{item.Name}</title></head>
-                <body style='background:#0f0f0f; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;'>
-                    <img src='{imgSrc}' style='max-width:95%; max-height:95%; box-shadow:0 10px 30px rgba(0,0,0,0.8); border-radius: 4px;'>
-                </body></html>";
-                return Content(imgHtml, "text/html", System.Text.Encoding.UTF8);
+                string imgHtml = $@"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{item.Name}</title></head><body style='background:#0f0f0f; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;'><img src='data:{item.ContentType};base64,{item.FileData}' style='max-width:95%; max-height:95%; box-shadow:0 10px 30px rgba(0,0,0,0.8); border-radius: 4px;'></body></html>";
+                return Content(imgHtml, "text/html", Encoding.UTF8);
             }
+            if (!string.IsNullOrEmpty(item.FileData) && item.ContentType == "application/pdf") return File(Convert.FromBase64String(item.FileData), item.ContentType);
+            if (!string.IsNullOrEmpty(item.FileData)) return File(Convert.FromBase64String(item.FileData), item.ContentType, item.Name);
 
-            if (!string.IsNullOrEmpty(item.FileData) && item.ContentType == "application/pdf")
-            {
-                byte[] bytes = Convert.FromBase64String(item.FileData);
-                return File(bytes, item.ContentType);
-            }
-
-            if (!string.IsNullOrEmpty(item.FileData))
-            {
-                byte[] bytes = Convert.FromBase64String(item.FileData);
-                return File(bytes, item.ContentType, item.Name);
-            }
-
-            string html = $@"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{item.Name} - Önizleme</title><link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css' rel='stylesheet'></head>
-            <body style='background:#202124; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; font-family:""Segoe UI"",sans-serif;'>
-                <div style='background:#303134; padding:40px 60px; border-radius:12px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);'>
-                    <i class='fas fa-file' style='font-size:64px; color:#8ab4f8; margin-bottom:20px;'></i>
-                    <h2 style='margin:0 0 10px 0; font-weight:500;'>{item.Name}</h2>
-                    <p style='color:#9aa0a6; margin:0 0 20px 0;'>Sahibi: {item.Owner} &bull; Boyut: {item.Size}</p>
-                    <div style='padding:15px; background:#202124; border-radius:8px; color:#e8eaed; font-size:14px; margin-top:20px;'>
-                        Bu bir sistem simülasyon dosyasıdır. <br>Kendi yüklediğiniz gerçek dosyaların içeriği burada görünecektir.
-                    </div>
-                </div>
-            </body></html>";
-            return Content(html, "text/html", System.Text.Encoding.UTF8);
+            string html = $@"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{item.Name}</title><link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css' rel='stylesheet'></head><body style='background:#202124; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; font-family:""Segoe UI"",sans-serif;'><div style='background:#303134; padding:40px 60px; border-radius:12px; text-align:center;'><i class='fas fa-file' style='font-size:64px; color:#8ab4f8; margin-bottom:20px;'></i><h2 style='margin:0 0 10px 0; font-weight:500;'>{item.Name}</h2><p style='color:#9aa0a6;'>Simülasyon Dosyası</p></div></body></html>";
+            return Content(html, "text/html", Encoding.UTF8);
         }
 
         [HttpGet]
@@ -144,100 +180,27 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             var item = GetDatabase().FirstOrDefault(i => i.Id == id);
             if (item == null) return NotFound();
+            if (!string.IsNullOrEmpty(item.FileData)) return File(Convert.FromBase64String(item.FileData), item.ContentType, item.Name);
 
-            if (!string.IsNullOrEmpty(item.FileData))
-            {
-                byte[] bytes = Convert.FromBase64String(item.FileData);
-                return File(bytes, item.ContentType, item.Name);
-            }
-
-            string contentType = "application/octet-stream";
-            if (item.Extension == "pdf") contentType = "application/pdf";
-            else if (item.Extension == "xlsx") contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-            else if (item.Extension == "png" || item.Extension == "jpg") contentType = "image/" + item.Extension;
-            else if (item.Extension == "zip") contentType = "application/zip";
-
-            byte[] dummyBytes = Encoding.UTF8.GetBytes("Bu bir CoreDrive simulasyon dosyasidir.");
-            return File(dummyBytes, contentType, item.Name);
+            string contentType = item.Extension == "pdf" ? "application/pdf" : item.Extension == "xlsx" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : item.Extension == "zip" ? "application/zip" : "application/octet-stream";
+            return File(Encoding.UTF8.GetBytes("Simülasyon dosyası."), contentType, item.Name);
         }
 
         [HttpPost]
         public IActionResult ShareItem(string id, string email, string returnUrl)
         {
-            var db = GetDatabase();
-            var item = db.FirstOrDefault(i => i.Id == id);
-            if (item != null && !string.IsNullOrEmpty(email))
-            {
-                item.IsShared = true;
-                item.SharedWith = email;
-                SaveDatabase(db);
-
-                try
-                {
-                    var smtpClient = new SmtpClient("smtp.gmail.com")
-                    {
-                        Port = 587,
-                        Credentials = new NetworkCredential("seninmailin@gmail.com", "uygulamasifresi"),
-                        EnableSsl = true,
-                    };
-                    var mailMessage = new MailMessage { From = new MailAddress("seninmailin@gmail.com"), Subject = "CoreDrive: Sizinle bir dosya paylaşıldı", Body = $"Merhaba,\n\nCoreDrive platformu üzerinden sizinle bir dosya paylaşıldı.\n\nDosya Adı: {item.Name}\nPaylaşan: {User.Identity.Name}\n\nDosyayı görüntülemek veya indirmek için CoreDrive hesabınıza giriş yapın.", IsBodyHtml = false, };
-                    mailMessage.To.Add(email);
-                    smtpClient.Send(mailMessage);
-                }
-                catch { }
-            }
+            var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id);
+            if (item != null && !string.IsNullOrEmpty(email)) { item.IsShared = true; item.SharedWith = email; SaveDatabase(db); }
             return Redirect(returnUrl ?? "/Drive/Dashboard");
         }
 
-        [HttpPost]
-        public IActionResult MoveToTrash(string id, string returnUrl)
-        {
-            var db = GetDatabase();
-            var item = db.FirstOrDefault(i => i.Id == id);
-            if (item != null) { item.IsDeleted = true; SaveDatabase(db); }
-            return Redirect(returnUrl ?? "/Drive/Dashboard");
-        }
+        [HttpPost] public IActionResult MoveToTrash(string id, string returnUrl) { var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id); if (item != null) { item.IsDeleted = true; SaveDatabase(db); } return Redirect(returnUrl ?? "/Drive/Dashboard"); }
+        [HttpPost] public IActionResult RestoreFromTrash(string id) { var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id); if (item != null) { item.IsDeleted = false; SaveDatabase(db); } return RedirectToAction("Trash"); }
+        [HttpPost] public IActionResult DeletePermanently(string id) { var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id); if (item != null) { db.Remove(item); SaveDatabase(db); } return RedirectToAction("Trash"); }
+        [HttpPost] public IActionResult EmptyTrash() { var db = GetDatabase(); db.RemoveAll(i => i.IsDeleted); SaveDatabase(db); return RedirectToAction("Trash"); }
+        [HttpPost] public IActionResult UnshareItem(string id) { var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id); if (item != null) { item.IsShared = false; SaveDatabase(db); } return RedirectToAction("Shared"); }
 
-        [HttpPost]
-        public IActionResult RestoreFromTrash(string id)
-        {
-            var db = GetDatabase();
-            var item = db.FirstOrDefault(i => i.Id == id);
-            if (item != null) { item.IsDeleted = false; SaveDatabase(db); }
-            return RedirectToAction("Trash");
-        }
-
-        [HttpPost]
-        public IActionResult DeletePermanently(string id)
-        {
-            var db = GetDatabase();
-            var item = db.FirstOrDefault(i => i.Id == id);
-            if (item != null) { db.Remove(item); SaveDatabase(db); }
-            return RedirectToAction("Trash");
-        }
-
-        [HttpPost]
-        public IActionResult EmptyTrash()
-        {
-            var db = GetDatabase();
-            db.RemoveAll(i => i.IsDeleted);
-            SaveDatabase(db);
-            return RedirectToAction("Trash");
-        }
-
-        [HttpPost]
-        public IActionResult UnshareItem(string id)
-        {
-            var db = GetDatabase();
-            var item = db.FirstOrDefault(i => i.Id == id);
-            if (item != null) { item.IsShared = false; SaveDatabase(db); }
-            return RedirectToAction("Shared");
-        }
-
-        [HttpGet]
-        public IActionResult Shared() { return View(GetDatabase().Where(i => i.IsShared && !i.IsDeleted).ToList()); }
-
-        [HttpGet]
-        public IActionResult Trash() { return View(GetDatabase().Where(i => i.IsDeleted).ToList()); }
+        [HttpGet] public IActionResult Shared() { return View(GetDatabase().Where(i => i.IsShared && !i.IsDeleted).ToList()); }
+        [HttpGet] public IActionResult Trash() { return View(GetDatabase().Where(i => i.IsDeleted).ToList()); }
     }
 }

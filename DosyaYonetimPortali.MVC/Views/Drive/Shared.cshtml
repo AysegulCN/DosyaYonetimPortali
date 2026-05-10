@@ -1,32 +1,9 @@
 ﻿@model List<DosyaYonetimPortali.MVC.Models.DriveItemViewModel>
 @{
-    ViewData["Title"] = "Benimle Paylaşılanlar";
-    Layout = "~/Views/Shared/_DriveLayout.cshtml";
+    ViewData["Title"] = "Benimle Paylaşılanlar"; Layout = "~/Views/Shared/_DriveLayout.cshtml";
 }
 
-<style>
-    body, #wrapper #content-wrapper { background-color: #fff; }
-    .btn-google-new { background-color: #fff; color: #3c4043; border-radius: 24px; padding: 8px 24px 8px 12px; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); font-weight: 500; font-size: 14px; border: none; transition: background-color 0.2s, box-shadow 0.2s; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-    .btn-google-new:hover { background-color: #f8f9fa; box-shadow: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15); }
-    .section-title { font-size: 14px; font-weight: 500; color: #5f6368; margin-bottom: 15px; margin-top: 30px; border-bottom: 1px solid #f1f3f5; padding-bottom: 10px; }
-    .file-table { width: 100%; border-collapse: collapse; }
-    .file-table th { color: #5f6368; font-weight: 500; font-size: 13px; text-align: left; padding: 12px 15px; border-bottom: 1px solid #dadce0; }
-    .file-table td { padding: 12px 15px; border-bottom: 1px solid #dadce0; color: #3c4043; font-size: 13px; font-weight: 500; vertical-align: middle; }
-    .file-table tr:hover td { background-color: #f5f5f5; }
-    .file-name-cell { display: flex; align-items: center; font-size: 14px; }
-    .file-icon { font-size: 20px; margin-right: 15px; width: 24px; text-align: center; }
-</style>
-
 <div class="d-flex align-items-center mb-4 mt-2">
-    <div class="dropdown mr-4">
-        <button class="btn-google-new dropdown-toggle" type="button" data-toggle="dropdown">
-            <svg width="28" height="28" viewBox="0 0 36 36"><path fill="#34A853" d="M16 16v14h4V20z"></path><path fill="#4285F4" d="M30 16H20l-4 4h14z"></path><path fill="#FBBC05" d="M6 16v4h10l4-4z"></path><path fill="#EA4335" d="M20 16V6h-4v14z"></path></svg>
-            Yeni Ekle
-        </button>
-        <div class="dropdown-menu shadow border-0" style="border-radius: 8px; padding: 8px 0; min-width: 240px; margin-top: 8px;">
-            <a class="dropdown-item py-2 text-muted" href="#"><i class="fas fa-link mr-3"></i> Paylaşım Bağlantısı Oluştur</a>
-        </div>
-    </div>
     <h4 class="m-0 font-weight-normal text-dark" style="font-size: 1.25rem;">Benimle Paylaşılanlar</h4>
 </div>
 
@@ -35,23 +12,44 @@
     <table class="file-table">
         <thead><tr><th style="width: 45%;">Ad</th><th style="width: 20%;">Paylaşan Kişi</th><th style="width: 20%;">Paylaşım Tarihi</th><th style="width: 15%;">Aksiyon</th></tr></thead>
         <tbody>
-            @foreach (var file in Model.Where(m => m.Owner != "Ben"))
+            @if (Model.Where(m => m.Owner != "Ben").Any())
             {
-                <tr>
-                    <td>
-                        <a href="/Drive/PreviewFile?id=@file.Id" target="_blank" class="file-name-cell text-decoration-none" style="color: inherit;">
-                            @if (file.Extension == "pdf") { <i class="fas fa-file-pdf file-icon text-danger"></i> }
-                            else if (file.Extension == "xlsx") { <i class="fas fa-file-excel file-icon text-success"></i> }
-                            else { <i class="fas fa-file file-icon text-secondary"></i> }
-                            <span class="text-truncate">@file.Name</span>
-                        </a>
-                    </td>
-                    <td class="text-primary fw-bold">@file.Owner</td>
-                    <td class="text-muted">@file.ModifiedDate</td>
-                    <td>
-                        <a href="/Drive/DownloadFile?id=@file.Id" class="btn btn-sm btn-light border"><i class="fas fa-download text-primary"></i> İndir</a>
-                    </td>
-                </tr>
+                foreach (var file in Model.Where(m => m.Owner != "Ben"))
+                {
+                    <tr>
+                        <td>
+                            <a href="/Drive/PreviewFile?id=@file.Id" target="_blank" class="file-name-cell text-decoration-none text-dark">
+                                @if (file.Extension == "pdf")
+                                {
+                                    <i class="fas fa-file-pdf file-icon text-danger"></i>
+                                }
+                                else if (file.Extension == "xlsx")
+                                {
+
+                                    <i class="fas fa-file-excel file-icon text-success"></i>
+                                }
+                                else
+                                {
+
+                                    <i class="fas fa-file file-icon text-secondary"></i>
+                                }
+                                <span class="text-truncate">@file.Name</span>
+                            </a>
+                        </td>
+                        <td class="text-primary fw-bold">@file.Owner</td>
+                        <td class="text-muted">@file.ModifiedDate</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <a href="/Drive/DownloadFile?id=@file.Id" class="btn btn-sm bg-light border text-primary mr-2"><i class="fas fa-download"></i> İndir</a>
+                                <form asp-action="UnshareItem" method="post" class="m-0 p-0"><input type="hidden" name="id" value="@file.Id" /><button type="submit" class="btn btn-sm bg-light border text-danger"><i class="fas fa-trash"></i></button></form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="4" class="text-center py-4 text-muted">Sizinle paylaşılan bir dosya bulunmuyor.</td></tr>
             }
         </tbody>
     </table>
@@ -62,25 +60,39 @@
     <table class="file-table">
         <thead><tr><th style="width: 45%;">Ad</th><th style="width: 20%;">Paylaşılan Kişi</th><th style="width: 20%;">Paylaşım Tarihi</th><th style="width: 15%;">Aksiyon</th></tr></thead>
         <tbody>
-            @foreach (var file in Model.Where(m => m.Owner == "Ben"))
+            @if (Model.Where(m => m.Owner == "Ben").Any())
             {
-                <tr>
-                    <td>
-                        <a href="/Drive/PreviewFile?id=@file.Id" target="_blank" class="file-name-cell text-decoration-none" style="color: inherit;">
-                            @if (file.Extension == "xlsx") { <i class="fas fa-file-excel file-icon text-success"></i> }
-                            else { <i class="fas fa-file file-icon text-secondary"></i> }
-                            <span class="text-truncate">@file.Name</span>
-                        </a>
-                    </td>
-                    <td class="text-success fw-bold">@file.SharedWith</td>
-                    <td class="text-muted">@file.ModifiedDate</td>
-                    <td>
-                        <form asp-action="UnshareItem" method="post" class="m-0 p-0">
-                            <input type="hidden" name="id" value="@file.Id" />
-                            <button type="submit" class="btn btn-sm btn-light border text-danger"><i class="fas fa-times"></i> İptal Et</button>
-                        </form>
-                    </td>
-                </tr>
+                foreach (var file in Model.Where(m => m.Owner == "Ben"))
+                {
+                    <tr>
+                        <td>
+                            <a href="/Drive/PreviewFile?id=@file.Id" target="_blank" class="file-name-cell text-decoration-none text-dark">
+                                @if (file.Extension == "xlsx")
+                                {
+                                    <i class="fas fa-file-excel file-icon text-success"></i>
+                                }
+                                else
+                                {
+
+                                    <i class="fas fa-file file-icon text-secondary"></i>
+                                }
+                                <span class="text-truncate">@file.Name</span>
+                            </a>
+                        </td>
+                        <td class="text-success fw-bold">@file.SharedWith</td>
+                        <td class="text-muted">@file.ModifiedDate</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <a href="/Drive/DownloadFile?id=@file.Id" class="btn btn-sm bg-light border text-primary mr-2"><i class="fas fa-download"></i> İndir</a>
+                                <form asp-action="UnshareItem" method="post" class="m-0 p-0"><input type="hidden" name="id" value="@file.Id" /><button type="submit" class="btn btn-sm bg-light border text-danger"><i class="fas fa-times"></i> İptal</button></form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="4" class="text-center py-4 text-muted">Paylaştığınız bir dosya bulunmuyor.</td></tr>
             }
         </tbody>
     </table>

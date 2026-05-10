@@ -1,86 +1,92 @@
 ﻿@model DosyaYonetimPortali.MVC.Models.QuotaSettingsViewModel
 @{
-    ViewData["Title"] = "Kota Ayarları";
+    ViewData["Title"] = "Kota Yönetimi";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Admin layoutun neyse o kalmalı
+    long currentQuotaMB = ViewBag.CurrentQuotaMB;
+    int currentQuotaGB = (int)(currentQuotaMB / 1024);
+    int pendingGB = ViewBag.PendingRequestGB;
 }
 
-<style>
-    .btn-animated:active { transform: scale(0.95); }
-    .settings-card { border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .settings-header { background-color: transparent; border-bottom: 1px solid #f1f3f5; padding: 1.5rem; }
-    .settings-body { padding: 2rem; }
-    .modern-input { border-radius: 8px 0 0 8px; padding: 0.75rem 1rem; border: 1px solid #d1d3e2; height: 50px; font-weight: 500; color: #5a5c69; }
-    .modern-input:focus { border-color: #4e73df; box-shadow: none; outline: none; }
-    .input-group-text-modern { border-radius: 0 8px 8px 0; background-color: #f8f9fc; border: 1px solid #d1d3e2; border-left: none; color: #858796; font-weight: 600; padding: 0 1.25rem; }
-</style>
-
-<form asp-action="SaveQuotaSettings" asp-controller="Admin" method="post">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem Kota Ayarları</h1>
-        <button type="submit" class="btn btn-success shadow-sm btn-animated" style="border-radius: 10px; padding: 10px 20px; font-weight: 600;">
-            <i class="fas fa-save fa-sm text-white-50 me-2"></i> Değişiklikleri Kaydet
-        </button>
+<div class="container-fluid mt-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h3 class="m-0 font-weight-bold text-dark"><i class="fas fa-server text-primary mr-3"></i>Kota ve Depolama Yönetimi</h3>
+        <a href="/Drive/Dashboard" class="btn btn-outline-primary font-weight-bold" style="border-radius: 20px;"><i class="fas fa-external-link-alt mr-2"></i>Siteye Göz At</a>
     </div>
+
+    @if (TempData["ToastMessage"] != null)
+    {
+        <div class="alert @(TempData["ToastIcon"].ToString() == "success" ? "alert-success" : "alert-danger") alert-dismissible fade show border-0 shadow-sm mb-4" style="border-radius: 8px;">
+            <i class="fas @(TempData["ToastIcon"].ToString() == "success" ? "fa-check-circle" : "fa-times-circle") mr-2"></i> @TempData["ToastMessage"]
+            <button type="button" class="close text-dark" data-dismiss="alert" style="outline: none;"><span>&times;</span></button>
+        </div>
+    }
 
     <div class="row">
-        <div class="col-lg-6 mb-4">
-            <div class="card settings-card h-100">
-                <div class="card-header settings-header">
-                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-hdd me-2"></i>Varsayılan Limitler</h6>
+        <div class="col-xl-6 col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                <div class="card-header border-0 bg-transparent pt-4 pb-0 px-4">
+                    <h5 class="font-weight-bold text-dark m-0">Onay Bekleyen Kota Talepleri</h5>
                 </div>
-                <div class="card-body settings-body">
-                    <div class="mb-4">
-                        <label class="form-label text-dark fw-bold mb-2">Yeni Kullanıcı Başlangıç Kotası</label>
-                        <div class="input-group shadow-sm">
-                            <input type="number" asp-for="DefaultUserQuotaGB" class="form-control modern-input" required min="1">
-                            <span class="input-group-text input-group-text-modern">GB</span>
+                <div class="card-body p-4">
+                    @if (pendingGB > 0)
+                    {
+                        <div class="d-flex align-items-center justify-content-between p-3" style="border: 1px solid #dadce0; border-radius: 8px; background-color: #f8f9fa;">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-warning text-dark rounded-circle d-flex justify-content-center align-items-center mr-3" style="width: 48px; height: 48px; font-size: 20px;">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+                                <div>
+                                    <h6 class="m-0 font-weight-bold text-dark">Kullanıcı (Genel)</h6>
+                                    <small class="text-muted">Mevcut: @currentQuotaGB GB <i class="fas fa-arrow-right mx-1"></i> <strong>Talep Edilen: @pendingGB GB</strong></small>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <form asp-action="RejectQuotaRequest" method="post" class="m-0 mr-2">
+                                    <button type="submit" class="btn btn-outline-danger" style="border-radius: 8px; font-weight: 600;"><i class="fas fa-times mr-1"></i> Reddet</button>
+                                </form>
+                                <form asp-action="ApproveQuotaRequest" method="post" class="m-0">
+                                    <button type="submit" class="btn btn-success" style="border-radius: 8px; font-weight: 600;"><i class="fas fa-check mr-1"></i> Onayla</button>
+                                </form>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label class="form-label text-dark fw-bold mb-2">Maksimum Dosya Yükleme Boyutu</label>
-                        <div class="input-group shadow-sm">
-                            <input type="number" asp-for="MaxFileUploadMB" class="form-control modern-input" required min="1">
-                            <span class="input-group-text input-group-text-modern">MB</span>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle text-success mb-3" style="font-size: 40px; opacity: 0.5;"></i>
+                            <h6 class="text-muted">Bekleyen bir kota talebi bulunmuyor.</h6>
                         </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-6 mb-4">
-            <div class="card settings-card h-100">
-                <div class="card-header settings-header">
-                    <h6 class="m-0 font-weight-bold text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Sistem Uyarı Tetikleyicileri</h6>
+        <div class="col-xl-6 col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                <div class="card-header border-0 bg-transparent pt-4 pb-0 px-4">
+                    <h5 class="font-weight-bold text-dark m-0">Kullanıcı Kotalarını Yönet (Zorla Değiştir)</h5>
                 </div>
-                <div class="card-body settings-body">
-                    <div class="mb-4">
-                        <label class="form-label text-dark fw-bold mb-2">Kullanıcı Kota Uyarı Sınırı</label>
-                        <div class="input-group shadow-sm">
-                            <input type="number" asp-for="UserQuotaWarningPercent" class="form-control modern-input" required min="1" max="100">
-                            <span class="input-group-text input-group-text-modern">%</span>
-                        </div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center p-3 mb-3" style="border: 1px solid #dadce0; border-radius: 8px;">
+                        <h4 class="m-0 font-weight-bold text-primary mr-auto">@currentQuotaGB <span style="font-size: 16px;">GB</span></h4>
+                        <span class="badge badge-primary px-3 py-2" style="border-radius: 20px;">Mevcut Aktif Kota</span>
                     </div>
-                    <div>
-                        <label class="form-label text-dark fw-bold mb-2">Sunucu Kritik Doluluk Alarmı</label>
-                        <div class="input-group shadow-sm">
-                            <input type="number" asp-for="ServerCriticalAlarmPercent" class="form-control modern-input" required min="1" max="100">
-                            <span class="input-group-text input-group-text-modern">%</span>
-                        </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <form asp-action="ForceSetQuota" method="post" class="w-100 mr-2">
+                            <input type="hidden" name="targetGB" value="15" />
+                            <button type="submit" class="btn @(currentQuotaGB == 15 ? "btn-secondary disabled" : "btn-outline-danger") w-100" style="border-radius: 8px; font-weight: 600;"><i class="fas fa-arrow-down mr-1"></i> 15 GB'a Düşür</button>
+                        </form>
+                        <form asp-action="ForceSetQuota" method="post" class="w-100 mr-2">
+                            <input type="hidden" name="targetGB" value="50" />
+                            <button type="submit" class="btn @(currentQuotaGB == 50 ? "btn-secondary disabled" : "btn-outline-primary") w-100" style="border-radius: 8px; font-weight: 600;">50 GB Yap</button>
+                        </form>
+                        <form asp-action="ForceSetQuota" method="post" class="w-100">
+                            <input type="hidden" name="targetGB" value="250" />
+                            <button type="submit" class="btn @(currentQuotaGB == 250 ? "btn-secondary disabled" : "btn-outline-primary") w-100" style="border-radius: 8px; font-weight: 600;"><i class="fas fa-arrow-up mr-1"></i> 250 GB Yap</button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</form>
-
-@section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        @if (TempData["ToastMessage"] != null)
-        {
-            <text>
-            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true });
-            Toast.fire({ icon: '@TempData["ToastIcon"]', title: '@TempData["ToastMessage"]' });
-            </text>
-        }
-    </script>
-}
+</div>

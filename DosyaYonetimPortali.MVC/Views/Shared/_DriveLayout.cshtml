@@ -1,100 +1,377 @@
-﻿<!DOCTYPE html>
-<html lang="tr">
+﻿@{
+    var storageInfo = DosyaYonetimPortali.MVC.Controllers.DriveController.GetStorageInfo();
+    long currentQuotaMB = DosyaYonetimPortali.MVC.Controllers.DriveController.UserTotalQuotaMB;
+    int currentQuotaGB = (int)(currentQuotaMB / 1024);
+    
+    // GÜVENLİK YASTIĞI: Eğer isim boş gelirse çökmek yerine "Kullanıcı" ismini ata (?? "Kullanıcı")
+    string userName = DosyaYonetimPortali.MVC.Controllers.DriveController.CurrentFullName ?? "Kullanıcı";
+    string userEmail = DosyaYonetimPortali.MVC.Controllers.DriveController.CurrentEmail ?? "bilgi@coredrive.com";
+    string userPhone = DosyaYonetimPortali.MVC.Controllers.DriveController.CurrentPhone ?? "";
+    string userAvatar = DosyaYonetimPortali.MVC.Controllers.DriveController.CurrentAvatarBase64 ?? "";
+    
+    string initial = !string.IsNullOrEmpty(userName) ? userName.Substring(0,1).ToUpper() : "K";
+    
+    // GÜVENLİ KONTROL: userName yanına eklenen "?" işareti, null ise ToLower() işlemini atlar ve çökmeyi engeller.
+    bool isAdmin = User.IsInRole("Admin") || userName?.ToLower() == "sistem" || userName?.ToLower() == "patron";
+    
+    // Aynı güvenliği sayfa kontrolü için de yapıyoruz
+    bool isAdminPage = ViewContext.RouteData.Values["Controller"]?.ToString() == "Admin";
+}
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>CoreDrive - Dosyalarım</title>
-    
+    <title>CoreDrive</title>
     <link href="~/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="~/css/sb-admin-2.min.css" rel="stylesheet">
     <style>
-        body { background-color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        :root {
+            --bg-main: #ffffff; --bg-secondary: #f8f9fa; --bg-hover: #f1f3f4;
+            --text-main: #202124; --text-muted: #5f6368; --border-color: #dadce0;
+            --active-bg: #e8f0fe; --active-text: #1967d2; --input-bg: #f1f3f4;
+            --card-bg: #ffffff; --table-hover: #f5f5f5;
+        }
+        [data-theme="dark"] {
+            --bg-main: #202124; --bg-secondary: #292a2d; --bg-hover: #3c4043;
+            --text-main: #e8eaed; --text-muted: #9aa0a6; --border-color: #5f6368;
+            --active-bg: #3c4043; --active-text: #8ab4f8; --input-bg: #303134;
+            --card-bg: #2d2e30; --table-hover: #303134;
+        }
+        body { background-color: var(--bg-main) !important; color: var(--text-main) !important; overflow: hidden; font-family: 'Segoe UI', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .text-dark { color: var(--text-main) !important; }
+        .text-muted { color: var(--text-muted) !important; }
+        .bg-light { background-color: var(--bg-hover) !important; }
+        .border, .border-bottom, .border-top { border-color: var(--border-color) !important; }
         
-        .drive-navbar { background-color: #fff; border-bottom: 1px solid #dadce0; padding: 8px 16px; height: 64px; }
-        .drive-brand { font-size: 22px; color: #5f6368; font-weight: 500; text-decoration: none; display: flex; align-items: center; }
+        .drive-navbar { background-color: var(--bg-main); border-bottom: 1px solid var(--border-color); padding: 8px 16px; height: 64px; transition: background-color 0.3s; }
+        .drive-sidebar { width: 256px; height: calc(100vh - 64px); float: left; background-color: var(--bg-main); padding-top: 15px; border-right: 1px solid var(--border-color); transition: background-color 0.3s; }
+        .drive-main { margin-left: 256px; height: calc(100vh - 64px); padding: 0 30px; overflow-y: auto; background-color: var(--bg-main); }
         
-        .drive-sidebar { width: 256px; height: calc(100vh - 64px); float: left; padding: 16px 0; background-color: #fff; }
-        .drive-main { margin-left: 256px; height: calc(100vh - 64px); padding: 20px 30px; overflow-y: auto; background-color: #fff; }
+        .nav-link-drive { display: flex; align-items: center; padding: 12px 24px; color: var(--text-main); border-radius: 0 24px 24px 0; font-weight: 500; text-decoration: none; margin-bottom: 4px; transition: background-color 0.2s; }
+        .nav-link-drive:hover { background-color: var(--bg-hover); color: var(--text-main); text-decoration: none; }
+        .nav-link-drive.active { background-color: var(--active-bg); color: var(--active-text); }
+        .nav-link-drive i { font-size: 18px; margin-right: 18px; color: var(--text-muted); width: 24px; text-align: center; }
+        .nav-link-drive.active i { color: var(--active-text); }
         
-        .nav-item-drive { padding: 0 12px; margin-bottom: 4px; }
-        .nav-link-drive { display: flex; align-items: center; padding: 10px 24px; color: #3c4043; text-decoration: none; border-radius: 0 24px 24px 0; font-weight: 500; font-size: 14px; }
-        .nav-link-drive:hover { background-color: #f1f3f4; text-decoration: none; color: #3c4043; }
-        .nav-link-drive.active { background-color: #e8f0fe; color: #1967d2; }
-        .nav-link-drive.active i { color: #1967d2; }
-        .nav-link-drive i { font-size: 18px; margin-right: 18px; color: #5f6368; width: 24px; text-align: center; }
+        .search-bar { background-color: var(--input-bg); border-radius: 8px; padding: 8px 16px; width: 100%; max-width: 720px; display: flex; align-items: center; border: 1px solid transparent; transition: background-color 0.3s; }
+        .search-bar input { border: none; background: transparent; width: 100%; outline: none; margin-left: 10px; font-size: 16px; color: var(--text-main); }
+        .storage-area { padding: 12px 24px; margin-top: 15px; cursor: pointer; border-radius: 0 24px 24px 0; margin-right: 12px; transition: background-color 0.2s;}
+        .storage-area:hover { background-color: var(--bg-hover); }
+
+        .btn-google-new { background-color: var(--card-bg); color: var(--text-main); border-radius: 24px; padding: 8px 24px 8px 12px; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.2); font-weight: 500; font-size: 14px; border: 1px solid var(--border-color); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; }
+        .btn-google-new:hover { background-color: var(--bg-hover); box-shadow: 0 1px 3px 0 rgba(0,0,0,0.3); }
+        .section-title { font-size: 14px; font-weight: 500; color: var(--text-muted); margin-bottom: 15px; margin-top: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         
-        .search-bar { background-color: #f1f3f4; border-radius: 8px; padding: 8px 16px; width: 100%; max-width: 720px; display: flex; align-items: center; }
-        .search-bar input { border: none; background: transparent; width: 100%; outline: none; margin-left: 10px; font-size: 16px; color: #3c4043; }
+        .folder-card { border: 1px solid var(--border-color); background-color: var(--card-bg); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; cursor: pointer; transition: background-color 0.2s; color: var(--text-main); font-weight: 500; font-size: 14px; text-decoration: none !important; }
+        .folder-card:hover { background-color: var(--bg-hover); color: var(--text-main); }
+        .folder-icon { color: var(--text-muted); font-size: 20px; margin-right: 15px; }
+        
+        .file-table { width: 100%; border-collapse: collapse; }
+        .file-table th { color: var(--text-muted); font-weight: 500; font-size: 13px; text-align: left; padding: 12px 15px; border-bottom: 1px solid var(--border-color); }
+        .file-table td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-size: 13px; font-weight: 500; vertical-align: middle; }
+        .file-table tr:hover td { background-color: var(--table-hover); }
+        .file-name-cell { display: flex; align-items: center; font-size: 14px; }
+        .file-icon { font-size: 20px; margin-right: 15px; width: 24px; text-align: center; }
+        .action-menu-btn { background: none; border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .action-menu-btn:hover { background-color: var(--bg-hover); }
+
+        .modal-content { background-color: var(--card-bg) !important; color: var(--text-main) !important; border: 1px solid var(--border-color); }
+        .form-control { background-color: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); }
+        .form-control:focus { background-color: var(--bg-main); color: var(--text-main); }
+        .dropdown-menu { background-color: var(--card-bg); border: 1px solid var(--border-color); }
+        .dropdown-item { color: var(--text-main); }
+        .dropdown-item:hover { background-color: var(--bg-hover); color: var(--text-main); }
+        
+        .plan-card { border: 2px solid var(--border-color); border-radius: 16px; padding: 30px 20px; text-align: center; background: var(--card-bg); position: relative; overflow: hidden; }
+        .plan-card.active-plan { border-color: #1a73e8; background: var(--bg-hover); }
+        .plan-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 28px; background: var(--bg-hover); color: var(--text-muted); }
+        .active-plan .plan-icon { background: #1a73e8; color: #fff; }
+        .plan-badge { position: absolute; top: 16px; right: -35px; background: #1a73e8; color: #fff; font-size: 11px; font-weight: bold; padding: 4px 40px; transform: rotate(45deg); letter-spacing: 1px; }
+
+        .btn-theme-toggle { background: none; border: none; color: var(--text-muted); font-size: 20px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;}
+        .btn-theme-toggle:hover { background-color: var(--bg-hover); }
+        .close { color: var(--text-main); opacity: 0.8; text-shadow: none; }
+        .close:hover { color: var(--text-main); opacity: 1; }
+
+        .nav-pills .nav-link { color: var(--text-main); border-radius: 8px; font-weight: 500; margin-bottom: 5px; }
+        .nav-pills .nav-link.active { background-color: var(--active-bg); color: var(--active-text); }
+        .nav-pills .nav-link:hover:not(.active) { background-color: var(--bg-hover); }
+        
+        .avatar-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 16px; background-color: #1a73e8; border: 1px solid var(--border-color); }
+        .avatar-circle-lg { width: 70px; height: 70px; font-size: 32px; margin: 0 auto 10px auto; }
     </style>
 </head>
 <body>
-    
-    <header class="drive-navbar d-flex align-items-center justify-content-between sticky-top">
-        <div class="d-flex align-items-center" style="width: 240px;">
-            <a href="/Drive/Dashboard" class="drive-brand">
-                <i class="fas fa-cloud text-primary mr-2" style="font-size: 28px;"></i>
-                <span class="ml-1">CoreDrive</span>
-            </a>
-        </div>
-        
-        <div class="search-bar mx-4 d-none d-md-flex">
-            <i class="fas fa-search text-muted"></i>
-            <input type="text" placeholder="Drive'da dosya veya klasör arayın">
-        </div>
-        
+    <header class="drive-navbar d-flex align-items-center justify-content-between">
+        <div style="width: 240px;"><a href="/Drive/Dashboard" class="text-decoration-none text-dark font-weight-bold" style="font-size: 22px;"><i class="fas fa-cloud text-primary mr-2" style="font-size: 28px;"></i>CoreDrive</a></div>
+        <div class="search-bar mx-4 d-none d-md-flex"><i class="fas fa-search text-muted"></i><input type="text" placeholder="Drive'da arayın"></div>
         <div class="d-flex align-items-center">
+            
+            <button class="btn-theme-toggle mr-1" data-toggle="modal" data-target="#settingsModal" title="Ayarlar"><i class="fas fa-cog"></i></button>
+            <button id="themeToggleBtn" class="btn-theme-toggle mr-3" title="Temayı Değiştir"><i class="fas fa-moon"></i></button>
+            
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none" data-toggle="dropdown">
-                    <img src="~/img/undraw_profile.svg" class="rounded-circle border" width="36" height="36">
+                    @if(string.IsNullOrEmpty(userAvatar)) {
+                        <div class="avatar-circle shadow-sm">@initial</div>
+                    } else {
+                        <img src="@userAvatar" class="rounded-circle border shadow-sm" style="width:36px; height:36px; object-fit:cover;">
+                    }
                 </a>
-                <div class="dropdown-menu dropdown-menu-right shadow-sm border-0 mt-2" style="border-radius: 8px;">
-                    <span class="dropdown-item-text text-muted small pb-2 border-bottom">@User.Identity.Name</span>
-                    <a class="dropdown-item py-2 text-danger mt-1" href="/Auth/Logout">
-                        <i class="fas fa-sign-out-alt mr-2"></i> Çıkış Yap
-                    </a>
+                <div class="dropdown-menu dropdown-menu-right shadow-sm mt-2" style="border-radius: 8px; min-width: 240px;">
+                    <div class="px-3 py-3 text-center border-bottom">
+                        @if(string.IsNullOrEmpty(userAvatar)) {
+                            <div class="avatar-circle avatar-circle-lg shadow-sm">@initial</div>
+                        } else {
+                            <img src="@userAvatar" class="rounded-circle border shadow-sm mb-2" style="width:70px; height:70px; object-fit:cover;">
+                        }
+                        <div class="font-weight-bold text-dark">@userName</div>
+                        <div class="small text-muted">@userEmail</div>
+                    </div>
+                    
+                    @if(isAdmin) {
+                        <a class="dropdown-item py-2 mt-2 font-weight-bold text-primary" href="/Admin/QuotaManagement"><i class="fas fa-user-shield mr-3"></i> Admin Paneli</a>
+                    }
+                    
+                    <a class="dropdown-item py-2 @(isAdmin ? "" : "mt-2")" href="#" data-toggle="modal" data-target="#profileModal"><i class="fas fa-user-edit mr-3 text-muted"></i> Profilimi Düzenle</a>
+                    <a class="dropdown-item py-2" href="#" data-toggle="modal" data-target="#settingsModal"><i class="fas fa-sliders-h mr-3 text-muted"></i> Ayarlar</a>
+                    <div class="dropdown-divider my-2"></div>
+                    <a class="dropdown-item py-2 text-danger" href="/Auth/Logout"><i class="fas fa-sign-out-alt mr-3"></i> Çıkış Yap</a>
                 </div>
             </div>
         </div>
     </header>
 
-    <div>
-        <nav class="drive-sidebar d-none d-md-block">
-            <div class="nav-item-drive">
-                <a href="/Drive/Dashboard" class="nav-link-drive @(ViewContext.RouteData.Values["Action"].ToString() == "Dashboard" ? "active" : "")">
-                    <i class="fas fa-hdd"></i> Drive'ım
-                </a>
-            </div>
-            <div class="nav-item-drive">
-                <a href="/Drive/Shared" class="nav-link-drive @(ViewContext.RouteData.Values["Action"].ToString() == "Shared" ? "active" : "")">
-                    <i class="fas fa-user-friends"></i> Benimle Paylaşılanlar
-                </a>
-            </div>
-            <div class="nav-item-drive">
-                <a href="/Drive/Trash" class="nav-link-drive @(ViewContext.RouteData.Values["Action"].ToString() == "Trash" ? "active" : "")">
-                    <i class="fas fa-trash"></i> Çöp Kutusu
-                </a>
-            </div>
-            
-            <hr class="mx-3 my-3" style="border-color: #dadce0;">
-            
-            <div class="px-4 mt-3">
-                <div class="d-flex align-items-center text-muted mb-2" style="font-size: 13px;">
-                    <i class="fas fa-cloud mr-2"></i> Depolama Alanı
-                </div>
-                <div class="progress mb-2" style="height: 6px; border-radius: 3px;">
-                    <div class="progress-bar bg-primary" role="progressbar" style="width: 45%;"></div>
-                </div>
-                <div class="text-muted" style="font-size: 13px;">15 GB'ın 6.7 GB'ı kullanılıyor</div>
-            </div>
-        </nav>
+    <nav class="drive-sidebar">
+        <a href="/Drive/Dashboard" class="nav-link-drive @(ViewContext.RouteData.Values["Action"].ToString() == "Dashboard" ? "active" : "")"><i class="fas fa-hdd"></i> Drive'ım</a>
+        <a href="/Drive/Shared" class="nav-link-drive @(ViewContext.RouteData.Values["Action"].ToString() == "Shared" ? "active" : "")"><i class="fas fa-user-friends"></i> Benimle Paylaşılanlar</a>
+        <a href="/Drive/Trash" class="nav-link-drive @(ViewContext.RouteData.Values["Action"].ToString() == "Trash" ? "active" : "")"><i class="fas fa-trash"></i> Çöp Kutusu</a>
+        <hr class="mx-3 my-3 border-bottom">
+        <div class="storage-area" data-toggle="modal" data-target="#settingsModal">
+            <div class="text-muted font-weight-bold mb-2" style="font-size: 13px;"><i class="fas fa-cloud mr-2"></i> Depolama Alanı</div>
+            <div class="progress mb-2" style="height: 6px; border-radius: 3px; background-color: var(--border-color);"><div class="progress-bar @(storageInfo.Percent > 80 ? "bg-danger" : "bg-primary")" style="width: @storageInfo.Percent%;"></div></div>
+            <div class="text-muted" style="font-size: 12px;">@storageInfo.Total'ın @storageInfo.Used'ı kullanılıyor</div>
+        </div>
+    </nav>
 
-        <main class="drive-main">
-            @RenderBody()
-        </main>
+    <main class="drive-main">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mt-4 mb-0" style="border-radius: 8px; background-color: #e6f4ea; color: #137333;">
+                <div class="d-flex align-items-center"><i class="fas fa-check-circle mr-3" style="font-size: 20px;"></i><div><strong style="font-weight: 600;">Bilgi:</strong> @TempData["SuccessMessage"]</div></div>
+                <button type="button" class="close text-dark" data-dismiss="alert" style="outline: none;"><span>&times;</span></button>
+            </div>
+        }
+        @RenderBody()
+    </main>
+
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 12px; border: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                    <h4 class="modal-title font-weight-bold text-dark"><i class="fas fa-cog text-muted mr-2"></i> Ayarlar</h4>
+                    <button type="button" class="close text-dark" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-0 d-flex" style="min-height: 450px;">
+                    <div class="border-right" style="width: 220px; background: var(--bg-secondary); padding: 20px 10px;">
+                        <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+                            <a class="nav-link active" id="v-pills-general-tab" data-toggle="pill" href="#v-pills-general"><i class="fas fa-sliders-h mr-2"></i> Genel</a>
+                            <a class="nav-link" id="v-pills-plan-tab" data-toggle="pill" href="#v-pills-plan"><i class="fas fa-hdd mr-2"></i> Depolama & Plan</a>
+                            <a class="nav-link" id="v-pills-files-tab" data-toggle="pill" href="#v-pills-files"><i class="fas fa-file-alt mr-2"></i> Dosyalar</a>
+                        </div>
+                    </div>
+                    <div class="tab-content p-4 flex-grow-1" id="v-pills-tabContent">
+                        <div class="tab-pane fade show active" id="v-pills-general">
+                            <h5 class="text-dark font-weight-bold mb-4">Genel Ayarlar</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                                <div><h6 class="m-0 text-dark">Dil Seçeneği</h6><small class="text-muted">CoreDrive arayüz dili</small></div>
+                                <select class="form-control form-control-sm w-auto"><option>Türkçe</option><option>English</option></select>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="v-pills-plan">
+                            <h5 class="text-dark font-weight-bold mb-4">Plan Bilgileri</h5>
+                            <div class="p-4 mb-4 text-center" style="background: var(--active-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+                                <i class="fas fa-cloud text-primary mb-3" style="font-size: 32px;"></i>
+                                <h4 class="text-primary font-weight-bold mb-1">Mevcut Plan: @currentQuotaGB GB</h4>
+                                <p class="text-muted m-0">Kullanılan: @storageInfo.Used / Toplam: @storageInfo.Total</p>
+                            </div>
+                            <button class="btn btn-primary w-100 font-weight-bold" data-dismiss="modal" data-toggle="modal" data-target="#upgradeModal" style="border-radius: 8px; padding: 12px;">Planı Yükselt / Değiştir</button>
+                        </div>
+                        <div class="tab-pane fade" id="v-pills-files">
+                            <h5 class="text-dark font-weight-bold mb-4">Dosya Tercihleri</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                                <div><h6 class="m-0 text-dark">Çevrimdışı Erişim</h6><small class="text-muted">İnternet yokken dosyalara eriş</small></div>
+                                <input type="checkbox" checked>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 12px; border: none;">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <h5 class="modal-title font-weight-bold text-dark">Kişisel Bilgiler</h5>
+                    <button type="button" class="close text-dark" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form asp-action="UpdateProfile" asp-controller="Drive" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="returnUrl" value="@ViewContext.HttpContext.Request.Path" />
+                    <div class="modal-body px-4 py-3">
+                        <div class="text-center mb-4">
+                            <div class="position-relative d-inline-block">
+                                @if(string.IsNullOrEmpty(userAvatar)) {
+                                    <div class="avatar-circle shadow-sm" style="width:90px; height:90px; font-size:40px;">@initial</div>
+                                } else {
+                                    <img src="@userAvatar" class="rounded-circle border shadow-sm" style="width:90px; height:90px; object-fit:cover;">
+                                }
+                                <label for="avatarUpload" class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center position-absolute m-0" style="bottom: 0; right: 0; width: 32px; height: 32px; cursor: pointer; border: 3px solid var(--card-bg);">
+                                    <i class="fas fa-camera" style="font-size: 13px;"></i>
+                                </label>
+                                <input type="file" id="avatarUpload" name="avatarFile" accept="image/png, image/jpeg" style="display: none;">
+                            </div>
+                            <div class="small text-muted mt-2">Fotoğraf değiştirmek için kamera ikonuna tıklayın</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group mb-3">
+                                <label class="small font-weight-bold text-muted mb-1">Ad Soyad</label>
+                                <input type="text" name="fullName" class="form-control shadow-none" value="@userName" style="border-radius: 8px;">
+                            </div>
+                            <div class="col-md-6 form-group mb-3">
+                                <label class="small font-weight-bold text-muted mb-1">E-Posta Adresi</label>
+                                <input type="email" name="email" class="form-control shadow-none" value="@userEmail" style="border-radius: 8px;">
+                            </div>
+                        </div>
+                        <div class="form-group mb-4">
+                            <label class="small font-weight-bold text-muted mb-1">Telefon Numarası</label>
+                            <input type="tel" name="phone" class="form-control shadow-none" value="@userPhone" placeholder="+90 (___) ___ __ __" style="border-radius: 8px;">
+                        </div>
+
+                        <hr style="border-color: var(--border-color);">
+                        <h6 class="font-weight-bold text-dark mb-3 mt-3">Güvenlik ve Şifre</h6>
+
+                        <div class="form-group mb-3">
+                            <label class="small font-weight-bold text-muted mb-1">Yeni Şifre (İsteğe Bağlı)</label>
+                            <div class="input-group">
+                                <input type="password" name="newPassword" id="newPassword" class="form-control shadow-none border-right-0" placeholder="Değiştirmek istemiyorsanız boş bırakın" style="border-radius: 8px 0 0 8px;">
+                                <div class="input-group-append">
+                                    <button class="btn border-left-0 toggle-password" type="button" data-target="newPassword" style="border-radius: 0 8px 8px 0; background: var(--input-bg); border: 1px solid var(--border-color); border-left: none; color: var(--text-muted);"><i class="fas fa-eye"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold text-danger mb-1"><i class="fas fa-shield-alt mr-1"></i> Mevcut Şifreniz (Zorunlu)</label>
+                            <div class="input-group">
+                                <input type="password" name="currentPassword" id="currentPassword" class="form-control shadow-none border-danger border-right-0" placeholder="Değişiklikleri kaydetmek için şifrenizi girin" required style="border-radius: 8px 0 0 8px;">
+                                <div class="input-group-append">
+                                    <button class="btn border-danger border-left-0 toggle-password" type="button" data-target="currentPassword" style="border-radius: 0 8px 8px 0; background: var(--input-bg); border-left: none; color: var(--text-muted);"><i class="fas fa-eye"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 px-4 pb-4 pt-2 bg-light">
+                        <button type="button" class="btn btn-light text-muted font-weight-bold" data-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-primary font-weight-bold px-4" style="border-radius: 20px;">Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="upgradeModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                <div class="modal-header border-0 pb-0 pt-4 px-5">
+                    <h4 class="modal-title font-weight-bold text-dark">Depolama Alanını Yükselt</h4>
+                    <button type="button" class="close" data-dismiss="modal" style="font-size: 28px;"><span>&times;</span></button>
+                </div>
+                <div class="modal-body px-5 py-4">
+                    <p class="text-muted mb-4" style="font-size: 15px;">İhtiyacınıza uygun planı seçin. Yükseltme talebiniz IT departmanı tarafından onaylanacaktır.</p>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="plan-card h-100 @(currentQuotaGB == 15 ? "active-plan" : "")">
+                                @if(currentQuotaGB == 15) { <div class="plan-badge">MEVCUT</div> }
+                                <div class="plan-icon"><i class="fas fa-hdd"></i></div>
+                                <h5 class="text-dark font-weight-bold">Standart</h5>
+                                <h2 class="text-primary my-3 font-weight-bold" style="font-size: 38px;">15 <span style="font-size: 20px;">GB</span></h2>
+                                <p class="small text-muted mb-4 pb-2 border-bottom">Temel dosya ve belge saklama işlemleri için ideal başlangıç paketi.</p>
+                                @if(currentQuotaGB == 15) { <button class="btn btn-primary w-100 disabled" style="border-radius: 8px; font-weight: 600; padding: 10px;">Şu An Kullanımda</button> } 
+                                else { <button class="btn btn-light text-dark w-100 disabled" style="border-radius: 8px; font-weight: 600; padding: 10px;">Daha Düşük Paket</button> }
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="plan-card h-100 @(currentQuotaGB == 50 ? "active-plan" : "")">
+                                @if(currentQuotaGB == 50) { <div class="plan-badge">MEVCUT</div> }
+                                <div class="plan-icon"><i class="fas fa-cloud"></i></div>
+                                <h5 class="text-dark font-weight-bold">Profesyonel</h5>
+                                <h2 class="text-primary my-3 font-weight-bold" style="font-size: 38px;">50 <span style="font-size: 20px;">GB</span></h2>
+                                <p class="small text-muted mb-4 pb-2 border-bottom">Medya dosyaları ve yoğun veri akışı olan projeler için önerilir.</p>
+                                @if(currentQuotaGB == 50) { <button class="btn btn-primary w-100 disabled" style="border-radius: 8px; font-weight: 600; padding: 10px;">Şu An Kullanımda</button> } 
+                                else { <form asp-action="RequestQuotaUpgrade" asp-controller="Drive" method="post"><input type="hidden" name="requestedQuotaGB" value="50"/><input type="hidden" name="returnUrl" value="@ViewContext.HttpContext.Request.Path" /><button type="submit" class="btn btn-outline-primary w-100" style="border-radius: 8px; font-weight: 600; padding: 10px;">Talebi Gönder</button></form> }
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="plan-card h-100 @(currentQuotaGB == 250 ? "active-plan" : "")">
+                                @if(currentQuotaGB == 250) { <div class="plan-badge">MEVCUT</div> }
+                                <div class="plan-icon"><i class="fas fa-server"></i></div>
+                                <h5 class="text-dark font-weight-bold">Kurumsal</h5>
+                                <h2 class="text-primary my-3 font-weight-bold" style="font-size: 38px;">250 <span style="font-size: 20px;">GB</span></h2>
+                                <p class="small text-muted mb-4 pb-2 border-bottom">Büyük departmanlar ve yüksek çözünürlüklü arşivlemeler için.</p>
+                                @if(currentQuotaGB == 250) { <button class="btn btn-primary w-100 disabled" style="border-radius: 8px; font-weight: 600; padding: 10px;">Şu An Kullanımda</button> } 
+                                else { <form asp-action="RequestQuotaUpgrade" asp-controller="Drive" method="post"><input type="hidden" name="requestedQuotaGB" value="250"/><input type="hidden" name="returnUrl" value="@ViewContext.HttpContext.Request.Path" /><button type="submit" class="btn btn-outline-primary w-100" style="border-radius: 8px; font-weight: 600; padding: 10px;">Talebi Gönder</button></form> }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="~/vendor/jquery/jquery.min.js"></script>
     <script src="~/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const htmlElement = document.documentElement;
+            const themeToggleBtn = document.getElementById('themeToggleBtn');
+            const icon = themeToggleBtn.querySelector('i');
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            htmlElement.setAttribute('data-theme', currentTheme);
+            updateIcon(currentTheme);
+
+            themeToggleBtn.addEventListener('click', () => {
+                let newTheme = htmlElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+                htmlElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateIcon(newTheme);
+            });
+
+            function updateIcon(theme) {
+                if(theme === 'dark') { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); icon.style.color = '#fbbc05'; } 
+                else { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); icon.style.color = 'var(--text-muted)'; }
+            }
+
+            document.querySelectorAll('.toggle-password').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    let targetId = this.getAttribute('data-target');
+                    let input = document.getElementById(targetId);
+                    let icon = this.querySelector('i');
+                    if (input.type === "password") {
+                        input.type = "text";
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        input.type = "password";
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            });
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

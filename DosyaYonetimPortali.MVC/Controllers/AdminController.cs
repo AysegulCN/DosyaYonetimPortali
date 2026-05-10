@@ -71,16 +71,11 @@ namespace DosyaYonetimPortali.MVC.Controllers
         public IActionResult SaveSettings(SystemSettingsViewModel model)
         {
             _systemSettings = model;
-
             SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sistem yükleme limitleri ve güvenlik ayarları güncellendi.");
-
             TempData["ToastMessage"] = "Sistem ve güvenlik ayarları başarıyla kaydedildi.";
             TempData["ToastIcon"] = "success";
-
             return RedirectToAction("Settings");
         }
-
-
 
         [HttpPost]
         public IActionResult RevokeShare(string id)
@@ -119,12 +114,9 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             model.Id = Guid.NewGuid().ToString().Substring(0, 8);
             _tempUsers.Add(model);
-
             SystemLogger.AddLog("INFO", "Sistem Yöneticisi", $"'{model.FirstName} {model.LastName}' isimli yeni bir kullanıcı sisteme eklendi.");
-
             TempData["ToastMessage"] = $"{model.FirstName} {model.LastName} isimli kullanıcı ({model.Role}) olarak sisteme başarıyla eklendi.";
             TempData["ToastIcon"] = "success";
-
             return RedirectToAction("Users");
         }
 
@@ -136,7 +128,6 @@ namespace DosyaYonetimPortali.MVC.Controllers
             {
                 _tempUsers.Remove(user);
                 SystemLogger.AddLog("WARN", "Sistem Yöneticisi", $"'{user.FirstName} {user.LastName}' isimli kullanıcı sistemden silindi.");
-
                 TempData["ToastMessage"] = "Kullanıcı sistemden kalıcı olarak silindi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -152,9 +143,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
                 user.FirstName = FirstName;
                 user.LastName = LastName;
                 user.Role = Role;
-
                 SystemLogger.AddLog("INFO", "Sistem Yöneticisi", $"'{FirstName} {LastName}' kullanıcısının bilgileri güncellendi.");
-
                 TempData["ToastMessage"] = "Kullanıcı bilgileri başarıyla güncellendi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -179,15 +168,12 @@ namespace DosyaYonetimPortali.MVC.Controllers
             if (!string.IsNullOrEmpty(RoleName) && !_tempRoles.Any(r => r.RoleName.ToLower() == RoleName.ToLower()))
             {
                 _tempRoles.Add(new RoleViewModel { RoleName = RoleName, UserCount = 0, IsSystemRole = false });
-
                 foreach (var perm in _tempPermissions)
                 {
                     if (perm.RoleAccesses == null) perm.RoleAccesses = new List<RoleAccessViewModel>();
                     perm.RoleAccesses.Add(new RoleAccessViewModel { RoleName = RoleName, HasAccess = false });
                 }
-
                 SystemLogger.AddLog("INFO", "Sistem Yöneticisi", $"'{RoleName}' isimli yeni sistem rolü oluşturuldu.");
-
                 TempData["ToastMessage"] = $"'{RoleName}' rolü sisteme başarıyla eklendi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -201,7 +187,6 @@ namespace DosyaYonetimPortali.MVC.Controllers
             if (role != null && !role.IsSystemRole)
             {
                 role.RoleName = NewRoleName;
-
                 foreach (var perm in _tempPermissions)
                 {
                     var roleAccess = perm.RoleAccesses?.FirstOrDefault(ra => ra.RoleName == OldRoleName);
@@ -210,9 +195,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
                         roleAccess.RoleName = NewRoleName;
                     }
                 }
-
                 SystemLogger.AddLog("INFO", "Sistem Yöneticisi", $"'{OldRoleName}' rolünün adı '{NewRoleName}' olarak değiştirildi.");
-
                 TempData["ToastMessage"] = $"Rol adı '{NewRoleName}' olarak güncellendi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -226,14 +209,11 @@ namespace DosyaYonetimPortali.MVC.Controllers
             if (role != null && !role.IsSystemRole)
             {
                 _tempRoles.Remove(role);
-
                 foreach (var perm in _tempPermissions)
                 {
                     perm.RoleAccesses?.RemoveAll(ra => ra.RoleName == RoleName);
                 }
-
                 SystemLogger.AddLog("WARN", "Sistem Yöneticisi", $"'{RoleName}' isimli sistem rolü silindi.");
-
                 TempData["ToastMessage"] = $"'{RoleName}' rolü sistemden kalıcı olarak silindi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -287,9 +267,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
                     }
                 }
             }
-
             SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sistem yetki matrisi ve rol izinleri güncellendi.");
-
             TempData["ToastMessage"] = "Tüm yetki ayarları ve modüller başarıyla güncellendi.";
             TempData["ToastIcon"] = "success";
             return RedirectToAction("Permissions");
@@ -302,16 +280,12 @@ namespace DosyaYonetimPortali.MVC.Controllers
             {
                 bool isCore = ModuleType == "Core";
                 var newPerm = new PermissionViewModel { ModuleName = ModuleName, IsCore = isCore, RoleAccesses = new List<RoleAccessViewModel>() };
-
                 foreach (var role in _tempRoles)
                 {
                     newPerm.RoleAccesses.Add(new RoleAccessViewModel { RoleName = role.RoleName, HasAccess = role.RoleName == "Admin" });
                 }
-
                 _tempPermissions.Add(newPerm);
-
                 SystemLogger.AddLog("INFO", "Sistem Yöneticisi", $"'{ModuleName}' modülü için yeni sistem yetkisi eklendi.");
-
                 TempData["ToastMessage"] = $"Yeni yetki modülü ({ModuleName}) sisteme başarıyla entegre edildi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -325,9 +299,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
             if (permission != null)
             {
                 _tempPermissions.Remove(permission);
-
                 SystemLogger.AddLog("WARN", "Sistem Yöneticisi", $"'{ModuleName}' modülü sistem yetki matrisinden silindi.");
-
                 TempData["ToastMessage"] = $"'{ModuleName}' modülü sistemden kalıcı olarak silindi.";
                 TempData["ToastIcon"] = "success";
             }
@@ -345,14 +317,11 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             var builder = new StringBuilder();
             builder.AppendLine("Tarih/Saat,Kullanici,IP Adresi,Tarayici/Cihaz,Durum");
-
             foreach (var record in SystemLogger.LoginRecords)
             {
                 builder.AppendLine($"{record.Date},{record.UserEmail},{record.IpAddress},{record.BrowserDevice},{record.Status}");
             }
-
             SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Kullanıcı giriş kayıtları CSV formatında dışa aktarıldı.");
-
             return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "GirisKayitlari_CoreDrive.csv");
         }
 
@@ -367,14 +336,11 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             var builder = new StringBuilder();
             builder.AppendLine("Dosya Adi,Islem Yapan,Aksiyon,Tarih");
-
             foreach (var activity in SystemLogger.FileActivities)
             {
                 builder.AppendLine($"{activity.FileName},{activity.UserEmail},{activity.ActionType},{activity.Date}");
             }
-
             SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sistem dosya hareketleri CSV formatında dışa aktarıldı.");
-
             return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "DosyaHareketleri_CoreDrive.csv");
         }
 
@@ -400,7 +366,47 @@ namespace DosyaYonetimPortali.MVC.Controllers
         [HttpGet]
         public IActionResult QuotaManagement()
         {
+            ViewBag.CurrentQuotaMB = DriveController.UserTotalQuotaMB;
+            ViewBag.PendingRequestGB = DriveController.PendingQuotaRequestGB;
             return View(_quotaSettings);
+        }
+
+        [HttpPost]
+        public IActionResult ApproveQuotaRequest()
+        {
+            if (DriveController.PendingQuotaRequestGB > 0)
+            {
+                DriveController.UserTotalQuotaMB = DriveController.PendingQuotaRequestGB * 1024;
+                DriveController.PendingQuotaRequestGB = 0;
+                SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Kullanıcının kota artırım talebi onaylandı.");
+                TempData["ToastMessage"] = "Kullanıcının kota talebi başarıyla ONAYLANDI ve kapasitesi artırıldı.";
+                TempData["ToastIcon"] = "success";
+            }
+            return RedirectToAction("QuotaManagement");
+        }
+
+        [HttpPost]
+        public IActionResult RejectQuotaRequest()
+        {
+            if (DriveController.PendingQuotaRequestGB > 0)
+            {
+                DriveController.PendingQuotaRequestGB = 0;
+                SystemLogger.AddLog("WARN", "Sistem Yöneticisi", "Kullanıcının kota artırım talebi reddedildi.");
+                TempData["ToastMessage"] = "Kullanıcının kota talebi REDDEDİLDİ ve iptal edildi.";
+                TempData["ToastIcon"] = "error";
+            }
+            return RedirectToAction("QuotaManagement");
+        }
+
+        [HttpPost]
+        public IActionResult ForceSetQuota(int targetGB)
+        {
+            DriveController.UserTotalQuotaMB = targetGB * 1024;
+            DriveController.PendingQuotaRequestGB = 0;
+            SystemLogger.AddLog("WARN", "Sistem Yöneticisi", $"Kullanıcı kotası zorla {targetGB} GB olarak ayarlandı.");
+            TempData["ToastMessage"] = $"Kullanıcının kotası zorla {targetGB} GB seviyesine ayarlandı.";
+            TempData["ToastIcon"] = "success";
+            return RedirectToAction("QuotaManagement");
         }
 
         [HttpPost]
@@ -413,12 +419,10 @@ namespace DosyaYonetimPortali.MVC.Controllers
             return RedirectToAction("QuotaManagement");
         }
 
-
         [HttpPost]
         public IActionResult RefreshStorage()
         {
             SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sunucu depolama verileri manuel olarak yenilendi.");
-
             TempData["Message"] = "Sunucu depolama verileri güncellendi ve en son durum ekrana yansıtıldı.";
             return RedirectToAction("Storage");
         }
@@ -427,40 +431,30 @@ namespace DosyaYonetimPortali.MVC.Controllers
         public IActionResult GenerateSystemReport()
         {
             SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Genel sistem durumu PDF raporu oluşturuldu.");
-
             using (var ms = new MemoryStream())
             {
                 var writer = new PdfWriter(ms);
                 var pdf = new PdfDocument(writer);
                 var document = new Document(pdf);
-
                 var header = new Paragraph("CORE-DRIVE SISTEM RAPORU")
                      .SetTextAlignment(TextAlignment.CENTER)
                      .SetFontSize(22);
                 document.Add(header);
-
                 document.Add(new Paragraph("Rapor Tarihi: " + DateTime.Now.ToString("dd.MM.yyyy HH:mm"))
                     .SetTextAlignment(TextAlignment.RIGHT)
                     .SetFontSize(10)
                     .SetMarginBottom(20));
-
                 document.Add(new Paragraph("---------------------------------------------------------------------------------------------------"));
-
                 document.Add(new Paragraph("Toplam Kullanici: 124").SetFontSize(14).SetMarginBottom(5));
                 document.Add(new Paragraph("Yuklenen Toplam Dosya: 3,458").SetFontSize(14).SetMarginBottom(5));
                 document.Add(new Paragraph("Kullanilan Depolama: %45 (225 GB / 500 GB)").SetFontSize(14).SetMarginBottom(5));
                 document.Add(new Paragraph("Aktif Paylasilan Linkler: 86").SetFontSize(14).SetMarginBottom(20));
-
                 document.Add(new Paragraph("---------------------------------------------------------------------------------------------------"));
-
                 document.Add(new Paragraph("Sistem Durumu: SAGLIKLI").SetFontSize(12));
                 document.Add(new Paragraph("Guvenlik Taramasi: TEMIZ").SetFontSize(12));
-
                 document.Close();
-
                 byte[] fileBytes = ms.ToArray();
                 string fileName = $"CoreDrive_Rapor_{DateTime.Now.ToString("yyyyMMdd")}.pdf";
-
                 return File(fileBytes, "application/pdf", fileName);
             }
         }
@@ -499,22 +493,17 @@ namespace DosyaYonetimPortali.MVC.Controllers
                     string base64String = Convert.ToBase64String(fileBytes);
                     string ext = Path.GetExtension(avatarFile.FileName).Replace(".", "");
                     if (string.IsNullOrEmpty(ext)) ext = "jpeg";
-
                     AdminProfile.ProfilePictureUrl = $"data:image/{ext};base64,{base64String}";
                 }
             }
-
             AdminProfile.FirstName = model.FirstName;
             AdminProfile.LastName = model.LastName;
             AdminProfile.Email = model.Email;
-
             SystemLogger.AddLog("INFO", AdminProfile.Email, "Yönetici profil bilgileri ve/veya fotoğrafı güncellendi.");
-
             if (!string.IsNullOrEmpty(model.NewPassword) && !string.IsNullOrEmpty(model.CurrentPassword))
             {
                 SystemLogger.AddLog("WARN", AdminProfile.Email, "Yönetici hesabı güvenlik şifresi değiştirildi.");
             }
-
             TempData["ToastMessage"] = "Profil bilgileriniz başarıyla güncellendi.";
             TempData["ToastIcon"] = "success";
             return RedirectToAction("Profile");
