@@ -1,78 +1,298 @@
-﻿@model DosyaYonetimPortali.MVC.Models.LoginViewModel
-
-@{
-    ViewData["Title"] = "Sisteme Giriş";
+﻿@{
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>CoreDrive - Bulut Depolama Çözümleri</title>
+    <link href="~/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #ffffff;
+            --text-title: #1e293b;
+            --text-para: #475569;
+            --primary: #1a73e8;
+            --card-bg: #ffffff;
+            --nav-bg: rgba(255, 255, 255, 0.8);
+            --border: #e2e8f0;
+        }
 
-<div class="row justify-content-center align-items-center" style="min-height: 100vh; margin-top: -30px;">
-    <div class="col-xl-10 col-lg-12 col-md-9">
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --text-title: #f8fafc;
+            --text-para: #94a3b8;
+            --primary: #3b82f6;
+            --card-bg: #1e293b;
+            --nav-bg: rgba(15, 23, 42, 0.9);
+            --border: #334155;
+        }
+
+        * { box-sizing: border-box; }
+        body { background-color: var(--bg-body); color: var(--text-para); font-family: 'Lato', sans-serif; margin: 0; transition: background 0.4s, color 0.4s; overflow-x: hidden; scroll-behavior: smooth; }
+        h1, h2, h3 { color: var(--text-title); font-family: 'Poppins', sans-serif; margin: 0; }
+
+        .navbar { position: fixed; top: 0; width: 100%; height: 80px; background: var(--nav-bg); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: space-between; padding: 0 60px; border-bottom: 1px solid var(--border); z-index: 1000; }
+        .logo { font-size: 24px; font-weight: 700; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 10px; }
         
-        <div class="card o-hidden border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
-            <div class="card-body p-0">
-                <div class="row" style="min-height: 600px;">
-                    
-                    <div class="col-lg-6 d-none d-lg-block"
-                         style="background: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop') center center; background-size: cover; position: relative;">
-                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 50px 40px;">
-                            <h2 class="text-white fw-bold mb-2">Verileriniz Güvende.</h2>
-                            <p class="text-white-50" style="font-size: 1.1rem;">CoreDrive ile tüm dosyalarınızı tek bir yerden yönetin, dilediğinizle güvenle paylaşın.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="col-lg-6 d-flex align-items-center justify-content-center bg-white">
-                        <div class="p-5 w-100" style="max-width: 480px;">
-                            
-                            <div class="text-center mb-5">
-                                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow" style="width: 65px; height: 65px;">
-                                    <i class="fas fa-cloud fa-2x"></i>
-                                </div>
-                                <h1 class="h4 text-gray-900 mb-2 fw-bold">CoreDrive Portalı</h1>
-                                <p class="text-muted">Yönetim paneline erişmek için giriş yapın</p>
-                            </div>
-                            
-                            @if (!ViewData.ModelState.IsValid)
-                            {
-                                <div class="alert alert-danger" style="border-radius: 12px; font-size: 0.9rem;">
-                                    <div asp-validation-summary="All" class="mb-0 text-danger font-weight-bold"></div>
-                                </div>
-                            }
+        .nav-right-group { display: flex; align-items: center; gap: 40px; margin-left: auto; }
+        .nav-links { display: flex; gap: 25px; }
+        .nav-links a { text-decoration: none; color: var(--text-title); font-weight: 600; font-size: 15px; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--primary); }
+        
+        .nav-actions { display: flex; align-items: center; gap: 15px; }
+        .theme-toggle { cursor: pointer; font-size: 20px; color: var(--text-title); transition: transform 0.3s; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; }
+        .theme-toggle:hover { background-color: var(--border); }
+        .btn-auth { text-decoration: none; padding: 10px 22px; border-radius: 8px; font-weight: 600; font-size: 14px; transition: 0.3s; }
+        .btn-login { color: var(--text-title); }
+        .btn-login:hover { background-color: var(--border); }
+        .btn-register { background: var(--primary); color: #fff; box-shadow: 0 4px 14px rgba(26,115,232,0.3); }
+        .btn-register:hover { transform: translateY(-2px); filter: brightness(1.1); color: #fff; text-decoration: none; }
 
-                            <form asp-action="Login" asp-controller="Auth" method="post" class="user">
-                                
-                                <div class="form-group mb-4 position-relative">
-                                    <i class="fas fa-envelope position-absolute text-muted" style="left: 20px; top: 18px; font-size: 1.1rem; z-index: 5;"></i>
-                                    <input type="email" asp-for="Email" class="form-control form-control-user"
-                                           placeholder="E-posta Adresiniz" required
-                                           style="border-radius: 16px; padding: 15px 20px 15px 50px; font-size: 1rem; background-color: #f8f9fc; border: 1px solid #eaecf4;">
-                                </div>
+        .hero { min-height: 100vh; display: flex; align-items: center; padding: 100px 60px 0; gap: 40px; position: relative; }
+        .hero-text { flex: 1; max-width: 600px; }
+        .hero h1 { font-size: 68px; line-height: 1.1; margin-bottom: 25px; letter-spacing: -1px; }
+        .hero h1 span { color: var(--primary); }
+        .hero p { font-size: 20px; line-height: 1.6; margin-bottom: 40px; }
+        
+        .hero-visual { flex: 1; position: relative; height: 500px; }
+        .floating { position: absolute; background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.1); padding: 20px; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .f1 { width: 300px; top: 10%; left: 10%; z-index: 3; animation: float 6s infinite ease-in-out; }
+        .f2 { width: 260px; bottom: 20%; right: 10%; z-index: 2; animation: float 6s infinite ease-in-out 1s; }
+        .f3 { width: 220px; top: 40%; right: 25%; z-index: 1; animation: float 6s infinite ease-in-out 2s; }
 
-                                <div class="form-group mb-4 position-relative">
-                                    <i class="fas fa-lock position-absolute text-muted" style="left: 20px; top: 18px; font-size: 1.1rem; z-index: 5;"></i>
-                                    <input type="password" asp-for="Password" class="form-control form-control-user"
-                                           placeholder="Şifreniz" required
-                                           style="border-radius: 16px; padding: 15px 20px 15px 50px; font-size: 1rem; background-color: #f8f9fc; border: 1px solid #eaecf4;">
-                                </div>
-                                
-                                <button type="submit" class="btn btn-primary btn-user btn-block w-100 fw-bold shadow-sm mt-2"
-                                        style="border-radius: 16px; padding: 14px; font-size: 1.1rem; letter-spacing: 0.5px;">
-                                    Giriş Yap <i class="fas fa-arrow-right ms-2"></i>
-                                </button>
-                            </form>
-                            
-                            <hr class="my-4">
-                            
-                            <div class="text-center">
-                                <a class="small text-primary fw-bold text-decoration-none" href="#">Şifremi Unuttum</a>
-                            </div>
-                            <div class="text-center mt-2">
-                                <span class="small text-muted">Sistemde kaydınız yok mu?</span>
-                                <a href="/Auth/Register" class="...">Hesap Oluştur</a>
-                            </div>
-                            
-                        </div>
+        @@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .hide-up { transform: translateY(-150%) scale(0.8); opacity: 0; pointer-events: none; }
+
+        .features { padding: 100px 60px; text-align: center; }
+        .features h2 { font-size: 44px; margin-bottom: 60px; }
+        .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+        .f-card { background: var(--card-bg); padding: 40px; border-radius: 20px; border: 1px solid var(--border); transition: 0.3s; text-align: left; }
+        .f-card:hover { transform: translateY(-10px); box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-color: var(--primary); }
+        .f-card i { font-size: 40px; color: var(--primary); margin-bottom: 25px; display: block; }
+        .f-card h3 { font-size: 22px; margin-bottom: 15px; }
+        .f-card p { line-height: 1.6; margin: 0; }
+
+        .pricing { padding: 100px 60px; text-align: center; background-color: var(--border); opacity: 0.9; }
+        .pricing h2 { font-size: 44px; margin-bottom: 15px; }
+        .pricing > p { font-size: 18px; margin-bottom: 60px; }
+        .pricing-grid { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+        .p-card { background: var(--card-bg); padding: 40px; border-radius: 20px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid var(--border); transition: 0.3s; }
+        .p-card:hover { transform: translateY(-10px); border-color: var(--primary); }
+        .p-card h3 { font-size: 24px; margin-bottom: 10px; }
+        .p-card h4 { font-size: 48px; color: var(--primary); margin: 20px 0; }
+        .p-card span { font-size: 16px; color: var(--text-para); }
+        .p-card ul { list-style: none; padding: 0; margin: 0 0 30px 0; text-align: left; }
+        .p-card li { margin-bottom: 15px; font-size: 15px; }
+        .p-card li i { color: var(--primary); margin-right: 10px; }
+
+        .dropbox-style { background: #000; color: #fff; padding: 120px 60px; display: flex; align-items: center; gap: 80px; }
+        .db-text { flex: 1; }
+        .db-text h2 { color: #fff; font-size: 52px; line-height: 1.2; margin-bottom: 30px; }
+        .db-text p { font-size: 20px; color: #cbd5e1; margin-bottom: 40px; line-height: 1.6; }
+        .db-visual { flex: 1.2; background: #1e293b; border-radius: 12px; padding: 10px; box-shadow: 0 30px 60px rgba(0,0,0,0.5); overflow: hidden; }
+        .db-visual img { width: 100%; border-radius: 8px; display: block; }
+
+        .footer { background-color: var(--card-bg); padding: 80px 60px 40px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; flex-wrap: wrap; }
+        .footer-brand { max-width: 300px; }
+        .footer-brand h2 { color: var(--primary); display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .footer-links h4 { font-size: 18px; margin-bottom: 20px; }
+        .footer-links ul { list-style: none; padding: 0; }
+        .footer-links li { margin-bottom: 12px; }
+        .footer-links a { color: var(--text-para); text-decoration: none; transition: 0.3s; }
+        .footer-links a:hover { color: var(--primary); }
+        .footer-bottom { width: 100%; text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="logo"><i class="fas fa-cloud"></i> CoreDrive</a>
+        
+        <div class="nav-right-group">
+            <div class="nav-links">
+                <a href="#ozellikler">Özellikler</a>
+                <a href="#planlar">Planlar</a>
+                <a href="#iletisim">İletişim</a>
+            </div>
+            <div id="themeToggleBtn" class="theme-toggle"><i class="fas fa-moon"></i></div>
+            <div class="nav-actions">
+                <a href="/Auth/Login" class="btn-auth btn-login">Giriş Yap</a>
+                <a href="/Auth/Register" class="btn-auth btn-register">Hemen Başla</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-text">
+            <h1>Tüm dünyanız için <br><span>tek bir yer.</span></h1>
+            <p>CoreDrive ile projelerinizi saklayın, belgelerinizi düzenleyin ve arkadaşlarınızla saniyeler içinde paylaşın. Güvenli, hızlı ve sınırsız.</p>
+            <div style="display:flex; gap:15px; align-items: center;">
+                <a href="/Auth/Register" class="btn-auth btn-register" style="padding: 15px 35px; font-size:16px;">Ücretsiz Deneyin</a>
+                <a href="#ozellikler" class="btn-auth btn-login" style="padding: 15px 35px; font-size:16px; border:1px solid var(--border)">Özellikleri Keşfet</a>
+            </div>
+        </div>
+        <div class="hero-visual" id="floatingArea">
+            <div class="floating f1">
+                <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
+                    <i class="fas fa-file-excel text-success" style="font-size:30px;"></i>
+                    <div style="font-weight:700; color:var(--text-title); font-size: 15px;">Proje_Butcesi.xlsx</div>
+                </div>
+                <div style="font-size:12px; color: var(--text-para);">Paylaşıldı: muhasebe@coredrive.com</div>
+            </div>
+            <div class="floating f2">
+                <div style="background:var(--primary); color:#fff; border-radius:8px; padding:15px; text-align:center;">
+                    <i class="fas fa-shield-alt mr-2" style="font-size: 20px; margin-bottom: 10px;"></i> 
+                    <div style="font-size: 14px; opacity: 0.9;">Yönetici Onayı Bekliyor</div>
+                    <div style="font-size:28px; font-weight:700; margin-top:5px;">250 GB</div>
+                </div>
+            </div>
+            <div class="floating f3">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width: 36px; height: 36px; background-color: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">A</div>
+                    <div>
+                        <div style="font-size:14px; font-weight:600; color:var(--text-title)">Ahmet Yılmaz</div>
+                        <div style="font-size: 12px; color: var(--text-para);">Yeni dosya yükledi</div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+    </section>
+
+    <section id="ozellikler" class="features">
+        <h2>Neden CoreDrive?</h2>
+        <div class="feature-grid">
+            <div class="f-card">
+                <i class="fas fa-bolt"></i>
+                <h3>Işık Hızında</h3>
+                <p>Global sunucu ağımız sayesinde dosyalarınız her zaman en hızlı şekilde ulaşılabilir durumdadır.</p>
+            </div>
+            <div class="f-card">
+                <i class="fas fa-lock"></i>
+                <h3>Uçtan Uca Şifreleme</h3>
+                <p>Verileriniz 256-bit AES protokolü ile şifrelenir. Sizden başkası erişemez.</p>
+            </div>
+            <div class="f-card">
+                <i class="fas fa-users-cog"></i>
+                <h3>Gelişmiş Denetim</h3>
+                <p>Admin panelimizle tüm çalışanlarınızın erişim izinlerini ve kotalarını anlık yönetin.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="planlar" class="pricing">
+        <h2>İhtiyacınıza Uygun Planlar</h2>
+        <p>Bireysel kullanımdan kurumsal şirketlere kadar herkes için CoreDrive.</p>
+        <div class="pricing-grid">
+            <div class="p-card">
+                <h3>Standart</h3>
+                <h4>15 <span>GB</span></h4>
+                <ul>
+                    <li><i class="fas fa-check"></i> Temel Depolama</li>
+                    <li><i class="fas fa-check"></i> 1 Kullanıcı</li>
+                    <li><i class="fas fa-check"></i> Mobil Erişim</li>
+                </ul>
+                <a href="/Auth/Register" class="btn-auth btn-login" style="display:block; border:1px solid var(--border);">Ücretsiz Başla</a>
+            </div>
+            <div class="p-card" style="border-color: var(--primary); transform: scale(1.05);">
+                <h3>Profesyonel</h3>
+                <h4>50 <span>GB</span></h4>
+                <ul>
+                    <li><i class="fas fa-check"></i> Gelişmiş Şifreleme</li>
+                    <li><i class="fas fa-check"></i> 5 Kullanıcı</li>
+                    <li><i class="fas fa-check"></i> Öncelikli Destek</li>
+                </ul>
+                <a href="/Auth/Register" class="btn-auth btn-register" style="display:block;">Hemen Geçiş Yap</a>
+            </div>
+            <div class="p-card">
+                <h3>Kurumsal</h3>
+                <h4>250 <span>GB</span></h4>
+                <ul>
+                    <li><i class="fas fa-check"></i> Sınırsız Kullanıcı</li>
+                    <li><i class="fas fa-check"></i> Gelişmiş Admin Paneli</li>
+                    <li><i class="fas fa-check"></i> Özel API Erişimi</li>
+                </ul>
+                <a href="/Auth/Register" class="btn-auth btn-login" style="display:block; border:1px solid var(--border);">Bize Ulaşın</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="dropbox-style">
+        <div class="db-text">
+            <h2>İşinizi büyütmek için ihtiyacınız olan her şey.</h2>
+            <p>CoreDrive, ekiplerin birlikte çalışmasını kolaylaştırmak için tasarlandı. Dosya sürüm geçmişi, anlık yorumlar ve akıllı arama özellikleriyle verimliliğinizi artırın.</p>
+            <a href="/Auth/Register" class="btn-auth btn-register" style="padding: 16px 40px; font-size:16px;">Ekibinizi Taşıyın</a>
+        </div>
+        <div class="db-visual">
+            <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop" alt="Dashboard Mockup" style="opacity: 0.9;">
+        </div>
+    </section>
+
+    <footer id="iletisim" class="footer">
+        <div class="footer-brand">
+            <h2><i class="fas fa-cloud"></i> CoreDrive</h2>
+            <p>Verilerinizi güvenle saklayın, dünyanın her yerinden anında erişin. İşinizi bulutun gücüyle yönetin.</p>
+        </div>
+        <div class="footer-links">
+            <h4>Ürün</h4>
+            <ul>
+                <li><a href="#ozellikler">Özellikler</a></li>
+                <li><a href="#planlar">Fiyatlandırma</a></li>
+                <li><a href="#">Güvenlik</a></li>
+            </ul>
+        </div>
+        <div class="footer-links">
+            <h4>İletişim</h4>
+            <ul>
+                <li><a href="#"><i class="fas fa-envelope mr-2"></i> destek@coredrive.com</a></li>
+                <li><a href="#"><i class="fas fa-phone mr-2"></i> +90 (850) 123 45 67</a></li>
+                <li><a href="#"><i class="fas fa-map-marker-alt mr-2"></i> Teknokent, İstanbul</a></li>
+            </ul>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 CoreDrive. Tüm hakları saklıdır.
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeBtn = document.getElementById('themeToggleBtn');
+            const html = document.documentElement;
+            
+            const currentTheme = localStorage.getItem('site-theme') || 'light';
+            html.setAttribute('data-theme', currentTheme);
+            updateIcon(currentTheme);
+
+            themeBtn.addEventListener('click', () => {
+                const newTheme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('site-theme', newTheme);
+                updateIcon(newTheme);
+            });
+
+            function updateIcon(theme) {
+                const icon = themeBtn.querySelector('i');
+                if(theme === 'dark') { 
+                    icon.className = 'fas fa-sun'; 
+                    icon.style.color = '#fbbc05'; 
+                } else { 
+                    icon.className = 'fas fa-moon'; 
+                    icon.style.color = 'var(--text-title)'; 
+                }
+            }
+
+            window.addEventListener('scroll', () => {
+                const scrollPos = window.scrollY;
+                const floatingItems = document.querySelectorAll('.floating');
+                if(scrollPos > 300) {
+                    floatingItems.forEach(item => item.classList.add('hide-up'));
+                } else {
+                    floatingItems.forEach(item => item.classList.remove('hide-up'));
+                }
+            });
+        });
+    </script>
+</body>
+</html>

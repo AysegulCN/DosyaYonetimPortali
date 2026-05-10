@@ -1,18 +1,25 @@
 ﻿@model List<DosyaYonetimPortali.MVC.Models.LogViewModel>
 @{
     ViewData["Title"] = "Admin Dashboard";
-    Layout = "~/Views/Shared/_Layout.cshtml"; // Admin layoutun neyse o kalmalı
+    Layout = "~/Views/Shared/_Layout.cshtml";
     int pendingGB = ViewBag.PendingRequestGB ?? 0;
 }
-
 <div class="container-fluid mt-4">
     <div class="d-flex align-items-center justify-content-between mb-4">
         <h3 class="m-0 font-weight-bold text-dark" style="font-size: 28px;">Sistem Genel Özeti</h3>
-        <div>
-            <form asp-action="GenerateSystemReport" method="post" class="d-inline m-0">
-                <button type="submit" class="btn btn-primary mr-2" style="border-radius: 8px;"><i class="fas fa-download mr-2"></i> Sistem Raporu Al</button>
+        
+        <div class="d-flex align-items-center">
+            
+            <form asp-action="GenerateSystemReport" method="post" class="m-0 mr-2">
+                <button type="submit" class="btn btn-primary" style="border-radius: 8px;">
+                    <i class="fas fa-download mr-2"></i> Sistem Raporu Al
+                </button>
             </form>
-            <a href="/Drive/Dashboard" class="btn btn-outline-primary" style="border-radius: 8px;"><i class="fas fa-external-link-alt mr-2"></i> Siteye Göz At</a>
+            
+            <a href="/?preview=true" class="btn btn-outline-primary" style="border-radius: 8px;">
+                <i class="fas fa-external-link-alt mr-2"></i> Siteye Göz At
+            </a>
+            
         </div>
     </div>
 
@@ -114,10 +121,35 @@
                     <tbody>
                         @if (Model != null && Model.Any())
                         {
-                            @foreach (var log in Model)
+                            foreach (var log in Model)
                             {
                                 <tr>
-                                    <td class="text-muted small">@((log as DosyaYonetimPortali.MVC.Models.LogViewModel).Date)</td>
+                                    <td class="px-4 py-3 font-weight-bold text-dark">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-light text-primary rounded-circle d-flex justify-content-center align-items-center mr-3 font-weight-bold" style="width: 36px; height: 36px;">
+                                                @(log.UserEmail.Substring(0, 1).ToUpper())
+                                            </div>
+                                            @log.UserEmail
+                                        </div>
+                                    </td>
+                                    <td class="text-muted">@log.Message</td>
+                                    <td class="text-muted small"><i class="far fa-clock mr-1"></i> @log.Date</td>
+                                    <td class="px-4 text-center">
+                                        @if (log.Status == "Başarılı" || log.Status == "INFO")
+                                        {
+                                            <span class="badge badge-success px-3 py-2" style="border-radius: 20px;">Başarılı</span>
+                                        }
+                                        else if (log.Status == "Kota Aşımı" || log.Status == "WARN")
+                                        {
+
+                                            <span class="badge badge-warning px-3 py-2 text-dark" style="border-radius: 20px;">Bekliyor / Uyarı</span>
+                                        }
+                                        else
+                                        {
+
+                                            <span class="badge badge-primary px-3 py-2" style="border-radius: 20px;">Admin İşlemi</span>
+                                        }
+                                    </td>
                                 </tr>
                             }
                         }

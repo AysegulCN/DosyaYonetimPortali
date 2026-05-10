@@ -34,6 +34,18 @@ namespace DosyaYonetimPortali.MVC.Models
             AddLog("Başarılı", userEmail, $"'{fileName}' üzerinde işlem: {actionType}");
         }
 
+        public static void AddLoginRecord(string email, string ipAddress, string browserInfo, string status, bool isSuccess)
+        {
+            LoginRecords.Insert(0, new LoginRecordViewModel
+            {
+                UserEmail = email,
+                IpAddress = ipAddress,
+                BrowserDevice = browserInfo,
+                Status = status,
+                Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm")
+            });
+        }
+
         public static void ClearLogs()
         {
             Logs.Clear();

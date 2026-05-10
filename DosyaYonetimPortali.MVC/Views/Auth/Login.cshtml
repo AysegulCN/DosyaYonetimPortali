@@ -1,0 +1,68 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>CoreDrive - Giriş Yap</title>
+    <link href="~/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body, html { height: 100%; margin: 0; font-family: 'Inter', sans-serif; background-color: #4A72E8; display: flex; align-items: center; justify-content: center; }
+        .login-wrapper { display: flex; width: 900px; height: 550px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        .login-left { width: 50%; background: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop') no-repeat center center; background-size: cover; position: relative; color: #ffffff; padding: 40px; display: flex; flex-direction: column; justify-content: flex-end; }
+        .login-left::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.9) 100%); }
+        .left-content { position: relative; z-index: 1; }
+        .left-content h2 { font-weight: 700; font-size: 26px; margin-bottom: 12px; letter-spacing: -0.5px; }
+        .left-content p { font-size: 14px; line-height: 1.6; opacity: 0.85; margin: 0; }
+        .login-right { width: 50%; padding: 50px 60px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: #ffffff; }
+        .cloud-icon-box { background-color: #4A72E8; color: #ffffff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 15px; box-shadow: 0 8px 16px rgba(74, 114, 232, 0.3); }
+        .login-right h3 { font-size: 22px; font-weight: 600; color: #333333; margin-bottom: 5px; }
+        .login-right p { color: #777777; font-size: 13px; margin-bottom: 35px; }
+        .input-group-custom { width: 100%; display: flex; align-items: center; background-color: #f0f4fa; border-radius: 8px; margin-bottom: 15px; padding: 0 15px; border: 1px solid transparent; transition: 0.3s; }
+        .input-group-custom:focus-within { border-color: #4A72E8; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(74, 114, 232, 0.1); }
+        .input-group-custom i { color: #888888; font-size: 14px; width: 20px; }
+        .input-group-custom input { border: none; background: transparent; padding: 14px 10px; width: 100%; outline: none; font-size: 14px; color: #333333; font-family: 'Inter', sans-serif; }
+        .btn-login { width: 100%; padding: 14px; background-color: #4A72E8; color: #ffffff; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.3s ease; margin-top: 10px; display: flex; justify-content: center; align-items: center; }
+        .btn-login:hover { background-color: #3a5cc8; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(74, 114, 232, 0.3); }
+        .links-container { margin-top: 25px; font-size: 12px; width: 100%; }
+        .forgot-link { color: #4A72E8; text-decoration: none; font-weight: 500; display: inline-block; margin-bottom: 15px; }
+        .register-text { color: #777777; border-top: 1px solid #eeeeee; padding-top: 15px; }
+        .register-text a { color: #4A72E8; text-decoration: none; font-weight: 600; }
+        .error-message { color: #dc3545; font-size: 13px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-left">
+            <div class="left-content">
+                <h2>Verileriniz Güvende.</h2>
+                <p>CoreDrive ile tüm dosyalarınızı tek bir yerden yönetin, dilediğinizle güvenle paylaşın.</p>
+            </div>
+        </div>
+        <div class="login-right">
+            <div class="cloud-icon-box"><i class="fas fa-cloud"></i></div>
+            <h3>CoreDrive Portalı</h3>
+            <p>Yönetim paneline erişmek için giriş yapın</p>
+            
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="error-message">
+                    @Html.ValidationSummary(true, "")
+                </div>
+            }
+
+            <form action="/Auth/Login" method="post" style="width: 100%;">
+                <div class="input-group-custom"><i class="fas fa-envelope"></i><input type="email" name="Email" placeholder="E-posta adresiniz" required></div>
+                <div class="input-group-custom"><i class="fas fa-lock"></i><input type="password" name="Password" placeholder="Şifreniz" required></div>
+                <button type="submit" class="btn-login">Giriş Yap <i class="fas fa-arrow-right" style="margin-left:8px;"></i></button>
+            </form>
+            <div class="links-container">
+                <a href="#" class="forgot-link">Şifremi Unuttum</a>
+                <div class="register-text">Sistemde kaydınız yok mu? <a href="/Auth/Register">Hesap Oluştur</a></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
