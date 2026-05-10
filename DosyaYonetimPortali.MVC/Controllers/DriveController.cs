@@ -15,8 +15,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
         public static long UserTotalQuotaMB = 15360;
         public static int PendingQuotaRequestGB = 0;
 
-        public static string CurrentFullName = "Kullanıcı";
-        public static string CurrentEmail = "kullanici@coredrive.com";
+        public static string CurrentFullName = "Ahmet";
+        public static string CurrentEmail = "ahmet@coredrive.com";
         public static string CurrentPhone = "";
         public static string CurrentAvatarBase64 = "";
 
@@ -41,8 +41,11 @@ namespace DosyaYonetimPortali.MVC.Controllers
                         CurrentAvatarBase64 = $"data:{avatarFile.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
                     }
                 }
+
+                SystemLogger.AddLog("Başarılı", CurrentFullName, "Profil bilgilerini güncelledi.");
                 TempData["SuccessMessage"] = "Profil bilgileriniz başarıyla güncellendi.";
             }
+
             return Redirect(returnUrl ?? "/Drive/Dashboard");
         }
 
@@ -69,7 +72,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
         public IActionResult RequestQuotaUpgrade(int requestedQuotaGB, string returnUrl)
         {
             PendingQuotaRequestGB = requestedQuotaGB;
-            TempData["SuccessMessage"] = $"{requestedQuotaGB} GB depolama alanı talebiniz sistem yöneticisine iletildi. Onaylandığında kotanız güncellenecektir.";
+            SystemLogger.AddLog("Kota Aşımı", CurrentFullName ?? "Kullanıcı", $"Sistemden {requestedQuotaGB} GB kota artırım talebinde bulundu.");
+            TempData["SuccessMessage"] = $"{requestedQuotaGB} GB depolama alanı talebiniz sistem yöneticisine iletildi.";
             return Redirect(returnUrl ?? "/Drive/Dashboard");
         }
 
@@ -113,8 +117,10 @@ namespace DosyaYonetimPortali.MVC.Controllers
             if (!string.IsNullOrEmpty(folderName))
             {
                 var db = GetDatabase();
-                db.Insert(0, new DriveItemViewModel { Id = Guid.NewGuid().ToString(), ParentId = parentId, Name = folderName, IsFolder = true, ModifiedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"), Owner = User.Identity.Name ?? "Kullanıcı", SizeBytes = 0 });
+                string currentUser = User.Identity.Name ?? "Kullanıcı";
+                db.Insert(0, new DriveItemViewModel { Id = Guid.NewGuid().ToString(), ParentId = parentId, Name = folderName, IsFolder = true, ModifiedDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm"), Owner = currentUser, SizeBytes = 0 });
                 SaveDatabase(db);
+                SystemLogger.AddFileActivity(folderName, currentUser, "Yeni Klasör Oluşturuldu");
             }
             return RedirectToAction("Dashboard", new { folderId = parentId });
         }
@@ -131,7 +137,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
                 double totalRequestedMB = (usedBytes + file.Length) / 1048576.0;
                 if (totalRequestedMB > UserTotalQuotaMB)
                 {
-                    TempData["StorageError"] = "Yetersiz depolama alanı! Lütfen dosya silerek yer açın veya kotanızı yükseltin.";
+                    TempData["StorageError"] = "Yetersiz depolama alanı!";
                     return RedirectToAction("Dashboard", new { folderId = parentId });
                 }
 
@@ -153,6 +159,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
                     ContentType = file.ContentType
                 });
                 SaveDatabase(db);
+                SystemLogger.AddFileActivity(file.FileName, currentUser, "Yeni Dosya Yüklendi");
             }
             return RedirectToAction("Dashboard", new { folderId = parentId });
         }
@@ -165,7 +172,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
 
             if (!string.IsNullOrEmpty(item.FileData) && item.ContentType != null && item.ContentType.StartsWith("image/"))
             {
-                string imgHtml = $@"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{item.Name}</title></head><body style='background:#0f0f0f; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;'><img src='data:{item.ContentType};base64,{item.FileData}' style='max-width:95%; max-height:95%; box-shadow:0 10px 30px rgba(0,0,0,0.8); border-radius: 4px;'></body></html>";
+                string imgHtml = $@"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{item.Name}</title></head><body style='background:#0f0f0f; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;'><img src='data:{item.ContentType};base64,{item.FileData}' style='max-width:95%; max-height:95%; border-radius: 4px;'></body></html>";
                 return Content(imgHtml, "text/html", Encoding.UTF8);
             }
             if (!string.IsNullOrEmpty(item.FileData) && item.ContentType == "application/pdf") return File(Convert.FromBase64String(item.FileData), item.ContentType);
@@ -190,15 +197,69 @@ namespace DosyaYonetimPortali.MVC.Controllers
         public IActionResult ShareItem(string id, string email, string returnUrl)
         {
             var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id);
-            if (item != null && !string.IsNullOrEmpty(email)) { item.IsShared = true; item.SharedWith = email; SaveDatabase(db); }
+            if (item != null && !string.IsNullOrEmpty(email))
+            {
+                item.IsShared = true; item.SharedWith = email; SaveDatabase(db);
+                SystemLogger.AddFileActivity(item.Name, User.Identity.Name ?? "Kullanıcı", $"{email} adresi ile paylaşıldı.");
+            }
             return Redirect(returnUrl ?? "/Drive/Dashboard");
         }
 
-        [HttpPost] public IActionResult MoveToTrash(string id, string returnUrl) { var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id); if (item != null) { item.IsDeleted = true; SaveDatabase(db); } return Redirect(returnUrl ?? "/Drive/Dashboard"); }
-        [HttpPost] public IActionResult RestoreFromTrash(string id) { var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id); if (item != null) { item.IsDeleted = false; SaveDatabase(db); } return RedirectToAction("Trash"); }
-        [HttpPost] public IActionResult DeletePermanently(string id) { var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id); if (item != null) { db.Remove(item); SaveDatabase(db); } return RedirectToAction("Trash"); }
-        [HttpPost] public IActionResult EmptyTrash() { var db = GetDatabase(); db.RemoveAll(i => i.IsDeleted); SaveDatabase(db); return RedirectToAction("Trash"); }
-        [HttpPost] public IActionResult UnshareItem(string id) { var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id); if (item != null) { item.IsShared = false; SaveDatabase(db); } return RedirectToAction("Shared"); }
+        [HttpPost]
+        public IActionResult MoveToTrash(string id, string returnUrl)
+        {
+            var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id);
+            if (item != null)
+            {
+                item.IsDeleted = true; SaveDatabase(db);
+                SystemLogger.AddFileActivity(item.Name, User.Identity.Name ?? "Kullanıcı", "Çöp kutusuna taşındı.");
+            }
+            return Redirect(returnUrl ?? "/Drive/Dashboard");
+        }
+
+        [HttpPost]
+        public IActionResult RestoreFromTrash(string id)
+        {
+            var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id);
+            if (item != null)
+            {
+                item.IsDeleted = false; SaveDatabase(db);
+                SystemLogger.AddFileActivity(item.Name, User.Identity.Name ?? "Kullanıcı", "Çöpten geri yüklendi.");
+            }
+            return RedirectToAction("Trash");
+        }
+
+        [HttpPost]
+        public IActionResult DeletePermanently(string id)
+        {
+            var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id);
+            if (item != null)
+            {
+                db.Remove(item); SaveDatabase(db);
+                SystemLogger.AddFileActivity(item.Name, User.Identity.Name ?? "Kullanıcı", "Sistemden kalıcı olarak silindi.");
+            }
+            return RedirectToAction("Trash");
+        }
+
+        [HttpPost]
+        public IActionResult EmptyTrash()
+        {
+            var db = GetDatabase(); db.RemoveAll(i => i.IsDeleted); SaveDatabase(db);
+            SystemLogger.AddFileActivity("Çöp Kutusu", User.Identity.Name ?? "Kullanıcı", "Tüm çöpler boşaltıldı.");
+            return RedirectToAction("Trash");
+        }
+
+        [HttpPost]
+        public IActionResult UnshareItem(string id)
+        {
+            var db = GetDatabase(); var item = db.FirstOrDefault(i => i.Id == id);
+            if (item != null)
+            {
+                item.IsShared = false; SaveDatabase(db);
+                SystemLogger.AddFileActivity(item.Name, User.Identity.Name ?? "Kullanıcı", "Paylaşım iptal edildi.");
+            }
+            return RedirectToAction("Shared");
+        }
 
         [HttpGet] public IActionResult Shared() { return View(GetDatabase().Where(i => i.IsShared && !i.IsDeleted).ToList()); }
         [HttpGet] public IActionResult Trash() { return View(GetDatabase().Where(i => i.IsDeleted).ToList()); }

@@ -29,7 +29,13 @@ namespace DosyaYonetimPortali.MVC.Controllers
 
         public IActionResult Dashboard()
         {
-            return View();
+            ViewBag.PendingRequestGB = DriveController.PendingQuotaRequestGB;
+
+            var recentLogs = SystemLogger.Logs != null
+                             ? SystemLogger.Logs.OrderByDescending(l => l.Date).Take(6).ToList()
+                             : new List<LogViewModel>();
+
+            return View(recentLogs);
         }
 
         public IActionResult Storage()
@@ -317,12 +323,14 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             var builder = new StringBuilder();
             builder.AppendLine("Tarih/Saat,Kullanici,IP Adresi,Tarayici/Cihaz,Durum");
+
             foreach (var record in SystemLogger.LoginRecords)
             {
                 builder.AppendLine($"{record.Date},{record.UserEmail},{record.IpAddress},{record.BrowserDevice},{record.Status}");
             }
-            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Kullanıcı giriş kayıtları CSV formatında dışa aktarıldı.");
-            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "GirisKayitlari_CoreDrive.csv");
+
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Kullanıcı giriş kayıtları CSV olarak indirildi.");
+            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "GirisKayitlari.csv");
         }
 
         [HttpGet]
@@ -336,12 +344,14 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             var builder = new StringBuilder();
             builder.AppendLine("Dosya Adi,Islem Yapan,Aksiyon,Tarih");
+
             foreach (var activity in SystemLogger.FileActivities)
             {
                 builder.AppendLine($"{activity.FileName},{activity.UserEmail},{activity.ActionType},{activity.Date}");
             }
-            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sistem dosya hareketleri CSV formatında dışa aktarıldı.");
-            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "DosyaHareketleri_CoreDrive.csv");
+
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Dosya hareketleri CSV olarak indirildi.");
+            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "DosyaHareketleri.csv");
         }
 
         private static FileSettingsViewModel _fileSettings = new FileSettingsViewModel();
@@ -357,7 +367,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
         public IActionResult SaveFileSettings(FileSettingsViewModel model)
         {
             _fileSettings = model;
-            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Dosya izinleri ve güvenlik (beyaz/kara liste) ayarları güncellendi.");
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Dosya izinleri ve güvenlik ayarları güncellendi.");
             TempData["ToastMessage"] = "Dosya güvenlik ayarları başarıyla kaydedildi.";
             TempData["ToastIcon"] = "success";
             return RedirectToAction("FileSettings");
@@ -378,8 +388,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
             {
                 DriveController.UserTotalQuotaMB = DriveController.PendingQuotaRequestGB * 1024;
                 DriveController.PendingQuotaRequestGB = 0;
-                SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Kullanıcının kota artırım talebi onaylandı.");
-                TempData["ToastMessage"] = "Kullanıcının kota talebi başarıyla ONAYLANDI ve kapasitesi artırıldı.";
+                SystemLogger.AddLog("Başarılı", "Sistem", "Kullanıcının kota artırım talebi onaylandı.");
+                TempData["ToastMessage"] = "Kullanıcının kota talebi başarıyla ONAYLANDI.";
                 TempData["ToastIcon"] = "success";
             }
             return RedirectToAction("QuotaManagement");
@@ -388,22 +398,18 @@ namespace DosyaYonetimPortali.MVC.Controllers
         [HttpPost]
         public IActionResult RejectQuotaRequest()
         {
-            if (DriveController.PendingQuotaRequestGB > 0)
-            {
-                DriveController.PendingQuotaRequestGB = 0;
-                SystemLogger.AddLog("WARN", "Sistem Yöneticisi", "Kullanıcının kota artırım talebi reddedildi.");
-                TempData["ToastMessage"] = "Kullanıcının kota talebi REDDEDİLDİ ve iptal edildi.";
-                TempData["ToastIcon"] = "error";
-            }
+            DriveController.PendingQuotaRequestGB = 0;
+            SystemLogger.AddLog("WARN", "Sistem", "Kullanıcının kota artırım talebi reddedildi.");
+            TempData["ToastMessage"] = "Kullanıcının kota talebi REDDEDİLDİ.";
+            TempData["ToastIcon"] = "error";
             return RedirectToAction("QuotaManagement");
         }
 
         [HttpPost]
         public IActionResult ForceSetQuota(int targetGB)
         {
-            DriveController.UserTotalQuotaMB = targetGB * 1024;
-            DriveController.PendingQuotaRequestGB = 0;
-            SystemLogger.AddLog("WARN", "Sistem Yöneticisi", $"Kullanıcı kotası zorla {targetGB} GB olarak ayarlandı.");
+            DriveController.UserTotalQuotaMB = (long)targetGB * 1024;
+            SystemLogger.AddLog("Admin", "Sistem", $"Kullanıcı kotası zorla {targetGB} GB olarak ayarlandı.");
             TempData["ToastMessage"] = $"Kullanıcının kotası zorla {targetGB} GB seviyesine ayarlandı.";
             TempData["ToastIcon"] = "success";
             return RedirectToAction("QuotaManagement");
@@ -413,7 +419,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
         public IActionResult SaveQuotaSettings(QuotaSettingsViewModel model)
         {
             _quotaSettings = model;
-            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sistem kota limitleri ve doluluk uyarı tetikleyicileri güncellendi.");
+            SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sistem kota limitleri güncellendi.");
             TempData["ToastMessage"] = "Sistem kota ayarları başarıyla kaydedildi.";
             TempData["ToastIcon"] = "success";
             return RedirectToAction("QuotaManagement");
@@ -423,7 +429,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
         public IActionResult RefreshStorage()
         {
             SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Sunucu depolama verileri manuel olarak yenilendi.");
-            TempData["Message"] = "Sunucu depolama verileri güncellendi ve en son durum ekrana yansıtıldı.";
+            TempData["Message"] = "Sunucu depolama verileri güncellendi.";
             return RedirectToAction("Storage");
         }
 
@@ -436,36 +442,15 @@ namespace DosyaYonetimPortali.MVC.Controllers
                 var writer = new PdfWriter(ms);
                 var pdf = new PdfDocument(writer);
                 var document = new Document(pdf);
-                var header = new Paragraph("CORE-DRIVE SISTEM RAPORU")
-                     .SetTextAlignment(TextAlignment.CENTER)
-                     .SetFontSize(22);
-                document.Add(header);
-                document.Add(new Paragraph("Rapor Tarihi: " + DateTime.Now.ToString("dd.MM.yyyy HH:mm"))
-                    .SetTextAlignment(TextAlignment.RIGHT)
-                    .SetFontSize(10)
-                    .SetMarginBottom(20));
+                document.Add(new Paragraph("CORE-DRIVE SISTEM RAPORU").SetTextAlignment(TextAlignment.CENTER).SetFontSize(22));
+                document.Add(new Paragraph("Rapor Tarihi: " + DateTime.Now.ToString("dd.MM.yyyy HH:mm")).SetTextAlignment(TextAlignment.RIGHT).SetFontSize(10));
                 document.Add(new Paragraph("---------------------------------------------------------------------------------------------------"));
-                document.Add(new Paragraph("Toplam Kullanici: 124").SetFontSize(14).SetMarginBottom(5));
-                document.Add(new Paragraph("Yuklenen Toplam Dosya: 3,458").SetFontSize(14).SetMarginBottom(5));
-                document.Add(new Paragraph("Kullanilan Depolama: %45 (225 GB / 500 GB)").SetFontSize(14).SetMarginBottom(5));
-                document.Add(new Paragraph("Aktif Paylasilan Linkler: 86").SetFontSize(14).SetMarginBottom(20));
-                document.Add(new Paragraph("---------------------------------------------------------------------------------------------------"));
-                document.Add(new Paragraph("Sistem Durumu: SAGLIKLI").SetFontSize(12));
-                document.Add(new Paragraph("Guvenlik Taramasi: TEMIZ").SetFontSize(12));
+                document.Add(new Paragraph("Toplam Kullanici: 124").SetFontSize(14));
+                document.Add(new Paragraph("Yuklenen Toplam Dosya: 3,458").SetFontSize(14));
                 document.Close();
-                byte[] fileBytes = ms.ToArray();
-                string fileName = $"CoreDrive_Rapor_{DateTime.Now.ToString("yyyyMMdd")}.pdf";
-                return File(fileBytes, "application/pdf", fileName);
+                return File(ms.ToArray(), "application/pdf", $"CoreDrive_Rapor_{DateTime.Now.ToString("yyyyMMdd")}.pdf");
             }
         }
-
-        private static ProfileViewModel _adminProfile = new ProfileViewModel
-        {
-            FirstName = "Sistem",
-            LastName = "Yöneticisi",
-            Email = "patron@coredrive.com",
-            ProfilePictureUrl = "https://ui-avatars.com/api/?name=Sistem+Yoneticisi&background=4e73df&color=fff&rounded=true"
-        };
 
         public static ProfileViewModel AdminProfile = new ProfileViewModel
         {
@@ -489,21 +474,13 @@ namespace DosyaYonetimPortali.MVC.Controllers
                 using (var ms = new MemoryStream())
                 {
                     await avatarFile.CopyToAsync(ms);
-                    var fileBytes = ms.ToArray();
-                    string base64String = Convert.ToBase64String(fileBytes);
-                    string ext = Path.GetExtension(avatarFile.FileName).Replace(".", "");
-                    if (string.IsNullOrEmpty(ext)) ext = "jpeg";
-                    AdminProfile.ProfilePictureUrl = $"data:image/{ext};base64,{base64String}";
+                    AdminProfile.ProfilePictureUrl = $"data:image/{Path.GetExtension(avatarFile.FileName).Replace(".", "")};base64,{Convert.ToBase64String(ms.ToArray())}";
                 }
             }
             AdminProfile.FirstName = model.FirstName;
             AdminProfile.LastName = model.LastName;
             AdminProfile.Email = model.Email;
-            SystemLogger.AddLog("INFO", AdminProfile.Email, "Yönetici profil bilgileri ve/veya fotoğrafı güncellendi.");
-            if (!string.IsNullOrEmpty(model.NewPassword) && !string.IsNullOrEmpty(model.CurrentPassword))
-            {
-                SystemLogger.AddLog("WARN", AdminProfile.Email, "Yönetici hesabı güvenlik şifresi değiştirildi.");
-            }
+            SystemLogger.AddLog("INFO", AdminProfile.Email, "Yönetici profil bilgileri güncellendi.");
             TempData["ToastMessage"] = "Profil bilgileriniz başarıyla güncellendi.";
             TempData["ToastIcon"] = "success";
             return RedirectToAction("Profile");
