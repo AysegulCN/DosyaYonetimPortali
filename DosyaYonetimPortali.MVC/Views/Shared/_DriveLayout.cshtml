@@ -60,17 +60,17 @@
     <div>
         <nav class="drive-sidebar d-none d-md-block">
             <div class="nav-item-drive">
-                <a href="/Drive/Dashboard" class="nav-link-drive active">
+                <a href="/Drive/Dashboard" class="nav-link-drive @(ViewContext.RouteData.Values["Action"].ToString() == "Dashboard" ? "active" : "")">
                     <i class="fas fa-hdd"></i> Drive'ım
                 </a>
             </div>
             <div class="nav-item-drive">
-                <a href="/Drive/Shared" class="nav-link-drive">
+                <a href="/Drive/Shared" class="nav-link-drive @(ViewContext.RouteData.Values["Action"].ToString() == "Shared" ? "active" : "")">
                     <i class="fas fa-user-friends"></i> Benimle Paylaşılanlar
                 </a>
             </div>
             <div class="nav-item-drive">
-                <a href="/Drive/Trash" class="nav-link-drive">
+                <a href="/Drive/Trash" class="nav-link-drive @(ViewContext.RouteData.Values["Action"].ToString() == "Trash" ? "active" : "")">
                     <i class="fas fa-trash"></i> Çöp Kutusu
                 </a>
             </div>
