@@ -1,14 +1,18 @@
 ﻿using DosyaYonetimPortali.MVC.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text;
+using System.IO;
 using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
-using System.IO;
 
 namespace DosyaYonetimPortali.MVC.Controllers
 {
@@ -16,6 +20,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
     public class AdminController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private static readonly string profileDbPath = Path.Combine(Directory.GetCurrentDirectory(), "admin_profile.json");
 
         public AdminController(IHttpClientFactory httpClientFactory)
         {
@@ -31,6 +36,25 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             ViewBag.PendingRequestGB = DriveController.PendingQuotaRequestGB;
 
+            int totalFiles = 0;
+            int activeShares = 0;
+            string dbPath = Path.Combine(Directory.GetCurrentDirectory(), "coredrive_db.json");
+
+            if (System.IO.File.Exists(dbPath))
+            {
+                var json = System.IO.File.ReadAllText(dbPath);
+                var db = JsonSerializer.Deserialize<List<DriveItemViewModel>>(json) ?? new List<DriveItemViewModel>();
+                totalFiles = db.Count(i => !i.IsFolder && !i.IsDeleted);
+                activeShares = db.Count(i => i.IsShared && !i.IsDeleted);
+            }
+
+            var storageInfo = DriveController.GetStorageInfo();
+
+            ViewBag.TotalUsers = _tempUsers.Count;
+            ViewBag.TotalFiles = totalFiles;
+            ViewBag.ActiveShares = activeShares;
+            ViewBag.StoragePercent = storageInfo.Percent;
+
             var recentLogs = SystemLogger.Logs != null
                              ? SystemLogger.Logs.OrderByDescending(l => l.Date).Take(6).ToList()
                              : new List<LogViewModel>();
@@ -38,8 +62,42 @@ namespace DosyaYonetimPortali.MVC.Controllers
             return View(recentLogs);
         }
 
+        [HttpGet]
         public IActionResult Storage()
         {
+            string dbPath = Path.Combine(Directory.GetCurrentDirectory(), "coredrive_db.json");
+            long usedBytes = 0;
+            long mediaBytes = 0;
+            long docBytes = 0;
+            long archiveBytes = 0;
+
+            if (System.IO.File.Exists(dbPath))
+            {
+                var json = System.IO.File.ReadAllText(dbPath);
+                var db = JsonSerializer.Deserialize<List<DriveItemViewModel>>(json) ?? new List<DriveItemViewModel>();
+
+                var activeFiles = db.Where(i => !i.IsFolder && !i.IsDeleted).ToList();
+                usedBytes = activeFiles.Sum(i => i.SizeBytes);
+
+                mediaBytes = activeFiles.Where(i => new[] { "jpg", "jpeg", "png", "gif", "mp4", "mov" }.Contains(i.Extension?.ToLower())).Sum(i => i.SizeBytes);
+                docBytes = activeFiles.Where(i => new[] { "pdf", "doc", "docx", "xls", "xlsx", "txt" }.Contains(i.Extension?.ToLower())).Sum(i => i.SizeBytes);
+                archiveBytes = activeFiles.Where(i => new[] { "zip", "rar", "7z", "tar" }.Contains(i.Extension?.ToLower())).Sum(i => i.SizeBytes);
+            }
+
+            long totalBytes = DriveController.UserTotalQuotaMB * 1048576;
+
+            ViewBag.UsedGB = (usedBytes / 1073741824.0).ToString("F2");
+            ViewBag.TotalGB = (totalBytes / 1073741824.0).ToString("F2");
+            ViewBag.StoragePercent = totalBytes > 0 ? (int)((usedBytes * 100) / totalBytes) : 0;
+
+            ViewBag.MediaGB = (mediaBytes / 1073741824.0).ToString("F2");
+            ViewBag.DocGB = (docBytes / 1073741824.0).ToString("F2");
+            ViewBag.ArchiveGB = (archiveBytes / 1073741824.0).ToString("F2");
+
+            ViewBag.MediaPercent = usedBytes > 0 ? (int)((mediaBytes * 100) / usedBytes) : 0;
+            ViewBag.DocPercent = usedBytes > 0 ? (int)((docBytes * 100) / usedBytes) : 0;
+            ViewBag.ArchivePercent = usedBytes > 0 ? (int)((archiveBytes * 100) / usedBytes) : 0;
+
             return View();
         }
 
@@ -54,15 +112,66 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             SystemLogger.ClearLogs();
             SystemLogger.AddLog("SYSTEM", "Sistem Yöneticisi", "Tüm eski log kayıtları manuel olarak temizlendi.");
-
             TempData["ToastMessage"] = "Sistemdeki tüm eski log kayıtları başarıyla temizlendi.";
             TempData["ToastIcon"] = "success";
             return RedirectToAction("Logs");
         }
 
+        [HttpGet]
         public IActionResult Shares()
         {
-            return View();
+            string dbPath = Path.Combine(Directory.GetCurrentDirectory(), "coredrive_db.json");
+            var sharedFiles = new List<DriveItemViewModel>();
+
+            if (System.IO.File.Exists(dbPath))
+            {
+                var json = System.IO.File.ReadAllText(dbPath);
+                var db = JsonSerializer.Deserialize<List<DriveItemViewModel>>(json) ?? new List<DriveItemViewModel>();
+                sharedFiles = db.Where(i => i.IsShared && !i.IsDeleted).ToList();
+            }
+
+            return View(sharedFiles);
+        }
+
+        [HttpPost]
+        public IActionResult RevokeShare(string id)
+        {
+            string dbPath = Path.Combine(Directory.GetCurrentDirectory(), "coredrive_db.json");
+            if (System.IO.File.Exists(dbPath))
+            {
+                var json = System.IO.File.ReadAllText(dbPath);
+                var db = JsonSerializer.Deserialize<List<DriveItemViewModel>>(json) ?? new List<DriveItemViewModel>();
+                var item = db.FirstOrDefault(i => i.Id == id);
+                if (item != null)
+                {
+                    item.IsShared = false;
+                    item.SharedWith = null;
+                    System.IO.File.WriteAllText(dbPath, JsonSerializer.Serialize(db));
+                    SystemLogger.AddLog("INFO", "Sistem Yöneticisi", $"'{item.Name}' dosyasının paylaşımı iptal edildi.");
+                }
+            }
+            TempData["Message"] = "Seçilen dosyanın paylaşım bağlantısı başarıyla iptal edildi.";
+            return RedirectToAction("Shares");
+        }
+
+        [HttpPost]
+        public IActionResult RevokeAllShares()
+        {
+            string dbPath = Path.Combine(Directory.GetCurrentDirectory(), "coredrive_db.json");
+            if (System.IO.File.Exists(dbPath))
+            {
+                var json = System.IO.File.ReadAllText(dbPath);
+                var db = JsonSerializer.Deserialize<List<DriveItemViewModel>>(json) ?? new List<DriveItemViewModel>();
+                foreach (var item in db.Where(i => i.IsShared))
+                {
+                    item.IsShared = false;
+                    item.SharedWith = null;
+                }
+                System.IO.File.WriteAllText(dbPath, JsonSerializer.Serialize(db));
+                SystemLogger.AddLog("WARN", "Sistem Yöneticisi", "Sistemdeki tüm açık paylaşım bağlantıları kapatıldı.");
+            }
+            TempData["Message"] = "Sistemdeki tüm açık paylaşım bağlantıları başarıyla kapatıldı.";
+            return RedirectToAction("Shares");
         }
 
         private static SystemSettingsViewModel _systemSettings = new SystemSettingsViewModel();
@@ -81,20 +190,6 @@ namespace DosyaYonetimPortali.MVC.Controllers
             TempData["ToastMessage"] = "Sistem ve güvenlik ayarları başarıyla kaydedildi.";
             TempData["ToastIcon"] = "success";
             return RedirectToAction("Settings");
-        }
-
-        [HttpPost]
-        public IActionResult RevokeShare(string id)
-        {
-            TempData["Message"] = "Seçilen dosyanın paylaşım bağlantısı başarıyla iptal edildi.";
-            return RedirectToAction("Shares");
-        }
-
-        [HttpPost]
-        public IActionResult RevokeAllShares()
-        {
-            TempData["Message"] = "Sistemdeki tüm açık paylaşım bağlantıları başarıyla kapatıldı.";
-            return RedirectToAction("Shares");
         }
 
         private static List<UserViewModel> _tempUsers = new List<UserViewModel>
@@ -323,12 +418,10 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             var builder = new StringBuilder();
             builder.AppendLine("Tarih/Saat,Kullanici,IP Adresi,Tarayici/Cihaz,Durum");
-
             foreach (var record in SystemLogger.LoginRecords)
             {
                 builder.AppendLine($"{record.Date},{record.UserEmail},{record.IpAddress},{record.BrowserDevice},{record.Status}");
             }
-
             SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Kullanıcı giriş kayıtları CSV olarak indirildi.");
             return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "GirisKayitlari.csv");
         }
@@ -344,12 +437,10 @@ namespace DosyaYonetimPortali.MVC.Controllers
         {
             var builder = new StringBuilder();
             builder.AppendLine("Dosya Adi,Islem Yapan,Aksiyon,Tarih");
-
             foreach (var activity in SystemLogger.FileActivities)
             {
                 builder.AppendLine($"{activity.FileName},{activity.UserEmail},{activity.ActionType},{activity.Date}");
             }
-
             SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Dosya hareketleri CSV olarak indirildi.");
             return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "DosyaHareketleri.csv");
         }
@@ -436,6 +527,20 @@ namespace DosyaYonetimPortali.MVC.Controllers
         [HttpPost]
         public IActionResult GenerateSystemReport()
         {
+            int totalUsers = _tempUsers.Count;
+            int totalFiles = 0;
+            int activeShares = 0;
+            string dbPath = Path.Combine(Directory.GetCurrentDirectory(), "coredrive_db.json");
+
+            if (System.IO.File.Exists(dbPath))
+            {
+                var json = System.IO.File.ReadAllText(dbPath);
+                var db = JsonSerializer.Deserialize<List<DriveItemViewModel>>(json) ?? new List<DriveItemViewModel>();
+                totalFiles = db.Count(i => !i.IsFolder && !i.IsDeleted);
+                activeShares = db.Count(i => i.IsShared && !i.IsDeleted);
+            }
+            var storageInfo = DriveController.GetStorageInfo();
+
             SystemLogger.AddLog("INFO", "Sistem Yöneticisi", "Genel sistem durumu PDF raporu oluşturuldu.");
             using (var ms = new MemoryStream())
             {
@@ -445,45 +550,82 @@ namespace DosyaYonetimPortali.MVC.Controllers
                 document.Add(new Paragraph("CORE-DRIVE SISTEM RAPORU").SetTextAlignment(TextAlignment.CENTER).SetFontSize(22));
                 document.Add(new Paragraph("Rapor Tarihi: " + DateTime.Now.ToString("dd.MM.yyyy HH:mm")).SetTextAlignment(TextAlignment.RIGHT).SetFontSize(10));
                 document.Add(new Paragraph("---------------------------------------------------------------------------------------------------"));
-                document.Add(new Paragraph("Toplam Kullanici: 124").SetFontSize(14));
-                document.Add(new Paragraph("Yuklenen Toplam Dosya: 3,458").SetFontSize(14));
+                document.Add(new Paragraph($"Toplam Kullanici: {totalUsers}").SetFontSize(14));
+                document.Add(new Paragraph($"Yuklenen Toplam Dosya: {totalFiles}").SetFontSize(14));
+                document.Add(new Paragraph($"Aktif Paylasilan Linkler: {activeShares}").SetFontSize(14));
+                document.Add(new Paragraph($"Sistem Depolama Dolulugu: %{storageInfo.Percent}").SetFontSize(14));
+                document.Add(new Paragraph("---------------------------------------------------------------------------------------------------"));
+                document.Add(new Paragraph("Sistem Durumu: SAGLIKLI").SetFontSize(12));
                 document.Close();
                 return File(ms.ToArray(), "application/pdf", $"CoreDrive_Rapor_{DateTime.Now.ToString("yyyyMMdd")}.pdf");
             }
         }
 
-        public static ProfileViewModel AdminProfile = new ProfileViewModel
+        public static AdminProfileData GetAdminProfileData()
         {
-            FirstName = "Sistem",
-            LastName = "Yöneticisi",
-            Email = "patron@coredrive.com",
-            ProfilePictureUrl = "https://ui-avatars.com/api/?name=Sistem+Yoneticisi&background=4e73df&color=fff&rounded=true"
-        };
+            if (System.IO.File.Exists(profileDbPath))
+            {
+                var json = System.IO.File.ReadAllText(profileDbPath);
+                return JsonSerializer.Deserialize<AdminProfileData>(json) ?? new AdminProfileData();
+            }
+            var defaultProfile = new AdminProfileData();
+            System.IO.File.WriteAllText(profileDbPath, JsonSerializer.Serialize(defaultProfile));
+            return defaultProfile;
+        }
 
         [HttpGet]
         public IActionResult Profile()
         {
-            return View(AdminProfile);
+            var data = GetAdminProfileData();
+            var model = new ProfileViewModel
+            {
+                FirstName = data.FirstName,
+                LastName = data.LastName,
+                Email = data.Email,
+                ProfilePictureUrl = data.ProfilePictureUrl
+            };
+            return View(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateProfile(ProfileViewModel model, IFormFile avatarFile)
+        public async Task<IActionResult> UpdateProfile(ProfileViewModel model, IFormFile avatarFile, string currentPassword, string newPassword)
         {
+            var data = GetAdminProfileData();
+
+            if (!string.IsNullOrEmpty(currentPassword) && !string.IsNullOrEmpty(newPassword))
+            {
+                if (currentPassword == data.Password) data.Password = newPassword;
+                else TempData["ToastMessage"] = "Mevcut şifreniz hatalı, şifre değiştirilemedi!";
+            }
+
             if (avatarFile != null && avatarFile.Length > 0)
             {
                 using (var ms = new MemoryStream())
                 {
                     await avatarFile.CopyToAsync(ms);
-                    AdminProfile.ProfilePictureUrl = $"data:image/{Path.GetExtension(avatarFile.FileName).Replace(".", "")};base64,{Convert.ToBase64String(ms.ToArray())}";
+                    data.ProfilePictureUrl = $"data:image/{Path.GetExtension(avatarFile.FileName).Replace(".", "")};base64,{Convert.ToBase64String(ms.ToArray())}";
                 }
             }
-            AdminProfile.FirstName = model.FirstName;
-            AdminProfile.LastName = model.LastName;
-            AdminProfile.Email = model.Email;
-            SystemLogger.AddLog("INFO", AdminProfile.Email, "Yönetici profil bilgileri güncellendi.");
-            TempData["ToastMessage"] = "Profil bilgileriniz başarıyla güncellendi.";
+
+            data.FirstName = model.FirstName;
+            data.LastName = model.LastName;
+            data.Email = model.Email;
+
+            System.IO.File.WriteAllText(profileDbPath, JsonSerializer.Serialize(data));
+
+            SystemLogger.AddLog("INFO", data.Email, "Yönetici profil bilgileri kalıcı olarak güncellendi.");
+            TempData["ToastMessage"] = "Profil bilgileriniz başarıyla ve kalıcı olarak güncellendi.";
             TempData["ToastIcon"] = "success";
             return RedirectToAction("Profile");
         }
+    }
+
+    public class AdminProfileData
+    {
+        public string FirstName { get; set; } = "Sistem";
+        public string LastName { get; set; } = "Yöneticisi";
+        public string Email { get; set; } = "patron@coredrive.com";
+        public string Password { get; set; } = "aysegul123";
+        public string ProfilePictureUrl { get; set; } = "https://ui-avatars.com/api/?name=Sistem+Yoneticisi&background=4e73df&color=fff&rounded=true";
     }
 }

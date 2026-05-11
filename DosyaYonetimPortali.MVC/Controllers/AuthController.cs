@@ -37,11 +37,31 @@ namespace DosyaYonetimPortali.MVC.Controllers
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "192.168.1.15";
             var browserInfo = "Chrome / Windows 11";
 
-            if (model.Email == "aysegulcoban@gmail.com" && model.Password == "aysegul123")
+            string profileDbPath = Path.Combine(Directory.GetCurrentDirectory(), "admin_profile.json");
+            string adminEmail = "patron@coredrive.com";
+            string adminPass = "aysegul123";
+            string adminName = "Sistem Yöneticisi";
+
+            if (System.IO.File.Exists(profileDbPath))
             {
+                using var doc = JsonDocument.Parse(System.IO.File.ReadAllText(profileDbPath));
+                var root = doc.RootElement;
+                if (root.TryGetProperty("Email", out var emailProp)) adminEmail = emailProp.GetString() ?? adminEmail;
+                if (root.TryGetProperty("Password", out var passProp)) adminPass = passProp.GetString() ?? adminPass;
+
+                string fName = root.TryGetProperty("FirstName", out var fn) ? fn.GetString() : "Sistem";
+                string lName = root.TryGetProperty("LastName", out var ln) ? ln.GetString() : "Yöneticisi";
+                adminName = $"{fName} {lName}";
+            }
+
+            if ((model.Email == "aysegulcoban@gmail.com" && model.Password == "aysegul123") ||
+                (model.Email == adminEmail && model.Password == adminPass))
+            {
+                string currentName = model.Email == "aysegulcoban@gmail.com" ? "Ayşegül Yılmaz" : adminName;
+
                 var testClaims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.Name, "Sistem Yöneticisi"),
+                    new Claim(ClaimTypes.Name, currentName),
                     new Claim(ClaimTypes.Email, model.Email),
                     new Claim(ClaimTypes.Role, "Admin")
                 };

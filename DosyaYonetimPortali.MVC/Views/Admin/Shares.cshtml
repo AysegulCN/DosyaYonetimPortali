@@ -1,49 +1,28 @@
-﻿@{
+﻿@model List<DosyaYonetimPortali.MVC.Models.DriveItemViewModel>
+@{
     ViewData["Title"] = "Paylaşım Denetimi";
 }
-
 <style>
     .btn-animated:active { transform: scale(0.95); }
-    
-    .modern-table tbody tr {
-        transition: all 0.25s ease-in-out;
-        border-bottom: 1px solid #f1f3f5;
-    }
-    .modern-table tbody tr:hover {
-        background-color: #ffffff;
-        box-shadow: 0 6px 15px rgba(0,0,0,0.08);
-        transform: translateY(-2px);
-        z-index: 10;
-        position: relative;
-    }
-    .modern-table td {
-        border-top: none !important; 
-        padding: 1.25rem 1rem !important; 
-        vertical-align: middle;
-    }
-    
-    .file-icon-wrapper {
-        width: 42px; height: 42px;
-        border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
-    }
+    .modern-table tbody tr { transition: all 0.25s ease-in-out; border-bottom: 1px solid #f1f3f5; }
+    .modern-table tbody tr:hover { background-color: #ffffff; box-shadow: 0 6px 15px rgba(0,0,0,0.08); transform: translateY(-2px); z-index: 10; position: relative; }
+    .modern-table td { border-top: none !important; padding: 1.25rem 1rem !important; vertical-align: middle; }
+    .file-icon-wrapper { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
     .bg-danger-soft { background-color: rgba(231, 74, 59, 0.1); }
     .bg-warning-soft { background-color: rgba(246, 194, 62, 0.1); }
+    .bg-success-soft { background-color: rgba(28, 200, 138, 0.1); }
+    .bg-primary-soft { background-color: rgba(78, 115, 223, 0.1); }
 </style>
 
-<!-- Üst Başlık ve Toplu İptal Butonu -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800 fw-bold">Aktif Paylaşımlar (Açık Linkler)</h1>
-    
     <form asp-action="RevokeAllShares" asp-controller="Admin" method="post" class="d-inline">
-        <!-- Tipi button yapıldı ve yeni JS fonksiyonuna bağlandı -->
         <button type="button" class="btn btn-danger shadow-sm btn-animated" style="border-radius: 10px; padding: 8px 15px;" onclick="confirmAction(event, this.closest('form'), 'Tüm açık bağlantıları kapatmak istediğinize emin misiniz? Bu işlem geri alınamaz!', 'Evet, Tümünü Kapat')">
             <i class="fas fa-unlink fa-sm text-white-50 me-1"></i> Tüm Açık Bağlantıları Kapat
         </button>
     </form>
 </div>
 
-<!-- İşlem Başarılı Mesajı Alanı -->
 @if (TempData["Message"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-radius: 10px;">
@@ -52,7 +31,6 @@
     </div>
 }
 
-<!-- Ana Tablo Kartı -->
 <div class="card shadow mb-5" style="border-radius: 15px; border: none; overflow: hidden;">
     <div class="card-header py-4 bg-white" style="border-bottom: 1px solid #f1f3f5;">
         <h6 class="m-0 font-weight-bold text-primary" style="font-size: 1.1rem;">
@@ -67,71 +45,56 @@
                         <th class="border-0 px-4 py-3">Dosya Adı</th>
                         <th class="border-0 py-3">Paylaşan Kullanıcı</th>
                         <th class="border-0 py-3">Oluşturulma Tarihi</th>
-                        <th class="border-0 py-3">İndirilme / Tıklanma</th>
                         <th class="border-0 py-3 text-end px-4">İşlem</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td class="px-4">
-                            <div class="d-flex align-items-center">
-                                <div class="file-icon-wrapper bg-danger-soft me-3 shadow-sm">
-                                    <i class="fas fa-file-pdf text-danger fa-lg"></i>
-                                </div>
-                                <span class="fw-bold text-dark">Q3_Maliyet_Analizi.pdf</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="https://ui-avatars.com/api/?name=Ayşegül+Yılmaz&background=e3f2fd&color=0d47a1&rounded=true" class="shadow-sm me-2" width="28" height="28">
-                                <span class="text-secondary">aysegul@coredrive.com</span>
-                            </div>
-                        </td>
-                        <td class="text-muted small"><i class="far fa-calendar-alt me-1 text-gray-400"></i> 01.05.2026</td>
-                        <td><span class="badge bg-success rounded-pill px-3 py-2 shadow-sm" style="font-weight: 600;">12 Kez</span></td>
-                        <td class="text-end px-4">
-                            <button type="button" class="btn btn-sm btn-outline-info shadow-sm me-1 btn-animated" title="Linki Kopyala" onclick="copyLink('https://coredrive.com/share/q3-maliyet-analizi')">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                            
-                            <form asp-action="RevokeShare" asp-controller="Admin" method="post" class="d-inline">
-                                <input type="hidden" name="id" value="1" />
-                                <button type="button" class="btn btn-sm btn-outline-danger shadow-sm btn-animated" title="Bağlantıyı İptal Et" onclick="confirmAction(event, this.closest('form'), 'Bu bağlantıyı iptal etmek istediğinize emin misiniz?', 'Evet, İptal Et')">
-                                    <i class="fas fa-unlink"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="px-4">
-                            <div class="d-flex align-items-center">
-                                <div class="file-icon-wrapper bg-warning-soft me-3 shadow-sm">
-                                    <i class="fas fa-file-archive text-warning fa-lg"></i>
-                                </div>
-                                <span class="fw-bold text-dark">Proje_Yedek_2026.zip</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img src="https://ui-avatars.com/api/?name=Patron&background=ffebee&color=b71c1c&rounded=true" class="shadow-sm me-2" width="28" height="28">
-                                <span class="text-secondary">patron@coredrive.com</span>
-                            </div>
-                        </td>
-                        <td class="text-muted small"><i class="far fa-calendar-alt me-1 text-gray-400"></i> 28.04.2026</td>
-                        <td><span class="badge bg-secondary rounded-pill px-3 py-2 shadow-sm" style="font-weight: 600;">0 Kez</span></td>
-                        <td class="text-end px-4">
-                            <button type="button" class="btn btn-sm btn-outline-info shadow-sm me-1 btn-animated" title="Linki Kopyala" onclick="copyLink('https://coredrive.com/share/proje-yedek-2026')">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                            
-                            <form asp-action="RevokeShare" asp-controller="Admin" method="post" class="d-inline">
-                                <input type="hidden" name="id" value="2" />
-                                <button type="button" class="btn btn-sm btn-outline-danger shadow-sm btn-animated" title="Bağlantıyı İptal Et" onclick="confirmAction(event, this.closest('form'), 'Bu bağlantıyı iptal etmek istediğinize emin misiniz?', 'Evet, İptal Et')">
-                                    <i class="fas fa-unlink"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            string iconClass = "fas fa-file text-primary";
+                            string bgClass = "bg-primary-soft";
+                            if (item.Extension == "pdf") { iconClass = "fas fa-file-pdf text-danger"; bgClass = "bg-danger-soft"; }
+                            else if (item.Extension == "zip" || item.Extension == "rar") { iconClass = "fas fa-file-archive text-warning"; bgClass = "bg-warning-soft"; }
+                            else if (item.Extension == "xlsx" || item.Extension == "xls") { iconClass = "fas fa-file-excel text-success"; bgClass = "bg-success-soft"; }
+
+                            <tr>
+                                <td class="px-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="file-icon-wrapper @bgClass me-3 shadow-sm">
+                                            <i class="@iconClass fa-lg"></i>
+                                        </div>
+                                        <span class="fw-bold text-dark">@item.Name</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://ui-avatars.com/api/?name=@item.Owner&background=e3f2fd&color=0d47a1&rounded=true" class="shadow-sm me-2" width="28" height="28">
+                                        <span class="text-secondary">@item.Owner</span>
+                                    </div>
+                                </td>
+                                <td class="text-muted small"><i class="far fa-calendar-alt me-1 text-gray-400"></i> @item.ModifiedDate</td>
+                                <td class="text-end px-4">
+                                    <button type="button" class="btn btn-sm btn-outline-info shadow-sm me-1 btn-animated" title="Linki Kopyala" onclick="copyLink('https://coredrive.com/share/@item.Id')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <form asp-action="RevokeShare" asp-controller="Admin" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="button" class="btn btn-sm btn-outline-danger shadow-sm btn-animated" title="Bağlantıyı İptal Et" onclick="confirmAction(event, this.closest('form'), 'Bu bağlantıyı iptal etmek istediğinize emin misiniz?', 'Evet, İptal Et')">
+                                            <i class="fas fa-unlink"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">Şu anda dışarıya açık paylaşılmış hiçbir dosya bulunmuyor.</td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
@@ -139,11 +102,8 @@
 </div>
 
 @section Scripts {
-    <!-- SweetAlert2 Kütüphanesini Projeye Dahil Ediyoruz -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <script>
-        // 1. Şık Kopyalama Uyarısı (Alert Yerine)
         function copyLink(url) {
             navigator.clipboard.writeText(url).then(() => {
                 Swal.fire({
@@ -158,23 +118,21 @@
             });
         }
 
-        // 2. Şık Onay Penceresi (Confirm Yerine)
         function confirmAction(event, form, message, confirmText) {
-            event.preventDefault(); // Formun hemen gitmesini engelle
-            
+            event.preventDefault();
             Swal.fire({
                 title: 'Emin misiniz?',
                 text: message,
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#e74a3b', // Kırmızı Tehlike Butonu
-                cancelButtonColor: '#858796',  // Gri Vazgeç Butonu
+                confirmButtonColor: '#e74a3b',
+                cancelButtonColor: '#858796',
                 confirmButtonText: confirmText,
                 cancelButtonText: 'Vazgeç',
-                reverseButtons: true // Vazgeç butonunu sola al
+                reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    form.submit(); // Kullanıcı evet derse formu gönder
+                    form.submit();
                 }
             });
         }

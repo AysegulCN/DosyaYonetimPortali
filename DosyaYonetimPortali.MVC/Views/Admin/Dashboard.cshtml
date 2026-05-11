@@ -4,26 +4,29 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     int pendingGB = ViewBag.PendingRequestGB ?? 0;
 }
+
+<style>
+    .stat-link { text-decoration: none !important; }
+    .stat-link .card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .stat-link:hover .card { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; border-color: #1a73e8 !important; }
+</style>
+
 <div class="container-fluid mt-4">
     <div class="d-flex align-items-center justify-content-between mb-4">
         <h3 class="m-0 font-weight-bold text-dark" style="font-size: 28px;">Sistem Genel Özeti</h3>
-        
         <div class="d-flex align-items-center">
-            
             <form asp-action="GenerateSystemReport" method="post" class="m-0 mr-2">
                 <button type="submit" class="btn btn-primary" style="border-radius: 8px;">
                     <i class="fas fa-download mr-2"></i> Sistem Raporu Al
                 </button>
             </form>
-            
             <a href="/?preview=true" class="btn btn-outline-primary" style="border-radius: 8px;">
                 <i class="fas fa-external-link-alt mr-2"></i> Siteye Göz At
             </a>
-            
         </div>
     </div>
 
-    @if (pendingGB > 0)
+    @if(pendingGB > 0)
     {
         <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center justify-content-between p-4 mb-4" style="border-radius: 12px;">
             <div class="d-flex align-items-center">
@@ -39,67 +42,78 @@
 
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2" style="border-radius: 12px;">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">TOPLAM KULLANICI</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">124</div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; opacity: 0.8;"><i class="fas fa-users"></i></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2" style="border-radius: 12px;">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">YÜKLENEN DOSYALAR</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">3,458</div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; opacity: 0.8;"><i class="fas fa-file-alt"></i></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2" style="border-radius: 12px;">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">DEPOLAMA (KULLANILAN)</div>
-                            <div class="row no-gutters align-items-center">
-                                <div class="col-auto"><div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">45%</div></div>
-                                <div class="col"><div class="progress progress-sm mr-2"><div class="progress-bar bg-info" role="progressbar" style="width: 45%"></div></div></div>
+            <a href="/Admin/Users" class="stat-link">
+                <div class="card border-left-primary shadow h-100 py-2" style="border-radius: 12px;">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">TOPLAM KULLANICI</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.TotalUsers</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; opacity: 0.8;"><i class="fas fa-users"></i></div>
                             </div>
                         </div>
-                        <div class="col-auto">
-                            <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; opacity: 0.8;"><i class="fas fa-hdd"></i></div>
-                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
+        
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2" style="border-radius: 12px;">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">AKTİF PAYLAŞIMLAR</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">86</div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; opacity: 0.8;"><i class="fas fa-link"></i></div>
+            <a href="/Admin/FileActivities" class="stat-link">
+                <div class="card border-left-success shadow h-100 py-2" style="border-radius: 12px;">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">YÜKLENEN DOSYALAR</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.TotalFiles</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; opacity: 0.8;"><i class="fas fa-file-alt"></i></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="/Admin/Storage" class="stat-link">
+                <div class="card border-left-info shadow h-100 py-2" style="border-radius: 12px;">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">DEPOLAMA (KULLANILAN)</div>
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col-auto"><div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">%@ViewBag.StoragePercent</div></div>
+                                    <div class="col"><div class="progress progress-sm mr-2"><div class="progress-bar bg-info" role="progressbar" style="width: @ViewBag.StoragePercent%"></div></div></div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; opacity: 0.8;"><i class="fas fa-hdd"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="/Admin/Shares" class="stat-link">
+                <div class="card border-left-warning shadow h-100 py-2" style="border-radius: 12px;">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">AKTİF PAYLAŞIMLAR</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.ActiveShares</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; opacity: 0.8;"><i class="fas fa-link"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
         </div>
     </div>
 
@@ -119,15 +133,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model != null && Model.Any())
+                        @if(Model != null && Model.Any())
                         {
-                            foreach (var log in Model)
+                            foreach(var log in Model)
                             {
                                 <tr>
                                     <td class="px-4 py-3 font-weight-bold text-dark">
                                         <div class="d-flex align-items-center">
                                             <div class="bg-light text-primary rounded-circle d-flex justify-content-center align-items-center mr-3 font-weight-bold" style="width: 36px; height: 36px;">
-                                                @(log.UserEmail.Substring(0, 1).ToUpper())
+                                                @(log.UserEmail.Substring(0,1).ToUpper())
                                             </div>
                                             @log.UserEmail
                                         </div>
@@ -135,20 +149,9 @@
                                     <td class="text-muted">@log.Message</td>
                                     <td class="text-muted small"><i class="far fa-clock mr-1"></i> @log.Date</td>
                                     <td class="px-4 text-center">
-                                        @if (log.Status == "Başarılı" || log.Status == "INFO")
-                                        {
-                                            <span class="badge badge-success px-3 py-2" style="border-radius: 20px;">Başarılı</span>
-                                        }
-                                        else if (log.Status == "Kota Aşımı" || log.Status == "WARN")
-                                        {
-
-                                            <span class="badge badge-warning px-3 py-2 text-dark" style="border-radius: 20px;">Bekliyor / Uyarı</span>
-                                        }
-                                        else
-                                        {
-
-                                            <span class="badge badge-primary px-3 py-2" style="border-radius: 20px;">Admin İşlemi</span>
-                                        }
+                                        @if(log.Status == "Başarılı" || log.Status == "INFO") { <span class="badge badge-success px-3 py-2" style="border-radius: 20px;">Başarılı</span> }
+                                        else if(log.Status == "Kota Aşımı" || log.Status == "WARN") { <span class="badge badge-warning px-3 py-2 text-dark" style="border-radius: 20px;">Bekliyor / Uyarı</span> }
+                                        else { <span class="badge badge-primary px-3 py-2" style="border-radius: 20px;">Admin İşlemi</span> }
                                     </td>
                                 </tr>
                             }
