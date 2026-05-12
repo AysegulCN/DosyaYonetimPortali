@@ -34,7 +34,6 @@ namespace DosyaYonetimPortali.API.Data
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
-            // 2. EKLEME: Paylaşım İlişkisi Kuralları
             builder.Entity<DosyaYonetimPortali.API.Models.FileShare>()
                 .HasOne(fs => fs.File)
                 .WithMany(f => f.SharedWithUsers)
