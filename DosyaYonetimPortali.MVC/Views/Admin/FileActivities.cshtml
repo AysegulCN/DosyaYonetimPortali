@@ -1,8 +1,8 @@
 ﻿@model List<DosyaYonetimPortali.MVC.Models.FileActivityViewModel>
 @{
     ViewData["Title"] = "Dosya Hareketleri";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
-
 <style>
     .btn-animated:active { transform: scale(0.95); }
     .modern-table tbody tr { transition: all 0.25s ease-in-out; border-bottom: 1px solid #f1f3f5; }
@@ -20,6 +20,7 @@
     .badge-download { background-color: #36b9cc; color: white; }
     .badge-upload { background-color: #1cc88a; color: white; }
     .badge-delete { background-color: #e74a3b; color: white; }
+    .badge-share { background-color: #f6c23e; color: white; }
 
     .search-box {
         position: relative;
@@ -48,7 +49,7 @@
     }
 </style>
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
+<div class="d-sm-flex align-items-center justify-content-between mb-4 mt-2">
     <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem Dosya Hareketleri</h1>
     
     <div class="d-flex align-items-center gap-3">
@@ -121,6 +122,10 @@
                                     else if (activity.ActionType == "Silme")
                                     {
                                         <span class="action-badge badge-delete"><i class="fas fa-trash me-1"></i> Silme</span>
+                                    }
+                                    else if (activity.ActionType == "Paylaşım")
+                                    {
+                                        <span class="action-badge badge-share"><i class="fas fa-share me-1"></i> Paylaşım</span>
                                     }
                                     else
                                     {

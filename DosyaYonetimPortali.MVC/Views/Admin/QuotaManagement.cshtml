@@ -1,7 +1,7 @@
 ﻿@model DosyaYonetimPortali.MVC.Models.QuotaSettingsViewModel
 @{
     ViewData["Title"] = "Kota Yönetimi";
-    Layout = "~/Views/Shared/_Layout.cshtml"; // Admin layoutun neyse o kalmalı
+    Layout = "~/Views/Shared/_Layout.cshtml"; 
     long currentQuotaMB = ViewBag.CurrentQuotaMB;
     int currentQuotaGB = (int)(currentQuotaMB / 1024);
     int pendingGB = ViewBag.PendingRequestGB;
@@ -10,7 +10,7 @@
 <div class="container-fluid mt-4">
     <div class="d-flex align-items-center justify-content-between mb-4">
         <h3 class="m-0 font-weight-bold text-dark"><i class="fas fa-server text-primary mr-3"></i>Kota ve Depolama Yönetimi</h3>
-        <a href="/Drive/Dashboard" class="btn btn-outline-primary font-weight-bold" style="border-radius: 20px;"><i class="fas fa-external-link-alt mr-2"></i>Siteye Göz At</a>
+        <a href="/?preview=true" class="btn btn-outline-primary font-weight-bold" style="border-radius: 20px;"><i class="fas fa-external-link-alt mr-2"></i>Siteye Göz At</a>
     </div>
 
     @if (TempData["ToastMessage"] != null)

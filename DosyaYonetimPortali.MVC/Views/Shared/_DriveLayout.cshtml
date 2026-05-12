@@ -1,19 +1,23 @@
-﻿@{
-    var storageInfo = DosyaYonetimPortali.MVC.Controllers.DriveController.GetStorageInfo();
+﻿@inject DosyaYonetimPortali.MVC.Data.AppDbContext DbContext
+@{
+    var storageInfo = DosyaYonetimPortali.MVC.Controllers.DriveController.GetStorageInfo(DbContext);
     long currentQuotaMB = DosyaYonetimPortali.MVC.Controllers.DriveController.UserTotalQuotaMB;
     int currentQuotaGB = (int)(currentQuotaMB / 1024);
     
-    string userName = DosyaYonetimPortali.MVC.Controllers.DriveController.CurrentFullName ?? "Kullanıcı";
-    string userEmail = DosyaYonetimPortali.MVC.Controllers.DriveController.CurrentEmail ?? "kullanici@coredrive.com";
-    string userPhone = DosyaYonetimPortali.MVC.Controllers.DriveController.CurrentPhone ?? "";
-    string userAvatar = DosyaYonetimPortali.MVC.Controllers.DriveController.CurrentAvatarBase64 ?? "";
+    string currentEmail = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+    var currentUser = DbContext.Users.FirstOrDefault(u => u.Email == currentEmail);
+
+    string userName = currentUser != null ? $"{currentUser.FirstName} {currentUser.LastName}" : "Kullanıcı";
+    string userEmail = currentUser?.Email ?? "kullanici@coredrive.com";
+    string userPhone = ""; 
+    string userAvatar = currentUser?.ProfilePictureUrl ?? "";
     
     string initial = !string.IsNullOrEmpty(userName) ? userName.Substring(0,1).ToUpper() : "K";
-    bool isAdmin = User.IsInRole("Admin") || userName?.ToLower() == "sistem" || userName?.ToLower() == "patron";
+    bool isAdmin = currentUser?.Role == "Admin";
     bool isAdminPage = ViewContext.RouteData.Values["Controller"]?.ToString() == "Admin";
 }
 <!DOCTYPE html>
-<html lang="tr" data-theme="light">
+<html lang="tr">
 <head>
     <meta charset="utf-8">
     <title>CoreDrive</title>
@@ -26,13 +30,7 @@
             --active-bg: #e8f0fe; --active-text: #1967d2; --input-bg: #f1f3f4;
             --card-bg: #ffffff; --table-hover: #f5f5f5;
         }
-        [data-theme="dark"] {
-            --bg-main: #202124; --bg-secondary: #292a2d; --bg-hover: #3c4043;
-            --text-main: #e8eaed; --text-muted: #9aa0a6; --border-color: #5f6368;
-            --active-bg: #3c4043; --active-text: #8ab4f8; --input-bg: #303134;
-            --card-bg: #2d2e30; --table-hover: #303134;
-        }
-        body { background-color: var(--bg-main) !important; color: var(--text-main) !important; overflow: hidden; font-family: 'Segoe UI', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        body { background-color: var(--bg-main) !important; color: var(--text-main) !important; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
         .text-dark { color: var(--text-main) !important; }
         .text-muted { color: var(--text-muted) !important; }
         .bg-light { background-color: var(--bg-hover) !important; }
@@ -62,16 +60,37 @@
         .nav-pills .nav-link { color: var(--text-main); border-radius: 8px; font-weight: 500; margin-bottom: 5px; }
         .nav-pills .nav-link.active { background-color: var(--active-bg); color: var(--active-text); }
         .nav-pills .nav-link:hover:not(.active) { background-color: var(--bg-hover); }
+        .custom-control-input:checked ~ .custom-control-label::before { background-color: #1a73e8; border-color: #1a73e8; }
+        
+       
+        body[data-view="grid"] .file-table thead { display: none; }
+        body[data-view="grid"] .file-table tbody { display: flex; flex-wrap: wrap; gap: 20px; padding: 10px 0; }
+        body[data-view="grid"] .file-table tr { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; width: 210px; height: 220px; display: flex; flex-direction: column; align-items: center; padding: 25px 15px 15px 15px; text-align: center; position: relative; transition: box-shadow 0.2s; }
+        body[data-view="grid"] .file-table tr:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.08); border-color: transparent; }
+        body[data-view="grid"] .file-table td { border: none; padding: 0; width: 100%; display: flex; justify-content: center; }
+        body[data-view="grid"] .file-table td:nth-child(2), body[data-view="grid"] .file-table td:nth-child(3), body[data-view="grid"] .file-table td:nth-child(4) { display: none; }
+        
+        body[data-view="grid"] .file-table td:nth-child(1) { flex-direction: column; align-items: center; height: 130px; font-size: 13px; font-weight: 600; color: #202124 !important; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; line-height: 1.4; }
+        body[data-view="grid"] .file-table td:nth-child(1) i { font-size: 60px !important; margin: 0 0 15px 0 !important; display: block; color: #1a73e8 !important; }
+        
+        body[data-view="grid"] .file-table td:nth-child(5) { position: absolute; bottom: 15px; display: flex; gap: 8px; justify-content: center; flex-direction: row; }
+        body[data-view="grid"] .file-table td:nth-child(5) .btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; padding: 0; font-size: 14px; }
+        body[data-view="grid"] .file-table td:nth-child(5) form { margin: 0; display: flex; }
     </style>
 </head>
 <body>
     <header class="drive-navbar d-flex align-items-center justify-content-between">
         <div style="width: 240px;"><a href="/Drive/Dashboard" class="text-decoration-none text-dark font-weight-bold" style="font-size: 22px;"><i class="fas fa-cloud text-primary mr-2" style="font-size: 28px;"></i>CoreDrive</a></div>
-        <div class="search-bar mx-4 d-none d-md-flex"><i class="fas fa-search text-muted"></i><input type="text" placeholder="Drive'da arayın"></div>
+        
+        <form asp-action="Dashboard" asp-controller="Drive" method="get" class="search-bar mx-4 d-none d-md-flex">
+            <i class="fas fa-search text-muted"></i>
+            <input type="text" name="searchQuery" value="@ViewBag.SearchQuery" placeholder="Drive'da arayın...">
+            <button type="submit" class="d-none"></button>
+        </form>
+
         <div class="d-flex align-items-center">
-            @if (isAdminPage) { <a href="/Drive/Dashboard" class="btn btn-outline-primary btn-sm mr-3 font-weight-bold" style="border-radius: 20px;"><i class="fas fa-external-link-alt mr-1"></i> Siteye Göz At</a> }
+            @if (isAdmin) { <a href="/Admin/Dashboard" class="btn btn-outline-primary btn-sm mr-3 font-weight-bold" style="border-radius: 20px;"><i class="fas fa-user-shield mr-1"></i> Admin Paneli</a> }
             <button class="btn-theme-toggle mr-1" data-toggle="modal" data-target="#settingsModal" title="Ayarlar"><i class="fas fa-cog"></i></button>
-            <button id="themeToggleBtn" class="btn-theme-toggle mr-3" title="Temayı Değiştir"><i class="fas fa-moon"></i></button>
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none" data-toggle="dropdown">
                     @if(string.IsNullOrEmpty(userAvatar)) { <div class="avatar-circle shadow-sm">@initial</div> } else { <img src="@userAvatar" class="rounded-circle border shadow-sm" style="width:36px; height:36px; object-fit:cover;"> }
@@ -105,32 +124,89 @@
         @if (TempData["SuccessMessage"] != null) { <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mt-4 mb-0" style="border-radius: 8px;"><i class="fas fa-check-circle mr-3"></i>@TempData["SuccessMessage"]<button type="button" class="close text-dark" data-dismiss="alert"><span>&times;</span></button></div> }
         @RenderBody()
     </main>
-    <div class="modal fade" id="settingsModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content" style="border-radius: 12px; border: none; overflow: hidden;"><div class="modal-header border-bottom px-4 pt-4 pb-3"><h4 class="modal-title font-weight-bold text-dark"><i class="fas fa-cog text-muted mr-2"></i> Ayarlar</h4><button type="button" class="close text-dark" data-dismiss="modal"><span>&times;</span></button></div><div class="modal-body p-0 d-flex" style="min-height: 400px;"><div class="border-right" style="width: 200px; background: var(--bg-secondary); padding: 20px 10px;"><div class="nav flex-column nav-pills" role="tablist"><a class="nav-link active" data-toggle="pill" href="#set-genel"><i class="fas fa-sliders-h mr-2"></i> Genel</a><a class="nav-link" data-toggle="pill" href="#set-plan"><i class="fas fa-hdd mr-2"></i> Plan</a></div></div><div class="tab-content p-4 flex-grow-1"><div class="tab-pane fade show active" id="set-genel"><h5 class="mb-3">Genel Ayarlar</h5><div class="d-flex justify-content-between align-items-center pb-3 border-bottom"><div><h6>Arayüz Dili</h6><small class="text-muted">Sistem dilini değiştirin</small></div><select class="form-control w-auto"><option>Türkçe</option><option>English</option></select></div></div><div class="tab-pane fade" id="set-plan"><h5 class="mb-3">Depolama Bilgileri</h5><div class="p-4 mb-3 text-center bg-light rounded border"><i class="fas fa-cloud text-primary mb-2" style="font-size: 24px;"></i><h4>@currentQuotaGB GB Plan</h4><p class="m-0">Kullanılan: @storageInfo.Used / @storageInfo.Total</p></div><button class="btn btn-primary w-100" data-dismiss="modal" data-toggle="modal" data-target="#upgradeModal">Planı Yükselt</button></div></div></div></div></div></div>
-    <div class="modal fade" id="profileModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="border-radius: 12px;"><div class="modal-header border-0 pb-0 pt-4 px-4"><h5 class="modal-title font-weight-bold text-dark">Profil Bilgileri</h5><button type="button" class="close text-dark" data-dismiss="modal"><span>&times;</span></button></div><form asp-action="UpdateProfile" asp-controller="Drive" method="post" enctype="multipart/form-data"><input type="hidden" name="returnUrl" value="@ViewContext.HttpContext.Request.Path" /><div class="modal-body px-4 py-3"><div class="text-center mb-4"><div class="position-relative d-inline-block">@if(string.IsNullOrEmpty(userAvatar)) { <div class="avatar-circle shadow-sm" style="width:90px; height:90px; font-size:40px;">@initial</div> } else { <img src="@userAvatar" class="rounded-circle border shadow-sm" style="width:90px; height:90px; object-fit:cover;"> } <label for="avatarUpload" class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center position-absolute m-0" style="bottom: 0; right: 0; width: 32px; height: 32px; cursor: pointer; border: 3px solid var(--card-bg);"><i class="fas fa-camera" style="font-size: 13px;"></i></label><input type="file" id="avatarUpload" name="avatarFile" accept="image/*" style="display: none;"></div></div><div class="row"><div class="col-md-6 mb-3"><label class="small font-weight-bold text-muted">Ad Soyad</label><input type="text" name="fullName" class="form-control shadow-none" value="@userName"></div><div class="col-md-6 mb-3"><label class="small font-weight-bold text-muted">E-Posta</label><input type="email" name="email" class="form-control shadow-none" value="@userEmail"></div></div><div class="form-group mb-4"><label class="small font-weight-bold text-muted">Telefon</label><input type="tel" name="phone" class="form-control shadow-none" value="@userPhone"></div><hr><div class="form-group mb-2"><label class="small font-weight-bold text-danger"><i class="fas fa-shield-alt mr-1"></i> Mevcut Şifre</label><div class="input-group"><input type="password" name="currentPassword" id="currentPassword" class="form-control border-danger" required><div class="input-group-append"><button class="btn btn-outline-secondary toggle-password" type="button" data-target="currentPassword"><i class="fas fa-eye"></i></button></div></div></div></div><div class="modal-footer border-0 px-4 pb-4 pt-2 bg-light"><button type="button" class="btn btn-light" data-dismiss="modal">İptal</button><button type="submit" class="btn btn-primary px-4" style="border-radius: 20px;">Kaydet</button></div></form></div></div></div>
-    <div class="modal fade" id="upgradeModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content" style="border-radius: 16px;"><div class="modal-header border-0 pt-4 px-5"><h4 class="modal-title font-weight-bold text-dark">Depolama Alanını Yükselt</h4><button type="button" class="close" data-dismiss="modal" style="font-size: 28px;"><span>&times;</span></button></div><div class="modal-body px-5 py-4"><p class="text-muted mb-4">İhtiyacınıza uygun planı seçin. Yükseltme talebiniz IT departmanı tarafından onaylanacaktır.</p><div class="row">@foreach (var plan in new[] { (15, "Standart", "hdd"), (50, "Profesyonel", "cloud"), (250, "Kurumsal", "server") }) { <div class="col-md-4 mb-3"><div class="plan-card h-100 @(currentQuotaGB == plan.Item1 ? "active-plan" : "")">@if(currentQuotaGB == plan.Item1) { <div class="plan-badge">MEVCUT</div> } <div class="plan-icon" style="width:64px;height:64px;margin:0 auto 15px;display:flex;align-items:center;justify-content:center;background:var(--bg-hover);border-radius:50%;font-size:24px;"><i class="fas fa-@plan.Item3"></i></div><h5 class="font-weight-bold">@plan.Item2</h5><h2 class="text-primary my-3 font-weight-bold">@plan.Item1 GB</h2>@if(currentQuotaGB == plan.Item1) { <button class="btn btn-primary w-100 disabled">Şu An Kullanımda</button> } else { <form asp-action="RequestQuotaUpgrade" asp-controller="Drive" method="post"><input type="hidden" name="requestedQuotaGB" value="@plan.Item1"/><input type="hidden" name="returnUrl" value="@ViewContext.HttpContext.Request.Path" /><button type="submit" class="btn btn-outline-primary w-100">Talebi Gönder</button></form> } </div></div> } </div></div></div></div></div>
-    <script src="~/vendor/jquery/jquery.min.js"></script><script src="~/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 12px; border: none; overflow: hidden;">
+                <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-white">
+                    <h4 class="modal-title font-weight-bold text-dark"><i class="fas fa-cog text-muted mr-2"></i> Ayarlar</h4>
+                    <button type="button" class="close text-dark" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-0 d-flex bg-white" style="min-height: 420px;">
+                    <div class="border-right" style="width: 220px; background: var(--bg-secondary); padding: 20px 10px;">
+                        <div class="nav flex-column nav-pills" role="tablist">
+                            <a class="nav-link active" data-toggle="pill" href="#set-gorunum"><i class="fas fa-paint-roller mr-2 w-20"></i> Görünüm</a>
+                            <a class="nav-link" data-toggle="pill" href="#set-bildirim"><i class="fas fa-bell mr-2 w-20"></i> Bildirimler</a>
+                            <a class="nav-link" data-toggle="pill" href="#set-plan"><i class="fas fa-hdd mr-2 w-20"></i> Plan</a>
+                        </div>
+                    </div>
+                    <div class="tab-content p-4 flex-grow-1">
+                        
+                        <div class="tab-pane fade show active text-dark" id="set-gorunum">
+                            <h5 class="mb-4 font-weight-bold">Görünüm ve Arayüz</h5>
+                            <div class="d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
+                                <div>
+                                    <h6 class="font-weight-bold mb-1">Varsayılan Görünüm</h6>
+                                    <small class="text-muted">Dosyalar nasıl listelensin?</small>
+                                </div>
+                                <select id="viewModeSelect" class="form-control w-auto shadow-none">
+                                    <option value="list">Liste (List)</option>
+                                    <option value="grid">Izgara (Grid)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade text-dark" id="set-bildirim">
+                            <form asp-action="UpdateSettings" asp-controller="Drive" method="post">
+                                <h5 class="mb-4 font-weight-bold">Bildirim Ayarları</h5>
+                                <div class="d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
+                                    <div>
+                                        <h6 class="font-weight-bold mb-1">E-Posta Bildirimleri</h6>
+                                        <small class="text-muted">Paylaşımlarda e-posta gönder</small>
+                                    </div>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" name="emailNotif" class="custom-control-input" id="emailSwitch" value="true" @(currentUser?.EmailNotifications == true ? "checked" : "")>
+                                        <label class="custom-control-label" style="cursor:pointer;" for="emailSwitch"></label>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center pb-3 border-bottom">
+                                    <div>
+                                        <h6 class="font-weight-bold mb-1">Sistem Bildirimleri</h6>
+                                        <small class="text-muted">Yükleme bittiğinde uyar</small>
+                                    </div>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" name="sysNotif" class="custom-control-input" id="sysSwitch" value="true" @(currentUser?.SystemNotifications == true ? "checked" : "")>
+                                        <label class="custom-control-label" style="cursor:pointer;" for="sysSwitch"></label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary mt-3 float-right" style="border-radius: 20px; px-4">Ayarları Kaydet</button>
+                            </form>
+                        </div>
+
+                        <div class="tab-pane fade text-dark" id="set-plan">
+                            <h5 class="mb-4 font-weight-bold">Depolama Bilgileri</h5>
+                            <div class="p-4 mb-3 text-center bg-light rounded border">
+                                <i class="fas fa-cloud text-primary mb-2" style="font-size: 24px;"></i>
+                                <h4 class="font-weight-bold">@currentQuotaGB GB Plan</h4>
+                                <p class="m-0 text-muted">Kullanılan: @storageInfo.Used / @storageInfo.Total</p>
+                            </div>
+                            <button class="btn btn-primary w-100 font-weight-bold" data-dismiss="modal" data-toggle="modal" data-target="#upgradeModal">Planı Yükselt</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="profileModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="border-radius: 12px;"><div class="modal-header border-0 pb-0 pt-4 px-4 bg-white"><h5 class="modal-title font-weight-bold text-dark">Profil Bilgileri</h5><button type="button" class="close text-dark" data-dismiss="modal"><span>&times;</span></button></div><form asp-action="UpdateProfile" asp-controller="Drive" method="post" enctype="multipart/form-data" class="bg-white"><input type="hidden" name="returnUrl" value="@ViewContext.HttpContext.Request.Path" /><div class="modal-body px-4 py-3"><div class="text-center mb-4"><div class="position-relative d-inline-block">@if(string.IsNullOrEmpty(userAvatar)) { <div class="avatar-circle shadow-sm" style="width:90px; height:90px; font-size:40px;">@initial</div> } else { <img src="@userAvatar" class="rounded-circle border shadow-sm" style="width:90px; height:90px; object-fit:cover;"> } <label for="avatarUpload" class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center position-absolute m-0" style="bottom: 0; right: 0; width: 32px; height: 32px; cursor: pointer; border: 3px solid var(--card-bg);"><i class="fas fa-camera" style="font-size: 13px;"></i></label><input type="file" id="avatarUpload" name="avatarFile" accept="image/*" style="display: none;"></div></div><div class="row"><div class="col-md-6 mb-3"><label class="small font-weight-bold text-muted">Ad Soyad</label><input type="text" name="fullName" class="form-control shadow-none" value="@userName"></div><div class="col-md-6 mb-3"><label class="small font-weight-bold text-muted">E-Posta</label><input type="email" name="email" class="form-control shadow-none" value="@userEmail" readonly></div></div><hr><div class="form-group mb-2"><label class="small font-weight-bold text-danger"><i class="fas fa-shield-alt mr-1"></i> Mevcut Şifre (Güncelleme için)</label><div class="input-group"><input type="password" name="currentPassword" id="currentPassword" class="form-control border-danger"><div class="input-group-append"><button class="btn btn-outline-secondary toggle-password" type="button" data-target="currentPassword"><i class="fas fa-eye"></i></button></div></div></div><div class="form-group mb-2"><label class="small font-weight-bold text-primary">Yeni Şifre</label><input type="password" name="newPassword" class="form-control shadow-none" placeholder="Değiştirmek istemiyorsanız boş bırakın"></div></div><div class="modal-footer border-0 px-4 pb-4 pt-2 bg-light"><button type="button" class="btn btn-light" data-dismiss="modal">İptal</button><button type="submit" class="btn btn-primary px-4" style="border-radius: 20px;">Kaydet</button></div></form></div></div></div>
+    
+    <div class="modal fade" id="upgradeModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content" style="border-radius: 16px;"><div class="modal-header border-0 pt-4 px-5 bg-white"><h4 class="modal-title font-weight-bold text-dark">Depolama Alanını Yükselt</h4><button type="button" class="close text-dark" data-dismiss="modal" style="font-size: 28px;"><span>&times;</span></button></div><div class="modal-body px-5 py-4 bg-white"><p class="text-muted mb-4">İhtiyacınıza uygun planı seçin. Yükseltme talebiniz IT departmanı tarafından onaylanacaktır.</p><div class="row">@foreach (var plan in new[] { (15, "Standart", "hdd"), (50, "Profesyonel", "cloud"), (250, "Kurumsal", "server") }) { <div class="col-md-4 mb-3"><div class="plan-card h-100 @(currentQuotaGB == plan.Item1 ? "active-plan" : "")">@if(currentQuotaGB == plan.Item1) { <div class="plan-badge text-primary font-weight-bold mb-2">MEVCUT</div> } <div class="plan-icon" style="width:64px;height:64px;margin:0 auto 15px;display:flex;align-items:center;justify-content:center;background:var(--bg-hover);border-radius:50%;font-size:24px;"><i class="fas fa-@plan.Item3 text-dark"></i></div><h5 class="font-weight-bold text-dark">@plan.Item2</h5><h2 class="text-primary my-3 font-weight-bold">@plan.Item1 GB</h2>@if(currentQuotaGB == plan.Item1) { <button class="btn btn-primary w-100 font-weight-bold disabled">Şu An Kullanımda</button> } else { <form asp-action="RequestQuotaUpgrade" asp-controller="Drive" method="post"><input type="hidden" name="requestedQuotaGB" value="@plan.Item1"/><input type="hidden" name="returnUrl" value="@ViewContext.HttpContext.Request.Path" /><button type="submit" class="btn btn-outline-primary w-100 font-weight-bold">Talebi Gönder</button></form> } </div></div> } </div></div></div></div></div>
+
+    <script src="~/vendor/jquery/jquery.min.js"></script>
+    <script src="~/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const html = document.documentElement;
-            const themeBtn = document.getElementById('themeToggleBtn');
-            const themeIcon = themeBtn.querySelector('i');
-            const currentTheme = localStorage.getItem('theme') || 'light';
-            
-            const updateIcon = (theme) => {
-                if(theme === 'dark') { themeIcon.className = 'fas fa-sun'; themeIcon.style.color = '#fbbc05'; } 
-                else { themeIcon.className = 'fas fa-moon'; themeIcon.style.color = 'var(--text-muted)'; }
-            };
-
-            html.setAttribute('data-theme', currentTheme);
-            updateIcon(currentTheme);
-
-            themeBtn.addEventListener('click', () => {
-                const newTheme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-                html.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-                updateIcon(newTheme);
-            });
-
             document.querySelectorAll('.toggle-password').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const input = document.getElementById(this.getAttribute('data-target'));
@@ -138,6 +214,18 @@
                     input.type = input.type === 'password' ? 'text' : 'password';
                     icon.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
                 });
+            });
+
+            const viewModeSelect = document.getElementById('viewModeSelect');
+            const savedView = localStorage.getItem('driveViewMode') || 'list';
+            
+            document.body.setAttribute('data-view', savedView);
+            viewModeSelect.value = savedView;
+
+            viewModeSelect.addEventListener('change', function() {
+                const selectedView = this.value;
+                document.body.setAttribute('data-view', selectedView);
+                localStorage.setItem('driveViewMode', selectedView);
             });
         });
     </script>

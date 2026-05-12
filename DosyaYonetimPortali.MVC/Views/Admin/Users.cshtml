@@ -19,7 +19,7 @@
     }
     .modern-table td {
         border-top: none !important; 
-        padding: 1.5rem 1rem !important; /* Üst üste binmeyi engellemek için padding artırıldı */
+        padding: 1.5rem 1rem !important; 
         vertical-align: middle;
     }
     .modern-badge {
@@ -73,7 +73,6 @@
                                     <div class="d-flex align-items-center">
                                         <img src="https://ui-avatars.com/api/?name=@user.FirstName+@user.LastName&background=random&color=fff&rounded=true" class="shadow-sm me-3" width="45" height="45">
                                         <div>
-                                            <!-- Line-height eklendi, üst üste binme çözüldü -->
                                             <div class="fw-bold text-dark mb-1" style="font-size: 1.05rem; line-height: 1.2;">@user.FirstName @user.LastName</div>
                                             <div class="small text-muted" style="line-height: 1;">ID: #@user.Id</div>
                                         </div>
@@ -81,7 +80,6 @@
                                 </td>
                                 <td class="text-secondary">@user.Email</td>
                                 <td class="text-center">
-                                    <!-- text-white eklendi, artık renkler mükemmel okunuyor -->
                                     @if (user.Role == "Admin")
                                     {
                                         <span class="badge bg-danger text-white modern-badge rounded-pill">Admin</span>
@@ -95,7 +93,6 @@
                                     <span class="text-success fw-bold"><i class="fas fa-circle fa-xs me-1"></i> Aktif</span>
                                 </td>
                                 <td class="text-end px-4">
-                                    <!-- Düzenle Butonu (Sarı uyarı butonu yerine Mavi Edit butonu yapıldı) -->
                                     <button type="button" class="btn btn-sm btn-outline-info shadow-sm me-1 btn-animated" title="Düzenle" onclick="openEditModal('@user.Id', '@user.FirstName', '@user.LastName', '@user.Role')">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -128,7 +125,6 @@
     </div>
 </div>
 
-<!-- KULLANICI DÜZENLE MODAL PENCERESİ -->
 <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 15px; border: none;">
@@ -173,7 +169,6 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Modalın içini doldurup açan fonksiyon
         function openEditModal(id, firstName, lastName, role) {
             document.getElementById('editUserId').value = id;
             document.getElementById('editUserFirstName').value = firstName;
@@ -183,7 +178,6 @@
             $('#editUserModal').modal('show');
         }
 
-        // Silme uyarı mesajı
         function confirmAction(event, form, message, confirmText, color) {
             event.preventDefault();
             Swal.fire({
@@ -204,7 +198,6 @@
             });
         }
 
-        // Toast Bildirimi
         @if (TempData["ToastMessage"] != null)
         {
             <text>

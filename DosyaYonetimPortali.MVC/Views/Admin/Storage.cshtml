@@ -1,7 +1,9 @@
 ﻿@{
     ViewData["Title"] = "Depolama Analizi";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4 mt-2">
     <h1 class="h3 mb-0 text-gray-800 fw-bold">Sunucu Depolama Analizi</h1>
     
     <form asp-action="RefreshStorage" asp-controller="Admin" method="post" class="d-inline">

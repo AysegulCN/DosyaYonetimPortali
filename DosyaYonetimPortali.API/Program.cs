@@ -9,7 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 namespace DosyaYonetimPortali.API
-{
+{   
+    
     public class Program
     {
         public static async Task Main(string[] args)

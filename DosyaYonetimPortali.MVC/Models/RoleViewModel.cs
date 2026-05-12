@@ -4,6 +4,6 @@
     {
         public string RoleName { get; set; }
         public int UserCount { get; set; }
-        public bool IsSystemRole { get; set; } // Admin gibi silinemez roller için
+        public bool IsSystemRole { get; set; } /
     }
 }

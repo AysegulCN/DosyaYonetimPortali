@@ -1,8 +1,8 @@
 ﻿@model List<DosyaYonetimPortali.MVC.Models.LogViewModel>
 @{
     ViewData["Title"] = "Sistem Logları";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
-
 <style>
     .btn-animated:active { transform: scale(0.95); }
     .modern-table tbody tr { transition: all 0.25s ease-in-out; border-bottom: 1px solid #f1f3f5; }
@@ -23,7 +23,7 @@
     .badge-system { background-color: #36b9cc; color: white; }
 </style>
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
+<div class="d-sm-flex align-items-center justify-content-between mb-4 mt-2">
     <h1 class="h3 mb-0 text-gray-800 fw-bold">Sistem Logları (Aktiviteler)</h1>
     
     @if (Model != null && Model.Any())
@@ -56,21 +56,21 @@
                             <tr>
                                 <td class="px-4 text-muted small">@log.Date</td>
                                 <td class="text-center">
-                                    @if (log.Level == "ERROR")
+                                    @if (log.Level == "ERROR" || log.Level == "HATA")
                                     {
-                                        <span class="level-badge badge-error">ERROR</span>
+                                        <span class="level-badge badge-error">HATA</span>
                                     }
-                                    else if (log.Level == "INFO")
+                                    else if (log.Level == "INFO" || log.Level == "BİLGİ")
                                     {
-                                        <span class="level-badge badge-info">INFO</span>
+                                        <span class="level-badge badge-info">BİLGİ</span>
                                     }
-                                    else if (log.Level == "WARN")
+                                    else if (log.Level == "WARN" || log.Level == "UYARI")
                                     {
-                                        <span class="level-badge badge-warn">WARN</span>
+                                        <span class="level-badge badge-warn">UYARI</span>
                                     }
-                                    else if (log.Level == "SYSTEM")
+                                    else
                                     {
-                                        <span class="level-badge badge-system">SYSTEM</span>
+                                        <span class="level-badge badge-system">SİSTEM</span>
                                     }
                                 </td>
                                 <td>@log.User</td>
@@ -90,14 +90,6 @@
                 </tbody>
             </table>
         </div>
-        @if (Model != null && Model.Any())
-        {
-            <div class="card-footer bg-white py-3 border-0 text-center">
-                <a href="#" class="text-decoration-none text-primary fw-bold" style="font-size: 0.9rem;">
-                    Tüm Logları Gör (Sayfa 1/45)
-                </a>
-            </div>
-        }
     </div>
 </div>
 
@@ -105,41 +97,41 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function confirmClearLogs() {
-        Swal.fire({
-        title: 'Emin misiniz?',
-        text: 'Eski sistem loglarını tamamen temizlemek üzeresiniz. Bu işlem geri alınamaz.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#e74a3b',
-        cancelButtonColor: '#858796',
-        confirmButtonText: 'Evet, Temizle',
-        cancelButtonText: 'Vazgeç',
-        reverseButtons: true,
-        borderRadius: '15px'
-        }).then((result) => {
-        if (result.isConfirmed) {
-        document.getElementById('clearLogsForm').submit();
-        }
-        });
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: 'Eski sistem loglarını tamamen temizlemek üzeresiniz. Bu işlem geri alınamaz.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74a3b',
+                cancelButtonColor: '#858796',
+                confirmButtonText: 'Evet, Temizle',
+                cancelButtonText: 'Vazgeç',
+                reverseButtons: true,
+                borderRadius: '15px'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('clearLogsForm').submit();
+                }
+            });
         }
 
         @if (TempData["ToastMessage"] != null)
         {
             <text>
                 const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 4000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
-                }
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 4000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                        toast.addEventListener('mouseleave', Swal.resumeTimer)
+                    }
                 });
                 Toast.fire({
-                icon: '@TempData["ToastIcon"]',
-                title: '@TempData["ToastMessage"]'
+                    icon: '@TempData["ToastIcon"]',
+                    title: '@TempData["ToastMessage"]'
                 });
             </text>
         }

@@ -1,128 +1,163 @@
 ﻿@model List<DosyaYonetimPortali.MVC.Models.DriveItemViewModel>
 @{
-    ViewData["Title"] = "Dosyalarım"; Layout = "~/Views/Shared/_DriveLayout.cshtml"; string currentFolderId = ViewBag.CurrentFolderId as string; string currentFolderName = ViewBag.CurrentFolderName as string;
+    ViewData["Title"] = "Drive'ım";
+    Layout = "~/Views/Shared/_DriveLayout.cshtml";
+    
+    var breadcrumb = ViewBag.Breadcrumb as List<DosyaYonetimPortali.MVC.Controllers.BreadcrumbItem>;
+    
+    string currentName = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Name)?.Value ?? "Kullanıcı";
+    string currentEmail = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value ?? "kullanici@coredrive.com";
+    string initial = !string.IsNullOrEmpty(currentName) ? currentName.Substring(0, 1).ToUpper() : "K";
 }
 
-@if (TempData["StorageError"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4 mt-2" style="border-radius: 8px; background-color: #fce8e6; color: #d93025;">
-        <div class="d-flex align-items-center"><i class="fas fa-exclamation-circle mr-3" style="font-size: 20px;"></i><div><strong style="font-weight: 600;">Yükleme Başarısız:</strong> @TempData["StorageError"]</div></div>
-        <button type="button" class="close text-dark" data-dismiss="alert" style="outline: none;"><span>&times;</span></button>
-    </div>
-}
-
-<div class="d-flex align-items-center mb-4 mt-2">
-    <div class="dropdown mr-4">
-        <button class="btn-google-new dropdown-toggle" type="button" data-toggle="dropdown">
-            <svg width="28" height="28" viewBox="0 0 36 36"><path fill="#34A853" d="M16 16v14h4V20z"></path><path fill="#4285F4" d="M30 16H20l-4 4h14z"></path><path fill="#FBBC05" d="M6 16v4h10l4-4z"></path><path fill="#EA4335" d="M20 16V6h-4v14z"></path></svg> Yeni Ekle
-        </button>
-        <div class="dropdown-menu shadow border-0" style="border-radius: 8px; padding: 8px 0; min-width: 240px; margin-top: 8px;">
-            <a class="dropdown-item py-2" href="#" data-toggle="modal" data-target="#newFolderModal"><i class="fas fa-folder-plus text-secondary mr-3"></i> Yeni Klasör</a>
-            <div class="dropdown-divider my-2"></div>
-            <a class="dropdown-item py-2" href="#" onclick="document.getElementById('fileUploadInput').click();"><i class="fas fa-file-upload text-primary mr-3"></i> Dosya Yükle</a>
-        </div>
-    </div>
-    <h4 class="m-0 font-weight-normal text-dark d-flex align-items-center" style="font-size: 1.25rem;">
-        @if (!string.IsNullOrEmpty(currentFolderId))
+<nav aria-label="breadcrumb" class="mb-3 mt-2">
+    <ol class="breadcrumb bg-light py-2 px-3 shadow-sm" style="border-radius: 8px; font-size: 14px;">
+        @if (breadcrumb != null && breadcrumb.Any())
         {
-            <a href="/Drive/Dashboard" class="text-decoration-none text-muted me-2"><i class="fas fa-arrow-left fa-sm"></i> Drive'ım</a><i class="fas fa-chevron-right fa-xs text-muted mx-2"></i><span>@currentFolderName</span>
+            for (int i = 0; i < breadcrumb.Count; i++)
+            {
+                if (i == breadcrumb.Count - 1)
+                {
+                    <li class="breadcrumb-item active font-weight-bold text-dark" aria-current="page">@breadcrumb[i].Name</li>
+                }
+                else
+                {
+                    <li class="breadcrumb-item">
+                        <a href="/Drive/Dashboard?folderId=@breadcrumb[i].FolderId" class="text-primary text-decoration-none">
+                            <i class="fas fa-folder-open mr-1"></i>@breadcrumb[i].Name
+                        </a>
+                    </li>
+                }
+            }
+        }
+    </ol>
+</nav>
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h4 class="font-weight-bold text-dark m-0">
+        @if (!string.IsNullOrEmpty(ViewBag.CurrentFolderName))
+        {
+            @ViewBag.CurrentFolderName
         }
         else
         {
-
-            <span>Drive'ım</span>
+            <text>Drive'ım</text>
         }
     </h4>
+    <div>
+        <button class="btn btn-primary shadow-sm mr-2" data-toggle="modal" data-target="#uploadModal" style="border-radius: 8px; font-weight: 500;">
+            <i class="fas fa-file-upload mr-2"></i> Dosya Yükle
+        </button>
+        <button class="btn btn-outline-secondary shadow-sm" data-toggle="modal" data-target="#folderModal" style="border-radius: 8px; font-weight: 500;">
+            <i class="fas fa-folder-plus mr-2"></i> Klasör Oluştur
+        </button>
+    </div>
 </div>
 
-<form id="uploadForm" asp-action="UploadFile" method="post" enctype="multipart/form-data" style="display: none;"><input type="hidden" name="parentId" value="@currentFolderId" /><input type="file" id="fileUploadInput" name="file" onchange="document.getElementById('uploadForm').submit();"></form>
-
-@if (Model == null || !Model.Any())
+@if (Model != null && Model.Any(i => i.IsFolder))
 {
-    <div class="text-center py-5 mt-5"><img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-folder-illustration-download-in-svg-png-gif-file-formats--no-data-found-result-not-pack-network-security-illustrations-5030432.png" style="width: 280px; opacity: 0.7;"><h5 class="text-muted mt-4">@(!string.IsNullOrEmpty(currentFolderId) ? "Bu klasör boş." : "Burası biraz boş görünüyor...")</h5></div>
-}
-else
-{
-    @if (Model.Any(m => m.IsFolder))
-    {
-        <div class="section-title">Klasörler</div>
-        <div class="row mb-4">
-            @foreach (var folder in Model.Where(m => m.IsFolder))
-            {
-                <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                    <div class="folder-card d-flex justify-content-between w-100">
-                        <a href="/Drive/Dashboard?folderId=@folder.Id" class="text-decoration-none d-flex align-items-center w-100" style="color: inherit;"><i class="fas fa-folder folder-icon"></i><span class="text-truncate">@folder.Name</span></a>
-                        <form asp-action="MoveToTrash" method="post" class="m-0 p-0 ml-auto"><input type="hidden" name="id" value="@folder.Id" /><input type="hidden" name="returnUrl" value="/Drive/Dashboard?folderId=@currentFolderId" /><button type="submit" class="btn btn-link text-muted p-0"><i class="fas fa-times"></i></button></form>
+    <h6 class="font-weight-bold text-muted mb-3 mt-4">Klasörler</h6>
+    <div class="row mb-4">
+        @foreach (var folder in Model.Where(i => i.IsFolder))
+        {
+            <div class="col-xl-3 col-md-4 mb-3">
+                <a href="/Drive/Dashboard?folderId=@folder.Id" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm folder-card" style="border-radius: 12px; transition: 0.2s;">
+                        <div class="card-body py-3 px-4 d-flex align-items-center">
+                            <i class="fas fa-folder text-primary mr-3" style="font-size: 24px;"></i>
+                            <span class="font-weight-bold text-dark text-truncate">@folder.Name</span>
+                        </div>
                     </div>
-                </div>
-            }
-        </div>
-    }
+                </a>
+            </div>
+        }
+    </div>
+}
 
-    @if (Model.Any(m => !m.IsFolder))
-    {
-        <div class="section-title">Dosyalar</div>
-        <div class="table-responsive">
-            <table class="file-table">
-                <thead><tr><th style="width: 45%;">Ad</th><th style="width: 20%;">Sahibi</th><th style="width: 20%;">Son Değiştirme</th><th style="width: 10%;">Boyut</th><th style="width: 5%;"></th></tr></thead>
-                <tbody>
-                    @foreach (var file in Model.Where(m => !m.IsFolder))
+<h6 class="font-weight-bold text-muted mb-3 mt-4">Dosyalar</h6>
+<div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle file-table">
+            <thead class="bg-light text-muted small">
+                <tr>
+                    <th class="border-0 px-4 py-3">Ad</th>
+                    <th class="border-0 py-3">Sahibi</th>
+                    <th class="border-0 py-3">Son Değiştirme</th>
+                    <th class="border-0 py-3">Boyut</th>
+                    <th class="border-0 text-right px-4 py-3">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any(i => !i.IsFolder))
+                {
+                    foreach (var item in Model.Where(i => !i.IsFolder))
                     {
                         <tr>
-                            <td>
-                                <a href="/Drive/PreviewFile?id=@file.Id" target="_blank" class="file-name-cell text-decoration-none text-dark">
-                                    @if (file.Extension == "pdf")
-                                    {
-                                        <i class="fas fa-file-pdf file-icon text-danger"></i>
-                                    }
-                                    else if (new[] { "png", "jpg", "jpeg" }.Contains(file.Extension))
-                                    {
-
-                                        <i class="fas fa-file-image file-icon text-info"></i>
-                                    }
-                                    else if (file.Extension == "xlsx")
-                                    {
-
-                                        <i class="fas fa-file-excel file-icon text-success"></i>
-                                    }
-                                    else
-                                    {
-
-                                        <i class="fas fa-file file-icon text-secondary"></i>
-                                    }
-                                    <span class="text-truncate">@file.Name</span>
-                                </a>
+                            <td class="px-4 py-3 font-weight-bold text-dark">
+                                <i class="fas fa-file-alt text-primary mr-3" style="font-size: 20px;"></i>
+                                @item.Name
                             </td>
-                            <td class="text-muted">@file.Owner</td>
-                            <td class="text-muted">@file.ModifiedDate</td>
-                            <td class="text-muted">@file.Size</td>
-                            <td class="text-center">
-                                <button class="action-menu-btn" data-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>
-                                <div class="dropdown-menu dropdown-menu-right shadow-sm border-0" style="border-radius: 8px; padding:0; overflow:hidden;">
-                                    <a class="dropdown-item py-2" href="/Drive/PreviewFile?id=@file.Id" target="_blank"><i class="fas fa-eye text-secondary me-2"></i> Önizle</a>
-                                    <a class="dropdown-item py-2" href="/Drive/DownloadFile?id=@file.Id"><i class="fas fa-download text-primary me-2"></i> İndir</a>
-                                    <button type="button" class="dropdown-item py-2" onclick="openShareModal('@file.Id', '@file.Name')"><i class="fas fa-share-alt text-success me-2"></i> Paylaş</button>
-                                    <div class="dropdown-divider m-0"></div>
-                                    <form asp-action="MoveToTrash" method="post" class="m-0 p-0"><input type="hidden" name="id" value="@file.Id" /><input type="hidden" name="returnUrl" value="/Drive/Dashboard?folderId=@currentFolderId" /><button type="submit" class="dropdown-item py-2 text-danger" style="background:none; border:none; width:100%; text-align:left;"><i class="fas fa-trash me-2"></i> Sil</button></form>
-                                </div>
+                            <td class="text-muted">@item.Owner</td>
+                            <td class="text-muted">@item.ModifiedDate</td>
+                            <td class="text-muted font-weight-bold">@item.Size</td>
+                            <td class="text-right px-4 py-3">
+                                <a href="/Drive/PreviewFile?id=@item.Id" target="_blank" class="btn btn-sm btn-light text-info rounded-circle mr-1" title="Önizle"><i class="fas fa-eye"></i></a>
+                                
+                                <a href="/Drive/DownloadFile?id=@item.Id" class="btn btn-sm btn-light text-primary rounded-circle mr-1" title="İndir"><i class="fas fa-download"></i></a>
+                                <button class="btn btn-sm btn-light text-success rounded-circle mr-1" title="Paylaş" onclick="openShareModal('@item.Id', '@item.Name')" data-toggle="modal" data-target="#shareModal"><i class="fas fa-user-plus"></i></button>
+                                <form asp-action="MoveToTrash" asp-controller="Drive" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm btn-light text-danger rounded-circle" title="Sil"><i class="fas fa-trash"></i></button>
+                                </form>
                             </td>
                         </tr>
                     }
-                </tbody>
-            </table>
-        </div>
-    }
-}
+                }
+                else
+                {
+                    <tr><td colspan="5" class="text-center py-5 text-muted">Burada henüz hiç dosya yok.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 
-<div class="modal fade" id="newFolderModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
-        <div class="modal-content" style="border-radius: 8px; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
-            <div class="modal-header border-0 pb-0 mt-2 mx-2"><h5 class="modal-title text-dark">Yeni Klasör</h5></div>
-            <form asp-action="CreateFolder" method="post">
-                <input type="hidden" name="parentId" value="@currentFolderId" />
-                <div class="modal-body px-4 pt-3 pb-2"><input type="text" name="folderName" class="form-control" required value="Adsız klasör" style="border-radius: 8px;"></div>
-                <div class="modal-footer border-0 bg-light px-4 pb-4 pt-2">
-                    <button type="button" class="btn btn-light text-muted" data-dismiss="modal">İptal</button><button type="submit" class="btn btn-primary" style="border-radius: 20px;">Oluştur</button>
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-cloud-upload-alt text-primary mr-2"></i> Dosya Yükle</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form asp-action="UploadFile" asp-controller="Drive" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="parentId" value="@ViewBag.CurrentFolderId" />
+                <div class="modal-body px-4 py-4 text-center">
+                    <input type="file" name="file" class="form-control-file" required>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-2">
+                    <button type="button" class="btn btn-light font-weight-bold" data-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold px-4" style="border-radius: 8px;">Yükle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="folderModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-folder-plus text-primary mr-2"></i> Yeni Klasör</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form asp-action="CreateFolder" asp-controller="Drive" method="post">
+                <input type="hidden" name="parentId" value="@ViewBag.CurrentFolderId" />
+                <div class="modal-body px-4 py-3">
+                    <input type="text" name="folderName" class="form-control" placeholder="Klasör Adı" required style="border-radius: 8px; background-color: #f8f9fa;">
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-2">
+                    <button type="button" class="btn btn-light font-weight-bold" data-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold px-4" style="border-radius: 8px;">Oluştur</button>
                 </div>
             </form>
         </div>
@@ -130,32 +165,90 @@ else
 </div>
 
 <div class="modal fade" id="shareModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;">
-        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
-            <div class="modal-header border-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-start"><h5 class="modal-title text-dark">Şunu paylaş: <span id="shareFileNameTitle" style="font-weight:500;"></span></h5><button type="button" class="close text-dark" data-dismiss="modal"><span>&times;</span></button></div>
-            <form asp-action="ShareItem" method="post">
-                <input type="hidden" name="id" id="shareFileId" /><input type="hidden" name="returnUrl" value="/Drive/Dashboard?folderId=@currentFolderId" />
-                <div class="modal-body px-4 pt-3 pb-2">
-                    <div class="d-flex align-items-center mb-4 p-1 border rounded"><input type="email" name="email" class="form-control border-0 shadow-none" placeholder="E-posta ekleyin" required><button type="submit" class="btn btn-primary" style="border-radius: 20px;">Gönder</button></div>
-                    <h6 class="text-muted mb-3">Hızlı Paylaşım</h6>
-                    <div class="d-flex gap-3 mb-4">
-                        <a href="#" id="wpShareBtn" target="_blank" class="btn btn-success flex-fill text-white" style="background-color: #25D366; border: none;"><i class="fab fa-whatsapp mr-2"></i> WhatsApp</a>
-                        <a href="#" id="tgShareBtn" target="_blank" class="btn btn-info flex-fill ml-2 text-white" style="background-color: #0088cc; border: none;"><i class="fab fa-telegram-plane mr-2"></i> Telegram</a>
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 560px;">
+        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 4px 24px rgba(0,0,0,0.2);">
+            <div class="modal-header border-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-start">
+                <h5 class="modal-title text-dark font-weight-normal" style="font-size: 22px;">
+                    "<span id="shareFileName"></span>" adlı öğeyi paylaş
+                </h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-light rounded-circle text-muted mr-1" style="width: 36px; height: 36px;"><i class="far fa-question-circle"></i></button>
+                    <button type="button" class="btn btn-sm btn-light rounded-circle text-muted" style="width: 36px; height: 36px;"><i class="fas fa-cog"></i></button>
+                </div>
+            </div>
+            <form asp-action="ShareItem" asp-controller="Drive" method="post">
+                <input type="hidden" name="id" id="shareFileId" />
+                <input type="hidden" name="returnUrl" value="/Drive/Dashboard" />
+                <div class="modal-body px-4 py-4">
+                    
+                    <div class="position-relative mb-4">
+                        <select name="email" class="form-control shadow-none" style="height: 56px; border: 1px solid #1a73e8; border-radius: 4px; padding-top: 12px; font-size: 16px; cursor: pointer; appearance: none;" required>
+                            <option value="" disabled selected></option>
+                            @if (ViewBag.SystemUsers != null)
+                            {
+                                foreach (var u in ViewBag.SystemUsers)
+                                {
+                                    <option value="@u.Email">@u.FirstName @u.LastName (@u.Email)</option>
+                                }
+                            }
+                        </select>
+                        <label class="position-absolute text-primary font-weight-normal" style="top: -10px; left: 12px; background: white; padding: 0 4px; font-size: 12px; pointer-events: none;">Kişi, grup, alan ve takvim etkinliği ekleyin</label>
                     </div>
+
+                    <h6 class="font-weight-bold text-dark mb-3" style="font-size: 14px;">Erişimi olan kişiler</h6>
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px; background-color: #1a73e8; font-size: 16px;">@initial</div>
+                        <div class="flex-grow-1">
+                            <div class="font-weight-bold text-dark" style="font-size: 14px;">@currentName (Siz)</div>
+                            <div class="text-muted" style="font-size: 12px;">@currentEmail</div>
+                        </div>
+                        <div class="text-muted small">Sahibi</div>
+                    </div>
+
+                    <h6 class="font-weight-bold text-dark mb-3" style="font-size: 14px;">Genel erişim</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
+                            <i class="fas fa-globe text-secondary"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="font-weight-bold text-dark" style="font-size: 14px;">Bağlantıya sahip olan herkes</div>
+                            <div class="text-muted" style="font-size: 12px;">Bu bağlantının paylaşıldığı herkes internete bağlıyken görüntüleyebilir</div>
+                        </div>
+                        <div>
+                            <select class="form-control form-control-sm border-0 bg-transparent font-weight-bold text-dark shadow-none" style="width: auto; cursor: pointer; appearance: none;">
+                                <option>Görüntüleyen</option>
+                                <option>Düzenleyen</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-outline-secondary font-weight-bold d-flex align-items-center" style="border-radius: 24px; padding: 8px 24px; border-color: #dadce0; color: #1a73e8;" onclick="copyMockLink()">
+                        <i class="fas fa-link mr-2"></i>Bağlantıyı kopyala
+                    </button>
+                    <button type="submit" class="btn btn-primary font-weight-bold" style="border-radius: 24px; padding: 8px 24px; background-color: #0b57d0; border: none;">Bitti</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        function openShareModal(fileId, fileName) {
-            document.getElementById('shareFileId').value = fileId; document.getElementById('shareFileNameTitle').innerText = fileName;
-            var shareUrl = encodeURIComponent(window.location.origin + "/Drive/DownloadFile?id=" + fileId);
-            var shareText = encodeURIComponent("CoreDrive'dan dosya: " + fileName + "\nLink: ");
-            document.getElementById('wpShareBtn').href = "https://api.whatsapp.com/send?text=" + shareText + shareUrl; document.getElementById('tgShareBtn').href = "https://t.me/share/url?url=" + shareUrl + "&text=" + shareText;
-            $('#shareModal').modal('show');
-        }
-    </script>
-}
+<script>
+    function openShareModal(id, name) {
+        document.getElementById('shareFileId').value = id;
+        document.getElementById('shareFileName').innerText = name;
+    }
+
+    function copyRealLink() {
+        var fileId = document.getElementById('shareFileId').value;
+        if (!fileId) return;
+        
+        var fileUrl = window.location.origin + "/Drive/DownloadFile?id=" + fileId;
+        
+        navigator.clipboard.writeText(fileUrl).then(function() {
+            alert("Bağlantı panoya kopyalandı!\n" + fileUrl);
+        }).catch(function(err) {
+            alert("Kopyalama başarısız oldu, tarayıcınız izin vermiyor olabilir.");
+        });
+    }
+</script>
