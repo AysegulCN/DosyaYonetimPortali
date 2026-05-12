@@ -27,4 +27,4 @@ Raporlama: iText7 (PDF Raporlama)
 *   **DosyaYonetimPortali.API:** Veritabanı modelleri ve iş mantığının yönetildiği arka uç.
 *   **DosyaYonetimPortali.MVC:** Kullanıcıların dosyalarını yönettiği ön yüz (arayüz).
 *   **wwwroot/uploads:** Kullanıcıların yüklediği fiziksel dosyaların saklandığı güvenli alan.
-*   
+* 
