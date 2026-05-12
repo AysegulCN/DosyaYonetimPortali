@@ -7,8 +7,10 @@ using Microsoft.AspNetCore.Localization;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpClient();
-object value = builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation(); 
-builder.Services.AddHttpContextAccessor(); 
+
+
+
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -20,14 +22,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LogoutPath = "/Auth/Logout";
         options.AccessDeniedPath = "/Home/Index";
         options.Cookie.Name = "CoreDrive.Auth";
-        options.Cookie.HttpOnly = true; 
-        options.ExpireTimeSpan = TimeSpan.FromHours(8); 
-        options.SlidingExpiration = true; 
+        options.Cookie.HttpOnly = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
     });
 
 var app = builder.Build();
 
-var supportedCultures = new[] { new CultureCulture("tr-TR") };
+var supportedCultures = new[] { new CultureInfo("tr-TR") };
+
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
     DefaultRequestCulture = new RequestCulture("tr-TR"),
@@ -44,7 +47,6 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -63,7 +65,7 @@ using (var scope = app.Services.CreateScope())
             {
                 Id = Guid.NewGuid().ToString().Substring(0, 8),
                 FirstName = "Ayşegül",
-                LastName = "Çoban", 
+                LastName = "Çoban",
                 Email = "aysegulcoban@gmail.com",
                 Password = "aysegul123",
                 Role = "Admin",
