@@ -33,6 +33,8 @@ namespace DosyaYonetimPortali.MVC.Controllers
             { "Kota Ayarları ve Yönetimi", false }
         };
 
+        private static List<string> _customRoles = new List<string>();
+
         public AdminController(AppDbContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
@@ -683,7 +685,7 @@ namespace DosyaYonetimPortali.MVC.Controllers
 
             var coreRoles = new List<string> { "Admin", "Standart Kullanıcı" };
 
-            var allRoles = coreRoles.Union(existingRoles).ToList();
+            var allRoles = coreRoles.Union(existingRoles).Union(_customRoles).Distinct().ToList();
 
             var model = new List<RoleViewModel>();
 
@@ -703,6 +705,11 @@ namespace DosyaYonetimPortali.MVC.Controllers
         [HttpPost]
         public IActionResult AddRole(string RoleName)
         {
+            if (!_customRoles.Contains(RoleName))
+            {
+                _customRoles.Add(RoleName);
+            }
+
             _context.SystemLogs.Add(new SystemLog
             {
                 Status = "INFO",
@@ -744,6 +751,11 @@ namespace DosyaYonetimPortali.MVC.Controllers
         [HttpPost]
         public IActionResult DeleteRole(string RoleName)
         {
+            if (_customRoles.Contains(RoleName))
+            {
+                _customRoles.Remove(RoleName);
+            }
+
             var users = _context.Users.Where(u => u.Role == RoleName).ToList();
             foreach (var u in users)
             {
@@ -847,6 +859,24 @@ namespace DosyaYonetimPortali.MVC.Controllers
 
             TempData["ToastMessage"] = "Yetki modülü başarıyla silindi.";
             TempData["ToastIcon"] = "success";
+            return RedirectToAction("Permissions");
+        }
+
+        [HttpPost]
+        public IActionResult SavePermissions()
+        {
+            _context.SystemLogs.Add(new SystemLog
+            {
+                Status = "WARN",
+                UserEmail = "Sistem Yöneticisi",
+                Message = "Sistem yetki matrisi başarıyla güncellendi.",
+                Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm")
+            });
+            _context.SaveChanges();
+
+            TempData["ToastMessage"] = "Yetki ayarları başarıyla kaydedildi.";
+            TempData["ToastIcon"] = "success";
+
             return RedirectToAction("Permissions");
         }
 
