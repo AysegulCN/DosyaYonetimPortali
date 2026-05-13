@@ -1,16 +1,14 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using DosyaYonetimPortali.MVC.Data;
-using System.Globalization;
-using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 
-
-
-builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -22,43 +20,24 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LogoutPath = "/Auth/Logout";
         options.AccessDeniedPath = "/Home/Index";
         options.Cookie.Name = "CoreDrive.Auth";
-        options.Cookie.HttpOnly = true;
-        options.ExpireTimeSpan = TimeSpan.FromHours(8);
-        options.SlidingExpiration = true;
     });
 
 var app = builder.Build();
 
-var supportedCultures = new[] { new CultureInfo("tr-TR") };
-
-app.UseRequestLocalization(new RequestLocalizationOptions
-{
-    DefaultRequestCulture = new RequestCulture("tr-TR"),
-    SupportedCultures = supportedCultures,
-    SupportedUICultures = supportedCultures
-});
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<AppDbContext>();
-
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     try
     {
         context.Database.Migrate();
-
         if (!context.Users.Any())
         {
             context.Users.Add(new DosyaYonetimPortali.MVC.Models.Entities.User
@@ -74,9 +53,7 @@ using (var scope = app.Services.CreateScope())
             context.SaveChanges();
         }
     }
-    catch (Exception ex)
-    {
-    }
+    catch { }
 }
 
 app.MapControllerRoute(

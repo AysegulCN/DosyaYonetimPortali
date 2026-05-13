@@ -24,6 +24,15 @@ namespace DosyaYonetimPortali.MVC.Controllers
         private readonly AppDbContext _context;
         private readonly IHttpClientFactory _httpClientFactory;
 
+        private static Dictionary<string, bool> _moduleDefinitions = new Dictionary<string, bool> {
+            { "Dosya Yükleme ve İndirme", true },
+            { "Klasör Oluşturma", true },
+            { "Dosya Paylaşımı (Bağlantı ile)", false },
+            { "Sistem Loglarını Görüntüleme", false },
+            { "Kullanıcı Yönetimi", false },
+            { "Kota Ayarları ve Yönetimi", false }
+        };
+
         public AdminController(AppDbContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
@@ -279,14 +288,15 @@ namespace DosyaYonetimPortali.MVC.Controllers
         [HttpPost]
         public IActionResult AddUser(UserViewModel model)
         {
-            var newUser = new User
+            var newUser = new DosyaYonetimPortali.MVC.Models.Entities.User
             {
                 Id = Guid.NewGuid().ToString().Substring(0, 8),
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Email = model.Email,
                 Password = "123",
-                Role = model.Role
+                Role = model.Role,
+                ProfilePictureUrl = $"https://ui-avatars.com/api/?name={model.FirstName}+{model.LastName}&background=random&color=fff&rounded=true"
             };
 
             _context.Users.Add(newUser);
@@ -660,6 +670,232 @@ namespace DosyaYonetimPortali.MVC.Controllers
             }
 
             return RedirectToAction("Profile");
+        }
+
+        [HttpGet]
+        public IActionResult Roles()
+        {
+            var existingRoles = _context.Users
+                .Where(u => !string.IsNullOrEmpty(u.Role))
+                .Select(u => u.Role)
+                .Distinct()
+                .ToList();
+
+            var coreRoles = new List<string> { "Admin", "Standart Kullanıcı" };
+
+            var allRoles = coreRoles.Union(existingRoles).ToList();
+
+            var model = new List<RoleViewModel>();
+
+            foreach (var role in allRoles)
+            {
+                model.Add(new RoleViewModel
+                {
+                    RoleName = role,
+                    UserCount = _context.Users.Count(u => u.Role == role),
+                    IsSystemRole = (role == "Admin" || role == "Standart Kullanıcı")
+                });
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult AddRole(string RoleName)
+        {
+            _context.SystemLogs.Add(new SystemLog
+            {
+                Status = "INFO",
+                UserEmail = "Sistem",
+                Message = $"'{RoleName}' isimli yeni rol sisteme eklendi.",
+                Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm")
+            });
+            _context.SaveChanges();
+
+            TempData["ToastMessage"] = "Yeni rol başarıyla oluşturuldu.";
+            TempData["ToastIcon"] = "success";
+            return RedirectToAction("Roles");
+        }
+
+        [HttpPost]
+        public IActionResult EditRole(string OldRoleName, string NewRoleName)
+        {
+            var users = _context.Users.Where(u => u.Role == OldRoleName).ToList();
+            foreach (var u in users)
+            {
+                u.Role = NewRoleName;
+            }
+
+            _context.SystemLogs.Add(new SystemLog
+            {
+                Status = "INFO",
+                UserEmail = "Sistem",
+                Message = $"'{OldRoleName}' rolü '{NewRoleName}' olarak güncellendi.",
+                Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm")
+            });
+
+            _context.SaveChanges();
+
+            TempData["ToastMessage"] = "Rol başarıyla güncellendi.";
+            TempData["ToastIcon"] = "success";
+            return RedirectToAction("Roles");
+        }
+
+        [HttpPost]
+        public IActionResult DeleteRole(string RoleName)
+        {
+            var users = _context.Users.Where(u => u.Role == RoleName).ToList();
+            foreach (var u in users)
+            {
+                u.Role = "Standart Kullanıcı";
+            }
+
+            _context.SystemLogs.Add(new SystemLog
+            {
+                Status = "WARN",
+                UserEmail = "Sistem",
+                Message = $"'{RoleName}' rolü silindi.",
+                Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm")
+            });
+
+            _context.SaveChanges();
+
+            TempData["ToastMessage"] = "Rol silindi ve kullanıcılar güncellendi.";
+            TempData["ToastIcon"] = "success";
+            return RedirectToAction("Roles");
+        }
+
+        [HttpGet]
+        public IActionResult Permissions()
+        {
+            var existingRoles = _context.Users
+                .Where(u => !string.IsNullOrEmpty(u.Role))
+                .Select(u => u.Role)
+                .Distinct()
+                .ToList();
+
+            if (!existingRoles.Contains("Admin")) existingRoles.Add("Admin");
+            if (!existingRoles.Contains("Standart Kullanıcı")) existingRoles.Add("Standart Kullanıcı");
+
+            ViewBag.Roles = existingRoles.Select(r => new RoleViewModel { RoleName = r }).ToList();
+
+            var modules = new List<PermissionViewModel>();
+
+            foreach (var mod in _moduleDefinitions)
+            {
+                var pvm = new PermissionViewModel
+                {
+                    ModuleName = mod.Key,
+                    IsCore = mod.Value,
+                    RoleAccesses = new List<RoleAccessViewModel>()
+                };
+
+                foreach (var role in existingRoles)
+                {
+                    pvm.RoleAccesses.Add(new RoleAccessViewModel
+                    {
+                        RoleName = role,
+                        HasAccess = (role == "Admin")
+                    });
+                }
+                modules.Add(pvm);
+            }
+
+            return View(modules);
+        }
+
+        [HttpPost]
+        public IActionResult AddPermission(string ModuleName, string ModuleType)
+        {
+            bool isCore = ModuleType == "Core";
+
+            if (!_moduleDefinitions.ContainsKey(ModuleName))
+            {
+                _moduleDefinitions.Add(ModuleName, isCore);
+            }
+
+            _context.SystemLogs.Add(new SystemLog
+            {
+                Status = "INFO",
+                UserEmail = "Sistem Yöneticisi",
+                Message = $"'{ModuleName}' isimli yeni {(isCore ? "çekirdek" : "serbest")} yetki modülü eklendi.",
+                Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm")
+            });
+            _context.SaveChanges();
+
+            TempData["ToastMessage"] = "Yeni yetki modülü başarıyla eklendi.";
+            TempData["ToastIcon"] = "success";
+            return RedirectToAction("Permissions");
+        }
+
+        [HttpPost]
+        public IActionResult DeletePermission(string ModuleName)
+        {
+            if (_moduleDefinitions.ContainsKey(ModuleName))
+            {
+                _moduleDefinitions.Remove(ModuleName);
+            }
+
+            _context.SystemLogs.Add(new SystemLog
+            {
+                Status = "WARN",
+                UserEmail = "Sistem Yöneticisi",
+                Message = $"'{ModuleName}' yetki modülü sistemden silindi.",
+                Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm")
+            });
+            _context.SaveChanges();
+
+            TempData["ToastMessage"] = "Yetki modülü başarıyla silindi.";
+            TempData["ToastIcon"] = "success";
+            return RedirectToAction("Permissions");
+        }
+
+        [HttpGet]
+        public IActionResult Settings()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult SaveSettings()
+        {
+            _context.SystemLogs.Add(new SystemLog
+            {
+                Status = "INFO",
+                UserEmail = "Sistem Yöneticisi",
+                Message = "Genel sistem ayarları güncellendi.",
+                Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm")
+            });
+            _context.SaveChanges();
+
+            TempData["ToastMessage"] = "Sistem ayarları başarıyla kaydedildi.";
+            TempData["ToastIcon"] = "success";
+
+            return RedirectToAction("Settings");
+        }
+
+        [HttpGet]
+        public IActionResult FileSettings()
+        {
+            return View(new FileSettingsViewModel());
+        }
+
+        [HttpPost]
+        public IActionResult SaveFileSettings()
+        {
+            _context.SystemLogs.Add(new SystemLog
+            {
+                Status = "WARN",
+                UserEmail = "Sistem Yöneticisi",
+                Message = "Dosya yükleme kısıtlamaları ve limit ayarları güncellendi.",
+                Date = DateTime.Now.ToString("dd.MM.yyyy HH:mm")
+            });
+            _context.SaveChanges();
+
+            TempData["ToastMessage"] = "Dosya ve güvenlik ayarları başarıyla kaydedildi.";
+            TempData["ToastIcon"] = "success";
+
+            return RedirectToAction("FileSettings");
         }
     }
 }
